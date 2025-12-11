@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.demo.view.LoginController"
+           styleClass="login-root-fixed"
+           stylesheets="@/style.css">
+
+    <VBox maxWidth="400"
+          maxHeight="500"
+          alignment="CENTER_LEFT"
+          styleClass="login-card-fixed">
+
+        <VBox spacing="8">
+            <Label text="Username" styleClass="login-label-fixed"/>
+            <TextField fx:id="userField" promptText="username" styleClass="login-input-fixed"/>
+            <VBox.margin>
+                <Insets bottom="25.0" />
+            </VBox.margin>
+        </VBox>
+
+        <VBox spacing="8">
+            <Label text="Password" styleClass="login-label-fixed"/>
+            <PasswordField fx:id="passField" promptText="password" styleClass="login-input-fixed"/>
+            <VBox.margin>
+                <Insets bottom="40.0" />
+            </VBox.margin>
+        </VBox>
+
+        <Button text="Sign In"
+                maxWidth="Infinity"
+                styleClass="login-btn-fixed"
+                onAction="#handleLogin"/>
+
+    </VBox>
+</StackPane>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.demo.view.ManagerController"
+            styleClass="view-background"
+            stylesheets="@/style.css">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="15">
+
+            <StackPane fx:id="profileBtn" style="-fx-cursor: hand;" onMouseClicked="#handleLogout">
+                <Circle fx:id="profileCircle" radius="25" fill="LIGHTBLUE" stroke="TOMATO" strokeWidth="0" />
+            </StackPane>
+
+            <VBox spacing="2">
+                <Label fx:id="lblHeaderName" text="..." styleClass="text-title" style="-fx-font-size: 16px;"/>
+                <Label fx:id="lblHeaderRole" text="Manager" styleClass="text-body" style="-fx-font-size: 14px;"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS" />
+
+            <StackPane style="-fx-cursor: hand;" onMouseClicked="#handleNotifications">
+                <SVGPath content="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"
+                         styleClass="icon-svg" scaleX="1.2" scaleY="1.2"/>
+            </StackPane>
+
+        </HBox>
+    </top>
+
+    <center>
+        <VBox alignment="CENTER">
+            <Label fx:id="lblWelcomeTop" text="welcome..." styleClass="welcome-text"/>
+            <Label fx:id="lblWelcomeName" text="..." styleClass="welcome-text-bold"/>
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox alignment="CENTER" spacing="20">
+            <padding>
+                <Insets bottom="50"/>
+            </padding>
+
+            <Button text="Menu" onAction="#goToMenu" styleClass="dashboard-btn" prefWidth="140" prefHeight="50"/>
+            <Button text="Financial" onAction="#goToFinancial" styleClass="dashboard-btn" prefWidth="140" prefHeight="50"/>
+
+        </HBox>
+    </bottom>
+
+</BorderPane>
