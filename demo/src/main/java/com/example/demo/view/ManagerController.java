@@ -73,12 +73,16 @@ public class ManagerController {
 
     @FXML
     private void goToFinancial() {
+
         System.out.println("Navigazione -> Financial (WIP)");
+        profileBtn.getScene().setRoot(FinancialController.getFXMLView());
     }
 
     @FXML
     private void handleNotifications() {
         System.out.println("Navigazione -> Financial");
+
+        //correggere porta verso financial data senza senzo
         profileBtn.getScene().setRoot(FinancialController.getFXMLView());
     }
 

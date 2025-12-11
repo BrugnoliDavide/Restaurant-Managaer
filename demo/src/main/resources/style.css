@@ -75,6 +75,8 @@
     -fx-background-radius: 8px;
     -fx-padding: 12px;
     -fx-cursor: hand;
+    -fx-background-insets: 0;
+    -fx-border-width: 0;
 }
 .login-btn-fixed:hover {
     -fx-background-color: #444444 !important;
