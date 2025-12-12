@@ -37,6 +37,11 @@ public class LoginController {
                 System.out.println("Login: CAMERIERE");
                 userField.getScene().setRoot(WaiterView.getView());
                 break;
+            case "cucina":
+                System.out.println("Login: cucina");
+                userField.getScene().setRoot(KitchenController.getFXMLView());
+                break;
+
             default:
                 // Errore visivo
                 userField.setStyle("-fx-border-color: red; -fx-border-radius: 8px;");

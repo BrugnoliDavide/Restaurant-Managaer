@@ -41,5 +41,5 @@ jobs:
         working-directory: demo
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -x verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+        run: mvn -X verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
           -Dsonar.projectKey=BrugnoliDavide_Restaurant-Managaer

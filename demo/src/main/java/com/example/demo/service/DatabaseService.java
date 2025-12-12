@@ -365,7 +365,49 @@ public class DatabaseService {
         return list;
     }
 
+// quary ottimizzate rispetto a getbystatus
 
+    public static List<Order> getKitchenActiveOrders() {
+        List<Order> list = new ArrayList<>();
+
+        // QUERY OTTIMIZZATA (PostgreSQL):
+        // 1. Seleziona ordini e calcola totale (COALESCE serve se non ci sono righe)
+        // 2. Filtra per stato = 'ordinato'
+        // 3. Filtra per data_ora >= adesso - 24 ore
+        String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
+                "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) as totale_calcolato " +
+                "FROM orders o " +
+                "LEFT JOIN order_items oi ON o.id = oi.order_id " +
+                "WHERE o.status = ? " +
+                "AND o.data_ora >= NOW() - INTERVAL '24 HOURS' " +
+                "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status " +
+                "ORDER BY o.data_ora ASC"; // In cucina di solito si vuole prima il più vecchio (FIFO)
+
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            // Impostiamo lo stato che cerchiamo
+            pstmt.setString(1, "ordinato");
+
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(new Order(
+                        rs.getInt("id"),
+                        rs.getTimestamp("data_ora").toLocalDateTime(),
+                        rs.getInt("tavolo"),
+                        rs.getString("username"),
+                        rs.getString("note"),
+                        rs.getString("status"),
+                        rs.getDouble("totale_calcolato")
+                ));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 
 
 }
