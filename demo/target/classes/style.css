@@ -130,6 +130,7 @@
     -fx-background-radius: 8;
     -fx-cursor: hand;
     -fx-font-weight: bold;
+    -fx-background-insets: 0;
 }
 
 .dashboard-btn {
@@ -140,10 +141,12 @@
     -fx-background-radius: 20;
     -fx-cursor: hand;
     -fx-font-size: 14px;
+    -fx-background-insets: 0;
 }
 .dashboard-btn:hover {
     -fx-background-color: -fx-text-secondary;
     -fx-text-fill: white;
+    -fx-background-insets: 0;
 }
 
 /* Icone SVG (Si colorano da sole in base al tema) */
@@ -159,6 +162,7 @@
 }
 .dark-theme .menu-row {
     -fx-border-color: #333333; /* Bordo più scuro nel tema scuro */
+    -fx-background-insets: 0;
 }
 
 .welcome-text {
@@ -182,8 +186,10 @@
     -fx-font-size: 16px;
     -fx-background-radius: 10px;
     -fx-cursor: hand;
+    -fx-background-insets: 0;
 }
 
 .dashboard-btn:hover {
     -fx-background-color: #444444;
+    -fx-background-insets: 0;
 }
