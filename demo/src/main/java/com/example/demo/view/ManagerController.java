@@ -2,9 +2,10 @@ package com.example.demo.view;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Side;
 import javafx.scene.Parent;
-import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
@@ -20,50 +21,66 @@ public class ManagerController {
     @FXML private StackPane profileBtn;
     @FXML private Circle profileCircle;
 
-    // Dati Simulati
     private String userName = "Sig.na Susan";
     private String userRole = "Manager";
 
     @FXML
     public void initialize() {
-        // --- 1. DEBUG DI SICUREZZA ---
-        if (profileBtn == null) {
-            System.err.println("ERRORE GRAVE: 'profileBtn' è NULL. Controlla fx:id nel FXML!");
-            return; // Fermiamoci per evitare il crash
-        }
+        if (profileBtn == null) return;
 
-        // --- 2. IMPOSTAZIONE TESTI ---
+        // Impostazione testi
         lblHeaderName.setText(userName);
         lblHeaderRole.setText(userRole);
         lblWelcomeTop.setText("welcome, " + userName.toLowerCase());
 
-        // Gestione sicura del nome (evita crash se non ci sono spazi)
-        if (userName.contains(" ")) {
-            lblWelcomeName.setText(userName.split(" ")[1]);
-        } else {
-            lblWelcomeName.setText(userName);
-        }
+        if (userName.contains(" ")) lblWelcomeName.setText(userName.split(" ")[1]);
+        else lblWelcomeName.setText(userName);
 
-        // --- 3. TOOLTIP (Logout) ---
-        // Lo installiamo via codice, così non impazziamo col FXML
-        Tooltip tooltip = new Tooltip("Logout");
+        // --- TOOLTIP AGGIORNATO ---
+        // Prima era "Logout", ora è "Opzioni Profilo"
+        Tooltip tooltip = new Tooltip("Opzioni Profilo");
         tooltip.setShowDelay(Duration.millis(50));
         Tooltip.install(profileBtn, tooltip);
 
-        // --- 4. ANIMAZIONI HOVER ---
+        // Animazioni Hover
         if (profileCircle != null) {
             profileBtn.setOnMouseEntered(e -> profileCircle.setStrokeWidth(3));
             profileBtn.setOnMouseExited(e -> profileCircle.setStrokeWidth(0));
         }
     }
 
-    // --- NAVIGAZIONE ---
-
+    // --- NUOVO METODO: MENU A TENDINA ---
     @FXML
-    private void handleLogout() {
-        System.out.println("Logout Manager...");
-        profileBtn.getScene().setRoot(LoginController.getFXMLView());
+    private void handleProfileMenu(MouseEvent event) {
+        // 1. Creiamo il Menu
+        ContextMenu contextMenu = new ContextMenu();
+
+        // 2. Voce "Gestione Staff"
+        MenuItem itemStaff = new MenuItem("Gestione Staff");
+        itemStaff.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10;");
+        itemStaff.setOnAction(e -> {
+            System.out.println("Navigazione -> Gestione Staff");
+            // Carica la vista UsersController che abbiamo creato prima
+            profileBtn.getScene().setRoot(UsersController.getFXMLView());
+        });
+
+        // 3. Voce "Logout"
+        MenuItem itemLogout = new MenuItem("Logout");
+        itemLogout.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10; -fx-text-fill: red;"); // Rosso per indicare uscita
+        itemLogout.setOnAction(e -> {
+            System.out.println("Eseguo Logout...");
+            profileBtn.getScene().setRoot(LoginController.getFXMLView());
+        });
+
+        // 4. Aggiungiamo le voci al menu (con un separatore in mezzo)
+        contextMenu.getItems().addAll(itemStaff, new SeparatorMenuItem(), itemLogout);
+
+        // 5. Mostra il menu SOTTO il bottone del profilo
+        // Side.BOTTOM dice "attaccati al lato inferiore del profileBtn"
+        contextMenu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
+
+    // --- ALTRE NAVIGAZIONI ---
 
     @FXML
     private void goToMenu() {
@@ -73,26 +90,19 @@ public class ManagerController {
 
     @FXML
     private void goToFinancial() {
-
-        System.out.println("Navigazione -> Financial (WIP)");
+        System.out.println("Navigazione -> Financial");
         profileBtn.getScene().setRoot(FinancialController.getFXMLView());
     }
 
     @FXML
     private void handleNotifications() {
-        System.out.println("Navigazione -> Financial");
-
-        //correggere porta verso financial data senza senzo
-        profileBtn.getScene().setRoot(FinancialController.getFXMLView());
+        System.out.println("Click Notifiche");
     }
 
-    // --- HELPER CARICAMENTO ---
     public static Parent getFXMLView() {
         try {
             return new FXMLLoader(ManagerController.class.getResource("/ManagerView.fxml")).load();
         } catch (IOException e) {
-            System.err.println("ERRORE CARICAMENTO FXML MANAGER:");
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

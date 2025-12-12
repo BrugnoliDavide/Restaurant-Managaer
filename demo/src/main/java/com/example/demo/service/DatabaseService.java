@@ -442,6 +442,55 @@ public class DatabaseService {
         return details;
     }
 
+    public static List<com.example.demo.model.User> getAllUsers() {
+        List<com.example.demo.model.User> list = new java.util.ArrayList<>();
+        String sql = "SELECT username, role FROM users ORDER BY role, username"; // Non selezioniamo nemmeno la colonna password
+
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while(rs.next()) {
+                // Creiamo l'utente SENZA password
+                list.add(new com.example.demo.model.User(
+                        rs.getString("username"),
+                        rs.getString("role")
+                ));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+
+    // --- CANCELLAZIONE UTENTE ---
+    public static boolean deleteUser(String usernameToDelete) {
+        String sql = "DELETE FROM users WHERE username = ?";
+
+        try (java.sql.Connection conn = java.sql.DriverManager.getConnection(URL, USER, PASS);
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, usernameToDelete);
+
+            int rowsAffected = pstmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Utente '" + usernameToDelete + "' eliminato correttamente.");
+                return true;
+            } else {
+                System.out.println("Nessun utente trovato con username: " + usernameToDelete);
+                return false;
+            }
+
+        } catch (java.sql.SQLException e) {
+            System.err.println("Errore durante l'eliminazione dell'utente: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+
+
 }
 
 
