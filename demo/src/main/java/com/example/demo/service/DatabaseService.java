@@ -179,7 +179,7 @@ public class DatabaseService {
     public static boolean createOrder(List<OrderItem> items, Integer tavolo, String note) {
         if (items.isEmpty()) return false;
 
-        String sqlOrder = "INSERT INTO orders (username, tavolo, note) VALUES (?, ?, ?)";
+        String sqlOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?,?, ?, ?)";
         String sqlItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, prezzo_vendita_snapshot, costo_realizzazione_snapshot) VALUES (?, ?, ?, ?, ?)";
 
         Connection conn = null;
@@ -199,6 +199,9 @@ public class DatabaseService {
             if (tavolo != null) pstmtOrder.setInt(2, tavolo);
             else pstmtOrder.setNull(2, java.sql.Types.INTEGER);
             pstmtOrder.setString(3, note);
+
+
+            pstmtOrder.setString(4, "ordered");
 
             int affectedRows = pstmtOrder.executeUpdate();
             if (affectedRows == 0) throw new SQLException("Creazione ordine fallita.");
@@ -387,7 +390,7 @@ public class DatabaseService {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             // Impostiamo lo stato che cerchiamo
-            pstmt.setString(1, "ordinato");
+            pstmt.setString(1, "ordered");
 
             ResultSet rs = pstmt.executeQuery();
 
@@ -409,6 +412,35 @@ public class DatabaseService {
         return list;
     }
 
+
+
+    // --- METODO PER I DETTAGLI (CUCINA) ---
+    public static List<String> getOrderItemsForDisplay(int orderId) {
+        List<String> details = new ArrayList<>();
+        // Uniamo order_items con menu_items per avere il nome del piatto
+        String sql = "SELECT mi.nome, oi.quantita " +
+                "FROM order_items oi " +
+                "JOIN menu_items mi ON oi.menu_item_id = mi.id " +
+                "WHERE oi.order_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, orderId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                String nome = rs.getString("nome");
+                int qta = rs.getInt("quantita");
+                // Formattiamo la stringa: "2x Carbonara"
+                details.add(qta + "x " + nome);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return details;
+    }
 
 }
 
