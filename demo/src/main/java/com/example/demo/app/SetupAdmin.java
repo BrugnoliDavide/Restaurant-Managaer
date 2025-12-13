@@ -1,4 +1,4 @@
-package com.example.demo.app;
+/*package com.example.demo.app;
 
 import com.example.demo.service.DatabaseService;
 import com.example.demo.service.SecurityService;
@@ -64,3 +64,5 @@ public class SetupAdmin {
         }
     }
 }
+
+*/

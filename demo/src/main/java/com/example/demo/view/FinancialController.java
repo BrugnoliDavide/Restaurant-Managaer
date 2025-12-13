@@ -8,11 +8,15 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
+
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -20,50 +24,94 @@ import java.util.stream.Collectors;
 public class FinancialController {
 
     @FXML private VBox ordersContainer;
-
-    // Iniettiamo la label definita nell'FXML
     @FXML private Label lblManage;
+    @FXML private TextField txtSearch; // Riferimento alla barra di ricerca
+
+    // Cache: contiene TUTTI gli ordini scaricati dal DB
+    private List<Order> allOrdersMaster = new ArrayList<>();
 
     @FXML
     public void initialize() {
-        // Configura l'effetto hover sul tasto indietro
         setupManageButton();
 
-        // Carica i dati
-        loadData();
+        // 1. Scarichiamo i dati dal DB una volta sola
+        loadDataFromDB();
+
+        // 2. Attiviamo il filtro di ricerca
+        setupSearchListener();
     }
 
-    // --- NUOVO METODO PER L'EFFETTO HOVER ---
-    private void setupManageButton() {
-        if (lblManage == null) return;
-
-        // Definizione stili
-        String styleNormal = "-fx-text-fill: #888888; -fx-font-size: 14px; -fx-cursor: hand; -fx-underline: false;";
-        String styleHover  = "-fx-text-fill: #333333; -fx-font-size: 14px; -fx-cursor: hand; -fx-underline: true;";
-
-        // Applica stile iniziale
-        lblManage.setStyle(styleNormal);
-
-        // Listener per il Mouse: Entrata -> Scuro e Sottolineato
-        lblManage.setOnMouseEntered(e -> lblManage.setStyle(styleHover));
-
-        // Listener per il Mouse: Uscita -> Grigio e Normale
-        lblManage.setOnMouseExited(e -> lblManage.setStyle(styleNormal));
+    // --- LOGICA RICERCA ---
+    private void setupSearchListener() {
+        // Aggiunge un listener: ogni volta che il testo cambia, esegue il codice
+        txtSearch.textProperty().addListener((observable, oldValue, newValue) -> {
+            filterAndRender(newValue);
+        });
     }
 
-    private void loadData() {
+    private void filterAndRender(String query) {
+        String lowerCaseQuery = query.toLowerCase().trim();
+
+        // Se la barra è vuota, mostra tutto
+        if (lowerCaseQuery.isEmpty()) {
+            renderOrders(allOrdersMaster);
+            return;
+        }
+
+        // Altrimenti filtra la Master List
+        List<Order> filteredList = allOrdersMaster.stream()
+                .filter(order -> matchesFilter(order, lowerCaseQuery))
+                .collect(Collectors.toList());
+
+        renderOrders(filteredList);
+    }
+
+    // Qui definiamo le regole: controlliamo ID, Tavolo, Prezzo e Data
+    private boolean matchesFilter(Order order, String query) {
+        // Cerca nell'ID
+        if (String.valueOf(order.getId()).contains(query)) return true;
+
+        // Cerca nel Tavolo
+        if (String.valueOf(order.getTavolo()).contains(query)) return true;
+
+        // Cerca nel Totale (convertito in stringa es: "15.50")
+        if (String.valueOf(order.getTotale()).contains(query)) return true;
+
+        // Cerca nella Data (es: cerco "2025" o "12")
+        if (order.getDataOra().toString().contains(query)) return true;
+
+        return false;
+    }
+
+    // --- CARICAMENTO DATI ---
+    private void loadDataFromDB() {
+        // Scarichiamo dal DB e salviamo nella lista Master
+        allOrdersMaster = DatabaseService.getAllOrdersWithTotal();
+
+        // Disegniamo tutto all'inizio
+        renderOrders(allOrdersMaster);
+    }
+
+    // Questo metodo si occupa SOLO di disegnare (raggruppare e creare le righe)
+    private void renderOrders(List<Order> ordersToRender) {
         ordersContainer.getChildren().clear();
 
-        List<Order> allOrders = DatabaseService.getAllOrdersWithTotal();
+        if (ordersToRender.isEmpty()) {
+            Label empty = new Label("Nessun ordine trovato.");
+            empty.setStyle("-fx-padding: 20; -fx-text-fill: #888; -fx-font-style: italic;");
+            ordersContainer.getChildren().add(empty);
+            return;
+        }
 
-        Map<LocalDate, List<Order>> grouped = allOrders.stream()
+        // Raggruppamento per Data
+        Map<LocalDate, List<Order>> grouped = ordersToRender.stream()
                 .collect(Collectors.groupingBy(
                         o -> o.getDataOra().toLocalDate(),
                         () -> new TreeMap<>(java.util.Collections.reverseOrder()),
                         Collectors.toList()
                 ));
 
-        DateTimeFormatter headerFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy");
+        DateTimeFormatter headerFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALY);
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
 
         for (Map.Entry<LocalDate, List<Order>> entry : grouped.entrySet()) {
@@ -75,7 +123,7 @@ public class FinancialController {
             dateHeader.setStyle("-fx-font-size: 12px; -fx-text-fill: #999; -fx-font-weight: bold; -fx-padding: 15 0 5 0;");
             ordersContainer.getChildren().add(dateHeader);
 
-            // Lista ordini
+            // Righe Ordini
             for (Order order : ordersOfDay) {
                 HBox row = createOrderRow(order, timeFormatter);
                 ordersContainer.getChildren().add(row);
@@ -83,6 +131,8 @@ public class FinancialController {
         }
     }
 
+    // --- METODI DI SUPPORTO (Row Creation & Style) ---
+    // (Uguale a prima, solo copiato per completezza)
     private HBox createOrderRow(Order order, DateTimeFormatter timeFormatter) {
         HBox row = new HBox();
         row.setAlignment(Pos.CENTER_LEFT);
@@ -92,9 +142,7 @@ public class FinancialController {
         row.setOnMouseEntered(e -> row.setStyle("-fx-border-color: #EEE; -fx-border-width: 0 0 1 0; -fx-background-color: #F9F9F9; -fx-cursor: hand;"));
         row.setOnMouseExited(e -> row.setStyle("-fx-border-color: #EEE; -fx-border-width: 0 0 1 0; -fx-background-color: white; -fx-cursor: hand;"));
 
-        row.setOnMouseClicked(e -> {
-            System.out.println("Apro dettagli ordine #" + order.getId());
-        });
+        row.setOnMouseClicked(e -> System.out.println("Apro dettagli ordine #" + order.getId()));
 
         VBox infoBox = new VBox(4);
         Label title = new Label("Order " + order.getId() + (order.getTavolo() > 0 ? " (Tav. " + order.getTavolo() + ")" : ""));
@@ -118,9 +166,18 @@ public class FinancialController {
         return row;
     }
 
+    private void setupManageButton() {
+        if (lblManage == null) return;
+        String styleNormal = "-fx-text-fill: #888888; -fx-font-size: 14px; -fx-cursor: hand; -fx-underline: false;";
+        String styleHover  = "-fx-text-fill: #333333; -fx-font-size: 14px; -fx-cursor: hand; -fx-underline: true;";
+
+        lblManage.setStyle(styleNormal);
+        lblManage.setOnMouseEntered(e -> lblManage.setStyle(styleHover));
+        lblManage.setOnMouseExited(e -> lblManage.setStyle(styleNormal));
+    }
+
     @FXML
     private void goBack() {
-        // Torna alla dashboard Manager usando il metodo statico
         try {
             ordersContainer.getScene().setRoot(ManagerController.getFXMLView());
         } catch (Exception e) {

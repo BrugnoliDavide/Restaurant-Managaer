@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
@@ -19,7 +20,7 @@
             stylesheets="@/style.css">
 
     <top>
-        <VBox spacing="5" style="-fx-background-color: white;">
+        <VBox spacing="15" style="-fx-background-color: white;">
             <padding>
                 <Insets top="20" right="20" bottom="10" left="20"/>
             </padding>
@@ -29,21 +30,28 @@
                    style="-fx-text-fill: #888888; -fx-font-size: 14px; -fx-cursor: hand;"/>
 
             <HBox alignment="CENTER_LEFT">
-
                 <Label text="financial data" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
-
                 <Region HBox.hgrow="ALWAYS"/>
-
                 <StackPane>
                     <SVGPath content="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"
-                             styleClass="icon-svg"
-                             fill="BLACK"
-                             scaleX="1.2" scaleY="1.2"/>
+                             styleClass="icon-svg" fill="BLACK" scaleX="1.2" scaleY="1.2"/>
                 </StackPane>
             </HBox>
 
+            <HBox alignment="CENTER_LEFT" spacing="10"
+                  style="-fx-background-color: #F0F2F5; -fx-background-radius: 20; -fx-padding: 8 15;">
+
+                <SVGPath content="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                         fill="#888" scaleX="0.9" scaleY="0.9"/>
+
+                <TextField fx:id="txtSearch"
+                           promptText="Cerca per ID, Tavolo, Prezzo..."
+                           style="-fx-background-color: transparent; -fx-text-fill: #333;"
+                           HBox.hgrow="ALWAYS"/>
+            </HBox>
+
             <Separator>
-                <padding><Insets top="10"/></padding>
+                <padding><Insets top="5"/></padding>
             </Separator>
         </VBox>
     </top>
