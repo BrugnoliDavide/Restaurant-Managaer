@@ -9,6 +9,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
+import com.example.demo.app.UserSession;
 
 import java.io.IOException;
 
@@ -21,24 +22,37 @@ public class ManagerController {
     @FXML private StackPane profileBtn;
     @FXML private Circle profileCircle;
 
-    private String userName = "Sig.na Susan";
-    private String userRole = "Manager";
 
     @FXML
     public void initialize() {
-        if (profileBtn == null) return;
 
-        // Impostazione testi
-        lblHeaderName.setText(userName);
-        lblHeaderRole.setText(userRole);
-        lblWelcomeTop.setText("welcome, " + userName.toLowerCase());
+            UserSession session = UserSession.getInstance();
 
-        if (userName.contains(" ")) lblWelcomeName.setText(userName.split(" ")[1]);
-        else lblWelcomeName.setText(userName);
+            // Valori di default
+            String displayName = "Utente";
+            String displayRole = "Ruolo";
+            String welcomeMsg = "Welcome";
 
-        // --- TOOLTIP AGGIORNATO ---
-        // Prima era "Logout", ora è "Opzioni Profilo"
-        Tooltip tooltip = new Tooltip("Opzioni Profilo");
+            if (session != null && session.getUser() != null) {
+                // Recuperiamo l'oggetto Utente Polimorfico
+                com.example.demo.model.User u = session.getUser();
+
+                displayName = u.getUsername();
+                displayRole = u.getRole();
+
+                // MAGIA: Questo metodo ritorna messaggi diversi in base alla classe (Manager vs Waiter)
+                welcomeMsg = u.getWelcomeMessage();
+            }
+
+            lblHeaderName.setText(displayName);
+            lblHeaderRole.setText(displayRole);
+
+            // Impostiamo il messaggio personalizzato
+            lblWelcomeTop.setText(welcomeMsg);
+
+        // --- TOOLTIP ---
+
+        Tooltip tooltip = new Tooltip("Opzioni");
         tooltip.setShowDelay(Duration.millis(50));
         Tooltip.install(profileBtn, tooltip);
 
@@ -69,6 +83,7 @@ public class ManagerController {
         itemLogout.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10; -fx-text-fill: red;"); // Rosso per indicare uscita
         itemLogout.setOnAction(e -> {
             System.out.println("Eseguo Logout...");
+            UserSession.cleanUserSession();
             profileBtn.getScene().setRoot(LoginController.getFXMLView());
         });
 
@@ -80,7 +95,7 @@ public class ManagerController {
         contextMenu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
 
-    // --- ALTRE NAVIGAZIONI ---
+
 
     @FXML
     private void goToMenu() {

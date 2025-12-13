@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.example.demo.app.UsersFactory;
+
 public class DatabaseService {
 
     // DATI DI CONNESSIONE (Quelli messi nel docker-compose)
@@ -444,20 +446,28 @@ public class DatabaseService {
 
     public static List<com.example.demo.model.User> getAllUsers() {
         List<com.example.demo.model.User> list = new java.util.ArrayList<>();
-        String sql = "SELECT username, role FROM users ORDER BY role, username"; // Non selezioniamo nemmeno la colonna password
+        String sql = "SELECT username, role FROM users ORDER BY role, username";
 
         try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while(rs.next()) {
-                // Creiamo l'utente SENZA password
-                list.add(new com.example.demo.model.User(
-                        rs.getString("username"),
-                        rs.getString("role")
-                ));
+                String u = rs.getString("username");
+                String r = rs.getString("role");
+
+                // --- CORREZIONE QUI ---
+                // Non usiamo più 'new User(...)', ma la Factory!
+                // La Factory deciderà se creare un ManagerUser, WaiterUser, ecc.
+                com.example.demo.model.User userObj = com.example.demo.app.UsersFactory.createUser(u, r);
+
+                if (userObj != null) {
+                    list.add(userObj);
+                }
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return list;
     }
 

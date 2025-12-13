@@ -1,5 +1,6 @@
 package com.example.demo.view;
 
+import com.example.demo.app.UserSession;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -65,11 +66,13 @@ public class WaiterView {
             profileImg.setStrokeWidth(3);
         });
         profileBtn.setOnMouseExited(e -> {
+
             profileImg.setStroke(null);
         });
 
         // 4. Azione Logout
         profileBtn.setOnMouseClicked(e -> {
+            UserSession.cleanUserSession();
             System.out.println("Eseguo Logout...");
             // Ora chiami il nuovo metodo statico che gestisce il caricamento FXML
             profileBtn.getScene().setRoot(LoginController.getFXMLView());
