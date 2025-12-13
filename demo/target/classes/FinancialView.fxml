@@ -3,51 +3,55 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
-<?import javafx.scene.layout.StackPane?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.example.demo.view.FinancialController"
             styleClass="view-background"
+            style="-fx-background-color: #FFFFFF;"
             stylesheets="@/style.css">
 
     <top>
-        <VBox spacing="10">
+        <VBox spacing="5" style="-fx-background-color: white;">
             <padding>
                 <Insets top="20" right="20" bottom="10" left="20"/>
             </padding>
 
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="← Manage" onMouseClicked="#goBack"
-                       style="-fx-text-fill: #888; -fx-cursor: hand; -fx-font-size: 14px;"/>
-            </HBox>
+            <Label fx:id="lblManage" text="← Manage"
+                   onMouseClicked="#goBack"
+                   style="-fx-text-fill: #888888; -fx-font-size: 14px; -fx-cursor: hand;"/>
 
             <HBox alignment="CENTER_LEFT">
-                <VBox>
-                    <Label text="Manage" styleClass="text-muted" style="-fx-font-size: 12px;"/>
-                    <Label text="financial data" styleClass="text-title" style="-fx-font-size: 24px;"/>
-                </VBox>
+
+                <Label text="financial data" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #000000;"/>
 
                 <Region HBox.hgrow="ALWAYS"/>
 
                 <StackPane>
-                    <SVGPath content="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" styleClass="icon-svg" scaleX="1.2" scaleY="1.2"/>
+                    <SVGPath content="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z"
+                             styleClass="icon-svg"
+                             fill="BLACK"
+                             scaleX="1.2" scaleY="1.2"/>
                 </StackPane>
             </HBox>
 
-            <Region style="-fx-background-color: #DDD; -fx-min-height: 1; -fx-max-height: 1;"/>
+            <Separator>
+                <padding><Insets top="10"/></padding>
+            </Separator>
         </VBox>
     </top>
 
     <center>
-        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: white;">
             <content>
-                <VBox fx:id="ordersContainer" spacing="0" style="-fx-background-color: transparent;">
+                <VBox fx:id="ordersContainer" spacing="0" style="-fx-background-color: white;">
                     <padding>
                         <Insets top="10" right="20" bottom="20" left="20"/>
                     </padding>
