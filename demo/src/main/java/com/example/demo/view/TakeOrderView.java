@@ -19,8 +19,8 @@ import java.util.Map;
 
 public class TakeOrderView {
 
-    // CARRELLO TEMPORANEO
-    private static Map<Integer, OrderItem> carrello = new HashMap<>();
+
+    private final static Map<Integer, OrderItem> carrello = new HashMap<>();
 
     public static Parent getView(int numeroTavolo) {
         carrello.clear();
@@ -62,7 +62,7 @@ public class TakeOrderView {
         header.getChildren().addAll(titles, spacer, btnCancel);
         root.setTop(header);
 
-        // --- 2. LISTA MENU ---
+
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color: transparent; -fx-background: white; -fx-border-color: transparent;");

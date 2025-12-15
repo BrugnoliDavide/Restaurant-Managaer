@@ -10,22 +10,30 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import java.io.IOException;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
 public class LoginController {
 
     @FXML private TextField userField;
     @FXML private PasswordField passField;
 
+    public static final Logger logger = Logger.getLogger(LoginController.class.getName());
+
+
     @FXML
     private void handleLogin() {
-        // 1. RESET STILE (Rimuove il rosso precedente se presente)
+        // Rimuove il rosso nei campi ca compilare se precedentemente era presente
         resetStyle();
 
         String user = userField.getText() != null ? userField.getText().trim() : "";
         String pass = passField.getText() != null ? passField.getText().trim() : "";
 
-        // 2. CONTROLLO CAMPI VUOTI
+        logger.info("Tentativo di autenticazione per l'username: '" + user + "'");
+
+        // CONTROLLO CAMPI VUOTI
         if (user.isEmpty() || pass.isEmpty()) {
-            System.out.println("Campi vuoti!");
+            //logger.warning("campi vuoti");
             showError(); // Mette i bordi rossi
             return;
         }
@@ -35,7 +43,7 @@ public class LoginController {
 
         if (role != null) {
             // LOGIN SUCCESSO
-            System.out.println("Login Successo! Ruolo: " + role);
+            logger.info("Login COMPLETATO per utente: " + user + " [Ruolo assegnato: " + role + "]");
 
             // A. Crea l'Utente specifico con la Factory
             com.example.demo.model.User currentUser = UsersFactory.createUser(user, role);
@@ -47,7 +55,8 @@ public class LoginController {
             navigateToRole(role.toLowerCase());
 
         } else {
-            // LOGIN FALLITO
+            logger.warning("Login FALLITO per username: '" + user + "' - Credenziali non valide.");
+            //questo print viene lasciato per far in modo che se si vedesse la console è evidente l'errpre
             System.out.println("Credenziali Errate");
             showError(); // Mette i bordi rossi
         }
@@ -66,15 +75,16 @@ public class LoginController {
     }
 
     private void resetStyle() {
-        // Rimuove gli stili inline (il rosso), tornando allo stile del CSS originale
         userField.setStyle("");
         passField.setStyle("");
     }
 
-    // --- NAVIGAZIONE ---
+
 
     private void navigateToRole(String role) {
         try {
+
+
             Parent view = null;
 
             switch (role) {
@@ -82,7 +92,7 @@ public class LoginController {
                     view = ManagerController.getFXMLView();
                     break;
                 case "cameriere":
-                    view = WaiterView.getView(); // O WaiterController.getFXMLView() se l'hai convertito
+                    view = WaiterView.getView();
                     break;
                 case "cucina":
                     view = KitchenController.getFXMLView();
@@ -97,7 +107,7 @@ public class LoginController {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Errore", e);
         }
     }
 

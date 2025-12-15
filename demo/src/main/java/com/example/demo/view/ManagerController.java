@@ -11,6 +11,9 @@ import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 import com.example.demo.app.UserSession;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
 import java.io.IOException;
 
 public class ManagerController {
@@ -21,6 +24,7 @@ public class ManagerController {
     @FXML private Label lblWelcomeName;
     @FXML private StackPane profileBtn;
     @FXML private Circle profileCircle;
+
 
 
     @FXML
@@ -40,7 +44,6 @@ public class ManagerController {
                 displayName = u.getUsername();
                 displayRole = u.getRole();
 
-                // MAGIA: Questo metodo ritorna messaggi diversi in base alla classe (Manager vs Waiter)
                 welcomeMsg = u.getWelcomeMessage();
             }
 
@@ -73,16 +76,19 @@ public class ManagerController {
         MenuItem itemStaff = new MenuItem("Gestione Staff");
         itemStaff.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10;");
         itemStaff.setOnAction(e -> {
-            System.out.println("Navigazione -> Gestione Staff");
+            //System.out.println("Navigazione -> Gestione Staff");
             // Carica la vista UsersController che abbiamo creato prima
             profileBtn.getScene().setRoot(UsersController.getFXMLView());
         });
 
-        // 3. Voce "Logout"
+
         MenuItem itemLogout = new MenuItem("Logout");
         itemLogout.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10; -fx-text-fill: red;"); // Rosso per indicare uscita
         itemLogout.setOnAction(e -> {
-            System.out.println("Eseguo Logout...");
+
+
+
+            //System.out.println("Eseguo Logout...");
             UserSession.cleanUserSession();
             profileBtn.getScene().setRoot(LoginController.getFXMLView());
         });
@@ -99,19 +105,19 @@ public class ManagerController {
 
     @FXML
     private void goToMenu() {
-        System.out.println("Navigazione -> Menu");
+        //System.out.println("Navigazione -> Menu");
         profileBtn.getScene().setRoot(MenuView.getView());
     }
 
     @FXML
     private void goToFinancial() {
-        System.out.println("Navigazione -> Financial");
+        //System.out.println("Navigazione -> Financial");
         profileBtn.getScene().setRoot(FinancialController.getFXMLView());
     }
 
     @FXML
     private void handleNotifications() {
-        System.out.println("Click Notifiche");
+        //System.out.println("Click Notifiche");
     }
 
     public static Parent getFXMLView() {

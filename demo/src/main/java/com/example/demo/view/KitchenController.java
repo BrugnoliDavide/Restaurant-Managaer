@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import static com.example.demo.view.LoginController.logger;
+
 public class KitchenController {
 
     // Contenitore dove verranno aggiunte le card degli ordini
@@ -176,7 +178,9 @@ public class KitchenController {
 
         // Azione Click: Segna come pronto
         btnDone.setOnAction(e -> {
-            System.out.println("Ordine #" + order.getId() + " completato.");
+
+
+            logger.info("Ordine #" + order.getId() + " completato.");
             // Aggiorna DB
             DatabaseService.setOrderStatus(order.getId(), "pronto");
             // Rimuovi visivamente la card

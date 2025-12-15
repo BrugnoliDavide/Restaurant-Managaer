@@ -17,9 +17,9 @@ import javafx.util.Duration; // Importante per la velocità del Tooltip
 public class WaiterView {
 
     // Placeholder Dati Utente
-    private static String userName = "Sir. Robert";
-    private static String userRole = "Waiter";
-    private static Color profilePlaceholderColor = Color.CORNFLOWERBLUE;
+    private final static String userName = "Sir. Robert";
+    private final static String userRole = "Waiter";
+    private final static Color profilePlaceholderColor = Color.CORNFLOWERBLUE;
 
     public static Parent getView() {
         BorderPane root = new BorderPane();
