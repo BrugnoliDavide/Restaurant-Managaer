@@ -10,6 +10,8 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import java.io.IOException;
 
+import static com.example.demo.view.LoginController.logger;
+
 public class UsersController {
 
     @FXML private TableView<User> usersTable;
@@ -54,7 +56,8 @@ public class UsersController {
             txtPass.clear();
             comboRole.getSelectionModel().clearSelection();
             loadData();
-            System.out.println("Utente creato con successo!");
+            logger.info("Utente " + txtUser +"creato con successo!");
+
         } else {
             showAlert("Errore", "Impossibile creare l'utente. Forse lo username esiste già?");
         }

@@ -8,9 +8,11 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import com.example.demo.app.UsersFactory;
+import static com.example.demo.view.LoginController.logger;
+
 
 public class DatabaseService {
 
@@ -44,8 +46,8 @@ public class DatabaseService {
             }
 
         } catch (SQLException e) {
-            System.out.println("ERRORE DATABASE: " + e.getMessage());
-            e.printStackTrace();
+
+            logger.log(Level.SEVERE, "Errore durante il caricamento del file", e);
         }
 
         return prodotti;
@@ -80,8 +82,10 @@ public class DatabaseService {
             return rowsAffected > 0; // Se è > 0, ha funzionato
 
         } catch (SQLException e) {
-            System.out.println("ERRORE INSERIMENTO: " + e.getMessage());
-            return false; // Qualcosa è andato storto (es. nome duplicato)
+
+            logger.log(Level.SEVERE, "ERRORE INSERIMENTO", e);
+
+            return false; // Qualcosa è andato storto
         }
     }
 
@@ -102,7 +106,9 @@ public class DatabaseService {
             return pstmt.executeUpdate() > 0;
 
         } catch (java.sql.SQLException e) {
-            System.out.println("ERRORE UPDATE: " + e.getMessage());
+
+            logger.log(Level.SEVERE, "ERRORE UPDATE", e);
+
             return false;
         }
     }
@@ -110,11 +116,15 @@ public class DatabaseService {
     // 2. ELIMINAZIONE
 // Metodo ELIMINAZIONE con DEBUG
     public static boolean deleteProduct(int id) {
-        System.out.println("--- INIZIO TENTATIVO ELIMINAZIONE ---");
-        System.out.println("ID ricevuto da eliminare: " + id);
+
+        logger.info("TENTATIVO ELIMINAZIONE: \"ID ricevuto da eliminare: \" + id");
+
 
         if (id <= 0) {
-            System.out.println("ERRORE: L'ID non è valido (è 0 o minore). Impossibile eliminare dal DB.");
+
+            //ripeto l'id anche se a tutti gli effetti questo viene già stampato tramite l'istruzione sopra
+            logger.log(Level.SEVERE, ": L'ID non è valido (è 0 o minore). Impossibile eliminare dal DB. id:", id );
+
             return false;
         }
 
@@ -125,22 +135,24 @@ public class DatabaseService {
 
             pstmt.setInt(1, id);
 
-            // Eseguiamo
             int rowsAffected = pstmt.executeUpdate();
 
-            System.out.println("Righe eliminate realmente dal DB: " + rowsAffected);
+            logger.info("Righe eliminate realmente dal DB: " + rowsAffected);
 
             if (rowsAffected > 0) {
-                System.out.println("SUCCESSO: Prodotto eliminato.");
+
+                logger.info("SUCCESSO: Prodotto eliminato.");
+
                 return true;
             } else {
-                System.out.println("FALLIMENTO: Nessuna riga trovata con questo ID. Il prodotto esiste nel DB?");
+
+                logger.warning("\"FALLIMENTO: Nessuna riga trovata con questo ID, id:" + id);
+
                 return false;
             }
 
         } catch (SQLException e) {
-            System.out.println("ERRORE SQL GRAVE: " + e.getMessage());
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "ERRORE SQL GRAVE: ", e);
             return false;
         }
     }
@@ -237,7 +249,8 @@ public class DatabaseService {
 
             // 2. COMMIT (Se siamo arrivati qui, salviamo tutto definitivamente)
             conn.commit();
-            System.out.println("Ordine #" + orderId + " creato con successo con " + items.size() + " righe.");
+
+            logger.info("Ordine #" + orderId + " creato con successo con " + items.size() + " righe.");
             return true;
 
         } catch (SQLException e) {

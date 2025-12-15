@@ -9,6 +9,8 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
+import static com.example.demo.view.LoginController.logger;
+
 public class MainApp extends Application {
 
     @Override
@@ -41,7 +43,7 @@ public class MainApp extends Application {
             Image icon = new Image(MainApp.class.getResourceAsStream("/logo.png"));
             stage.getIcons().add(icon);
         } catch (Exception e) {
-            System.out.println("Logo non trovato.");
+            logger.warning("Logo non trovato.");
         }
     }
 
