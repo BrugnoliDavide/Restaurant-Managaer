@@ -28,10 +28,10 @@ import static com.example.demo.view.LoginController.logger;
 
 public class KitchenController {
 
-    // Contenitore dove verranno aggiunte le card degli ordini
+
     @FXML private VBox ordersContainer;
 
-    // Riferimenti all'Header (profilo, nome, ecc.)
+
     @FXML private StackPane profileBtn;
     @FXML private Circle profileCircle;
     @FXML private Label lblHeaderName;
@@ -40,8 +40,8 @@ public class KitchenController {
 
     @FXML
     public void initialize() {
-        // 1. SETUP DATI UTENTE
-        // Recuperiamo la sessione
+
+        // Recupero sessione
         UserSession session = UserSession.getInstance();
 
         // Controlliamo che sessione e utente esistano per evitare crash
@@ -59,13 +59,12 @@ public class KitchenController {
             lblWelcomeMsg.setText("Cucina operativa. Buon lavoro, " + username + "!");
         }
 
-        // 2. EFFETTI GRAFICI (Hover sul cerchio profilo)
+
         if (profileBtn != null) {
             profileBtn.setOnMouseEntered(e -> profileCircle.setStrokeWidth(3));
             profileBtn.setOnMouseExited(e -> profileCircle.setStrokeWidth(0));
         }
 
-        // 3. CARICAMENTO ORDINI INIZIALE
         refreshData();
     }
 
@@ -123,19 +122,18 @@ public class KitchenController {
         }
     }
 
-    // --- CREAZIONE GRAFICA DELLA CARD (Sostituisce il vecchio OrderCardController) ---
     private HBox createOrderCard(Order order) {
-        // 1. Contenitore Esterno (Card)
+
         HBox card = new HBox(20);
         card.setStyle("-fx-background-color: white; -fx-background-radius: 8; -fx-border-color: #DDD; -fx-border-width: 1; -fx-border-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);");
         card.setPadding(new Insets(15));
         card.setAlignment(Pos.CENTER_LEFT);
 
-        // 2. Colonna Sinistra: Info Ordine
+
         VBox leftInfo = new VBox(5);
         HBox.setHgrow(leftInfo, Priority.ALWAYS); // Occupa tutto lo spazio a sinistra
 
-        // Titolo: "Ordine #12 (Tavolo 5)"
+
         String titleText = "Ordine #" + order.getId();
         if (order.getTavolo() > 0) titleText += " (Tavolo " + order.getTavolo() + ")";
 

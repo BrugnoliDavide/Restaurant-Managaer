@@ -158,10 +158,9 @@ public class DatabaseService {
     }
 
 
-    // Metodo per ottenere la lista delle categorie esistenti
+
     public static List<String> getAllCategories() {
         List<String> categories = new ArrayList<>();
-        // DISTINCT serve a non avere duplicati (es. se ho 10 Primi, voglio la scritta "Primi" una volta sola)
         String sql = "SELECT DISTINCT tipologia FROM menu_items ORDER BY tipologia";
 
         try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
@@ -173,10 +172,11 @@ public class DatabaseService {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+
+            logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nell'ottenere tutte le categorie ", e);
         }
 
-        // Se il DB è vuoto, restituiamo almeno delle categorie base per non lasciare l'utente smarrito
+        // Se il DB è vuoto, si restituiscono almeno delle categorie base per non lasciare l'utente smarrito
         if (categories.isEmpty()) {
             categories.add("Primi");
             categories.add("Secondi");
@@ -188,8 +188,6 @@ public class DatabaseService {
 
 
 
-
-    // Metodo Transazionale per creare Ordine + Righe
     public static boolean createOrder(List<OrderItem> items, Integer tavolo, String note) {
         if (items.isEmpty()) return false;
 
@@ -237,14 +235,14 @@ public class DatabaseService {
                 pstmtItem.setInt(1, orderId); // Usiamo l'ID appena recuperato
                 pstmtItem.setInt(2, item.getProduct().getId()); // ID dal Menu
                 pstmtItem.setInt(3, item.getQuantita());
-                pstmtItem.setDouble(4, item.getPrezzoSnapshot()); // Prezzo congelato
-                pstmtItem.setDouble(5, item.getCostoSnapshot());  // Costo congelato
+                pstmtItem.setDouble(4, item.getPrezzoSnapshot()); // Prezzo congelato al momento dell'acquisto
+                pstmtItem.setDouble(5, item.getCostoSnapshot());  // Costo congelato al momento dell'acquisto
 
-                // Aggiungiamo al "batch" (mucchio di query da eseguire insieme)
+                // Aggiungiamo al batch
                 pstmtItem.addBatch();
             }
 
-            // Eseguiamo tutte le righe insieme
+
             pstmtItem.executeBatch();
 
             // 2. COMMIT (Se siamo arrivati qui, salviamo tutto definitivamente)
@@ -257,29 +255,53 @@ public class DatabaseService {
             // 3. ROLLBACK (Se c'è un errore, annulliamo tutto come se non fosse mai successo)
             if (conn != null) {
                 try {
-                    System.out.println("Errore rilevato! Annullamento operazione (Rollback)...");
+
+                    logger.log(Level.SEVERE, "Errore rilevato! Annullamento operazione (Rollback)...");
                     conn.rollback();
+
                 } catch (SQLException ex) {
-                    ex.printStackTrace();
+                    logger.log(Level.SEVERE, "Si è verificato un errore nell'interazione col Database", ex);
                 }
             }
-            e.printStackTrace();
+
+            logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nella creazione dell'ordine", e);
+
             return false;
         } finally {
-            // Chiudiamo tutto
-            try { if (pstmtItem != null) pstmtItem.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (pstmtOrder != null) pstmtOrder.close(); } catch (SQLException e) { e.printStackTrace(); }
-            try { if (conn != null) conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
-        }
+
+
+
+
+            //Chiusura primo PreparedStatement
+            try {
+                if (pstmtItem != null) pstmtItem.close();
+            } catch (SQLException e) {
+                //WARNING perché è un errore di pulizia, non bloccante
+                logger.log(Level.WARNING, "Impossibile chiudere pstmtItem", e);
+            }
+
+            //Chiusura secondo PreparedStatement
+            try {
+                if (pstmtOrder != null) pstmtOrder.close();
+            } catch (SQLException e) {
+                logger.log(Level.WARNING, "Impossibile chiudere pstmtOrder", e);
+            }
+
+            //Chiudi la Connessione (e ripristina autoCommit se serve per il pool)
+            try {
+                if (conn != null) {
+                    conn.setAutoCommit(true); // Importante se usi connection pooling
+                    conn.close();
+                }
+            } catch (SQLException e) {
+                logger.log(Level.WARNING, "Impossibile chiudere o resettare la connessione DB", e);
+            }}
     }
 
 
 
 
-
-    // Metodo aggiornato per contare le vendite usando la nuova tabella
     public static long getQuantitySold(String nomeProdotto) {
-        // JOIN tra order_items e menu_items per trovare le righe giuste tramite il nome
         String sql = "SELECT SUM(oi.quantita) FROM order_items oi " +
                 "JOIN menu_items mi ON oi.menu_item_id = mi.id " +
                 "WHERE mi.nome = ?";
@@ -295,14 +317,11 @@ public class DatabaseService {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nel prelevare la quantità venduta", e);
         }
         return 0;
     }
 
-// --- GESTIONE STATI ORDINE ---
-
-    // 1. Cambia lo stato di un ordine (es. da APERTO a CHIUSO)
     public static boolean setOrderStatus(int orderId, String newStatus) {
         String sql = "UPDATE orders SET status = ? WHERE id = ?";
 
@@ -315,12 +334,12 @@ public class DatabaseService {
             return pstmt.executeUpdate() > 0;
 
         } catch (java.sql.SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nell'impostare le quantità vendute", e);
             return false;
         }
     }
 
-    // 2. Ottieni ordini filtrati per stato (es. getOrders("APERTO"))
+
     public static java.util.List<Order> getOrdersByStatus(String targetStatus) {
         java.util.List<Order> list = new java.util.ArrayList<>();
         String sql = "SELECT * FROM orders WHERE status = ? ORDER BY data_ora DESC";
@@ -344,7 +363,7 @@ public class DatabaseService {
             }
 
         } catch (java.sql.SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nel prelevare gli ordini a partire dallo stato", e);
         }
         return list;
     }
@@ -378,7 +397,7 @@ public class DatabaseService {
             }
 
         } catch (java.sql.SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nel prelevare  tutti gli ordini con totale", e);
         }
         return list;
     }
@@ -422,14 +441,12 @@ public class DatabaseService {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nel prelevare gli ordini attivi della cucina", e);
         }
         return list;
     }
 
 
-
-    // --- METODO PER I DETTAGLI (CUCINA) ---
     public static List<String> getOrderItemsForDisplay(int orderId) {
         List<String> details = new ArrayList<>();
         // Uniamo order_items con menu_items per avere il nome del piatto
@@ -452,7 +469,8 @@ public class DatabaseService {
             }
 
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nel prelevare gli ordini", e);
+
         }
         return details;
     }
@@ -479,7 +497,7 @@ public class DatabaseService {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nel prelevare gli utenti", e);
         }
         return list;
     }
@@ -497,16 +515,20 @@ public class DatabaseService {
             int rowsAffected = pstmt.executeUpdate();
 
             if (rowsAffected > 0) {
-                System.out.println("Utente '" + usernameToDelete + "' eliminato correttamente.");
+
+
+                logger.log(Level.INFO, "Utente '" + usernameToDelete + "' eliminato correttamente.");
+
                 return true;
             } else {
-                System.out.println("Nessun utente trovato con username: " + usernameToDelete);
+
+                logger.log(Level.WARNING, "Nessun utente trovato con username: " + usernameToDelete);
                 return false;
             }
 
         } catch (java.sql.SQLException e) {
-            System.err.println("Errore durante l'eliminazione dell'utente: " + e.getMessage());
-            e.printStackTrace();
+
+            logger.log(Level.SEVERE, "Errore durante l'eliminazione dell'utente: ",e);
             return false;
         }
     }
