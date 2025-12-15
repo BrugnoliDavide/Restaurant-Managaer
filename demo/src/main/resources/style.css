@@ -193,3 +193,7 @@
     -fx-background-color: #444444;
     -fx-background-insets: 0;
 }
+
+.login-gear-icon {
+    -fx-border-color: gray;
+}

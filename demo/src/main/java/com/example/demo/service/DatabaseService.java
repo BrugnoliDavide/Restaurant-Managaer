@@ -16,13 +16,24 @@ public class DatabaseService {
 
    private static final Logger logger = Logger.getLogger(DatabaseService.class.getName());
 
-   private static final String URL = "jdbc:postgresql://localhost:5432/restaurant_db";
-    private static final String USER = "admin";
-    private static final String PASS = "password123";
+   private static  String URL = "jdbc:postgresql://localhost:5432/restaurant_db";
+    private static  String USER = "admin";
+    private static  String PASS = "password123";
+
+
+
 
     private DatabaseService() {
         throw new IllegalStateException("Utility class");
     }
+
+    public static void setConnectionConfig(String ip, String port, String dbName, String username, String password) {
+        URL = "jdbc:postgresql://" + ip + ":" + port + "/" + dbName;
+        USER = username;
+        PASS = password;
+        logger.info("Configurazione DB aggiornata: " + URL);
+    }
+
 
 
 
@@ -97,7 +108,7 @@ public class DatabaseService {
     }
 
     public static boolean deleteProduct(int id) {
-        logger.info("Tentativo eliminazione prodotto ID: " + id);
+        logger.info("Tentativo eliminazione prodotto ID: {0}" + id);
 
         if (id <= 0) {
             logger.log(Level.WARNING, "ID non valido per eliminazione: {0}", id);
@@ -116,7 +127,7 @@ public class DatabaseService {
                 logger.info("SUCCESSO: Prodotto eliminato.");
                 return true;
             } else {
-                logger.warning("FALLIMENTO: Nessuna riga trovata con ID: " + id);
+                logger.warning("FALLIMENTO: Nessuna riga trovata con ID: {0}" + id);
                 return false;
             }
 
@@ -195,7 +206,7 @@ public class DatabaseService {
             pstmtItem.executeBatch();
 
             conn.commit();
-            logger.info("Ordine #" + orderId + " creato con successo.");
+            logger.info("Ordine # {0}" + orderId + " creato con successo.");
             return true;
 
         } catch (SQLException e) {
@@ -251,7 +262,7 @@ public class DatabaseService {
 
     public static List<Order> getOrdersByStatus(String targetStatus) {
         List<Order> list = new ArrayList<>();
-        String sql = "SELECT * FROM orders WHERE status = ? ORDER BY data_ora DESC";
+        String sql = "SELECT id, data_ora, tavolo, username, note, status, totale FROM orders WHERE status = ? ORDER BY data_ora DESC";
         try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, targetStatus);

@@ -8,6 +8,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import org.kordamp.ikonli.javafx.FontIcon;
+
 import java.io.IOException;
 
 import java.util.logging.Logger;
@@ -15,6 +17,7 @@ import java.util.logging.Level;
 
 public class LoginController {
 
+    @FXML private FontIcon gearIcon;
     @FXML private TextField userField;
     @FXML private PasswordField passField;
 
@@ -29,7 +32,9 @@ public class LoginController {
         String user = userField.getText() != null ? userField.getText().trim() : "";
         String pass = passField.getText() != null ? passField.getText().trim() : "";
 
-        logger.info("Tentativo di autenticazione per l'username: '" + user + "'");
+        logger.log(
+                Level.INFO, "Tentativo di autenticazione per l'username: '{0}'", user
+        );
 
         // CONTROLLO CAMPI VUOTI
         if (user.isEmpty() || pass.isEmpty()) {
@@ -38,31 +43,34 @@ public class LoginController {
             return;
         }
 
-        // 3. AUTENTICAZIONE
+
         String role = SecurityService.authenticate(user, pass);
 
         if (role != null) {
-            // LOGIN SUCCESSO
-            logger.info("Login COMPLETATO per utente: " + user + " [Ruolo assegnato: " + role + "]");
 
-            // A. Crea l'Utente specifico con la Factory
+            logger.log(
+                    Level.INFO,"Login COMPLETATO per utente: {0} [Ruolo assegnato: {1}]",
+                    new Object[]{ user, role }
+            );
+
+            //Crea l'Utente specifico con la Factory
             com.example.demo.model.User currentUser = UsersFactory.createUser(user, role);
 
-            // B. Inizializza la Sessione
+
             UserSession.getInstance(currentUser);
 
-            // C. Cambia Pagina
+
             navigateToRole(role.toLowerCase());
 
         } else {
-            logger.warning("Login FALLITO per username: '" + user + "' - Credenziali non valide.");
+            logger.log(Level.WARNING,"Login FALLITO per credenziali errate per username: '{0}'" , user );
             //questo print viene lasciato per far in modo che se si vedesse la console è evidente l'errpre
-            System.out.println("Credenziali Errate");
+            //System.out.println("Credenziali Errate");
             showError(); // Mette i bordi rossi
         }
     }
 
-    // --- METODI PER LA GRAFICA ---
+
 
     private void showError() {
         // Applica bordo rosso e raggio curvatura
@@ -98,7 +106,8 @@ public class LoginController {
                     view = KitchenController.getFXMLView();
                     break;
                 default:
-                    System.err.println("Ruolo non gestito: " + role);
+
+                    logger.log(Level.WARNING,"Role non valido");
                     return;
             }
 
