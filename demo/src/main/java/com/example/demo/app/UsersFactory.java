@@ -4,11 +4,13 @@ import com.example.demo.model.*;
 
 public class UsersFactory {
 
-
+    private UsersFactory() {
+        throw new IllegalStateException("Utility class");
+        //trattandosi di un eccezione standard non è necessario "scriverla"
+    }
     
-    // Factory Method Pattern
+    // Factory Method
     public static User createUser(String username, String role) {
-        if (role == null) return null;
 
         switch (role.toLowerCase()) {
             case "manager":
@@ -17,9 +19,10 @@ public class UsersFactory {
                 return new WaiterUser(username);
             case "cucina":
                 return new KitchenUser(username);
+            case "":
+                return null;
+
             default:
-                // Fallback: se il ruolo è sconosciuto, creiamo un utente generico anonimo
-                // (Oppure lanciamo eccezione)
                 return new User(username, role) {
                     @Override
                     public String getWelcomeMessage() {

@@ -95,7 +95,6 @@ public class FinancialController {
         renderOrders(allOrdersMaster);
     }
 
-    // Questo metodo si occupa SOLO di disegnare (raggruppare e creare le righe)
     private void renderOrders(List<Order> ordersToRender) {
         ordersContainer.getChildren().clear();
 
@@ -126,7 +125,7 @@ public class FinancialController {
             dateHeader.setStyle("-fx-font-size: 12px; -fx-text-fill: #999; -fx-font-weight: bold; -fx-padding: 15 0 5 0;");
             ordersContainer.getChildren().add(dateHeader);
 
-            // Righe Ordini
+
             for (Order order : ordersOfDay) {
                 HBox row = createOrderRow(order, timeFormatter);
                 ordersContainer.getChildren().add(row);
@@ -134,8 +133,7 @@ public class FinancialController {
         }
     }
 
-    // --- METODI DI SUPPORTO (Row Creation & Style) ---
-    // (Uguale a prima, solo copiato per completezza)
+
     private HBox createOrderRow(Order order, DateTimeFormatter timeFormatter) {
         HBox row = new HBox();
         row.setAlignment(Pos.CENTER_LEFT);
