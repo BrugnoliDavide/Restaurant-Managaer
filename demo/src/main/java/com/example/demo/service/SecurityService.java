@@ -2,6 +2,9 @@ package com.example.demo.service;
 
 import org.mindrot.jbcrypt.BCrypt;
 import java.sql.*;
+import java.util.logging.Level;
+
+import static com.example.demo.view.LoginController.logger;
 
 public class SecurityService {
 
@@ -9,7 +12,7 @@ public class SecurityService {
     private static final String USER = "admin";
     private static final String PASS = "password123";
 
-    // 1. AUTENTICAZIONE (Login)
+    // AUTENTICAZIONE (Login)
     // Ritorna il RUOLO se la password matcha l'hash, altrimenti null.
     public static String authenticate(String username, String candidatePassword) {
         String sql = "SELECT password, role FROM users WHERE username = ?";
@@ -24,20 +27,19 @@ public class SecurityService {
                 String storedHash = rs.getString("password");
                 String role = rs.getString("role");
 
-                // LA MAGIA: BCrypt controlla se la password in chiaro corrisponde all'hash
+
                 if (BCrypt.checkpw(candidatePassword, storedHash)) {
                     return role;
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nel nel login:", e);
         }
-        return null; // Utente non trovato o password errata
+        return null;
     }
 
-    // 2. REGISTRAZIONE UTENTE (Hash della password)
     public static boolean registerUser(String username, String plainPassword, String role) {
-        // Genera il Salt e Hasha la password
+
         String hashedPassword = BCrypt.hashpw(plainPassword, BCrypt.gensalt(12)); // 12 è il "costo" (più è alto, più è sicuro e lento)
 
         String sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
@@ -52,7 +54,7 @@ public class SecurityService {
             return pstmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            System.out.println("Errore creazione utente: " + e.getMessage());
+            logger.log(Level.SEVERE, "Errore creazione utente: ", e);
             return false;
         }
     }

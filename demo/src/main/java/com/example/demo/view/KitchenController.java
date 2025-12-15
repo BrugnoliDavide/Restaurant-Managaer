@@ -23,6 +23,7 @@ import javafx.scene.shape.Circle;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.logging.Level;
 
 import static com.example.demo.view.LoginController.logger;
 
@@ -68,7 +69,7 @@ public class KitchenController {
         refreshData();
     }
 
-    // --- LOGICA LOGOUT ---
+
     @FXML
     private void handleProfileMenu(MouseEvent event) {
         ContextMenu contextMenu = new ContextMenu();
@@ -77,12 +78,13 @@ public class KitchenController {
         itemLogout.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
 
         itemLogout.setOnAction(e -> {
-            System.out.println("Logout Cucina effettuato.");
 
-            // 1. Pulisci la sessione
+            //!!da togliere e inserire dentro il metodo sotto
+            logger.log(Level.INFO, "Logout Cucina effettuato.");
+
+            //!!da mettere qua sotto
             UserSession.cleanUserSession();
 
-            // 2. Torna alla schermata di Login (Caricamento manuale)
             try {
                 Parent loginView = new FXMLLoader(getClass().getResource("/LoginView.fxml")).load();
                 // Otteniamo la scena attuale dal bottone profilo e cambiamo la root

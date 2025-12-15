@@ -19,7 +19,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static com.example.demo.view.LoginController.logger;
 
 public class FinancialController {
 
@@ -142,7 +145,9 @@ public class FinancialController {
         row.setOnMouseEntered(e -> row.setStyle("-fx-border-color: #EEE; -fx-border-width: 0 0 1 0; -fx-background-color: #F9F9F9; -fx-cursor: hand;"));
         row.setOnMouseExited(e -> row.setStyle("-fx-border-color: #EEE; -fx-border-width: 0 0 1 0; -fx-background-color: white; -fx-cursor: hand;"));
 
-        row.setOnMouseClicked(e -> System.out.println("Apro dettagli ordine #" + order.getId()));
+        row.setOnMouseClicked(e -> logger.log(Level.INFO, "Apro dettagli ordine #" + order.getId()));
+
+
 
         VBox infoBox = new VBox(4);
         Label title = new Label("Order " + order.getId() + (order.getTavolo() > 0 ? " (Tav. " + order.getTavolo() + ")" : ""));
@@ -180,8 +185,10 @@ public class FinancialController {
     private void goBack() {
         try {
             ordersContainer.getScene().setRoot(ManagerController.getFXMLView());
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception e)
+        {
+            logger.log(Level.SEVERE, "errore nel tornare alla ManagerView", e);
+
         }
     }
 

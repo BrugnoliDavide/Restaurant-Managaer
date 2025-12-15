@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+
+import static com.example.demo.view.LoginController.logger;
 
 public class TakeOrderView {
 
@@ -55,8 +58,10 @@ public class TakeOrderView {
         btnCancel.setStyle("-fx-background-color: #E02E2E; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 8 15 8 15;");
 
         btnCancel.setOnAction(e -> {
-            System.out.println("Ordine annullato.");
-            btnCancel.getScene().setRoot(WaiterView.getView());
+
+            logger.log(Level.INFO, "Ordine annullato.");
+
+            btnCancel.getScene().setRoot(WaiterController.getFXMLView());
         });
 
         header.getChildren().addAll(titles, spacer, btnCancel);
@@ -107,7 +112,7 @@ public class TakeOrderView {
 
             if (success) {
                 showAlert("Successo", "Ordine inviato in cucina!");
-                btnSend.getScene().setRoot(WaiterView.getView());
+                btnSend.getScene().setRoot(WaiterController.getFXMLView());
             } else {
                 showAlert("Errore", "Impossibile inviare ordine.");
             }

@@ -66,13 +66,13 @@ public class ManagerController {
         }
     }
 
-    // --- NUOVO METODO: MENU A TENDINA ---
+    // MENU A TENDINA
     @FXML
     private void handleProfileMenu(MouseEvent event) {
-        // 1. Creiamo il Menu
+
         ContextMenu contextMenu = new ContextMenu();
 
-        // 2. Voce "Gestione Staff"
+
         MenuItem itemStaff = new MenuItem("Gestione Staff");
         itemStaff.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10;");
         itemStaff.setOnAction(e -> {
@@ -93,11 +93,10 @@ public class ManagerController {
             profileBtn.getScene().setRoot(LoginController.getFXMLView());
         });
 
-        // 4. Aggiungiamo le voci al menu (con un separatore in mezzo)
+
         contextMenu.getItems().addAll(itemStaff, new SeparatorMenuItem(), itemLogout);
 
-        // 5. Mostra il menu SOTTO il bottone del profilo
-        // Side.BOTTOM dice "attaccati al lato inferiore del profileBtn"
+
         contextMenu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
 

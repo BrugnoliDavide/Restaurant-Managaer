@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.shape.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
 
-<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.demo.view.ManagerController">
+<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.demo.view.ManagerController">
 
     <padding>
         <Insets bottom="20" left="20" right="20" top="20" />
@@ -14,8 +20,8 @@
     <top>
         <HBox alignment="CENTER_LEFT" spacing="15">
 
-            <StackPane fx:id="profileBtn" style="-fx-cursor: hand;" onMouseClicked="#handleProfileMenu">
-                <Circle fx:id="profileCircle" radius="25" fill="LIGHTBLUE" stroke="#3b3580" strokeWidth="0" />
+            <StackPane fx:id="profileBtn" onMouseClicked="#handleProfileMenu" style="-fx-cursor: hand;">
+                <Circle fx:id="profileCircle" fill="LIGHTBLUE" radius="25" stroke="#3b3580" strokeWidth="0" />
             </StackPane>
 
             <VBox spacing="2">
@@ -45,8 +51,8 @@
                 <Insets bottom="50" />
             </padding>
 
-            <Button onAction="#goToMenu" prefHeight="50" prefWidth="140" styleClass="dashboard-btn" text="Menu" />
-            <Button onAction="#goToFinancial" prefHeight="50" prefWidth="140" styleClass="dashboard-btn" text="Financial" />
+            <Button onAction="#goToMenu" prefHeight="50" prefWidth="140" styleClass="dashboard-btn" stylesheets="@style.css" text="Menu" />
+            <Button onAction="#goToFinancial" prefHeight="50" prefWidth="140" styleClass="dashboard-btn" stylesheets="@style.css" text="Financial" />
 
         </HBox>
     </bottom>

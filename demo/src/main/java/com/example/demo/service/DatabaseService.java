@@ -21,19 +21,17 @@ public class DatabaseService {
     private static final String USER = "admin";
     private static final String PASS = "password123";
 
-    // 1. Metodo per scaricare TUTTI i prodotti dal DB vero
+
     public static List<MenuProduct> getAllProducts() {
         List<MenuProduct> prodotti = new ArrayList<>();
 
-        // Query SQL
         String sql = "SELECT id, nome, tipologia, prezzo_vendita, costo_realizzazione, allergeni FROM menu_items";
 
         try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
-            // Scorriamo le righe della tabella risultante
-            while (rs.next()) {
+             while (rs.next()) {
                 int id = rs.getInt("id");
                 String nome = rs.getString("nome");
                 String tipologia = rs.getString("tipologia");
@@ -487,9 +485,6 @@ public class DatabaseService {
                 String u = rs.getString("username");
                 String r = rs.getString("role");
 
-                // --- CORREZIONE QUI ---
-                // Non usiamo più 'new User(...)', ma la Factory!
-                // La Factory deciderà se creare un ManagerUser, WaiterUser, ecc.
                 com.example.demo.model.User userObj = com.example.demo.app.UsersFactory.createUser(u, r);
 
                 if (userObj != null) {
@@ -502,8 +497,6 @@ public class DatabaseService {
         return list;
     }
 
-
-    // --- CANCELLAZIONE UTENTE ---
     public static boolean deleteUser(String usernameToDelete) {
         String sql = "DELETE FROM users WHERE username = ?";
 

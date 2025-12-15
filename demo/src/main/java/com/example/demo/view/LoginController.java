@@ -92,7 +92,7 @@ public class LoginController {
                     view = ManagerController.getFXMLView();
                     break;
                 case "cameriere":
-                    view = WaiterView.getView();
+                    view = WaiterController.getFXMLView();
                     break;
                 case "cucina":
                     view = KitchenController.getFXMLView();
