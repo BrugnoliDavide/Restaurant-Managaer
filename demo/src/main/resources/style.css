@@ -82,11 +82,6 @@
     -fx-background-color: #444444 !important;
 }
 
-
-/* ==================================================================
-   3. CLASSI GENERICHE (Usate nel resto dell'App)
-   ================================================================== */
-
 /* Sfondo Viste (Usa la variabile del tema) */
 .view-background {
     -fx-background-color: -fx-bg-primary;
@@ -126,12 +121,43 @@
 /* Bottoni Standard */
 .btn-primary {
     -fx-background-color: -fx-accent;
+    -fx-text-fill: -fx-text-secondary;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+    -fx-background-insets: 0;
+}
+
+.btn-secondary {
+    -fx-background-color: #b3b3b3;
     -fx-text-fill: -fx-accent-text;
     -fx-background-radius: 8;
     -fx-cursor: hand;
     -fx-font-weight: bold;
     -fx-background-insets: 0;
 }
+.btn-save {
+    -fx-background-color: -fx-accent;
+    -fx-text-fill: #a2da99;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+    -fx-background-insets: 0;
+}
+
+.input-standard {
+    -fx-background-color: #FFFFFF !important;
+    -fx-border-color: #CCCCCC;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 10px;
+    -fx-font-size: 14px;
+    -fx-text-fill: #333333 !important;
+    -fx-prompt-text-fill: #999999 !important;
+}
+
+
 
 .dashboard-btn {
     -fx-background-color: -fx-bg-surface;
@@ -196,4 +222,11 @@
 
 .login-gear-icon {
     -fx-border-color: gray;
+}
+
+.login-pop-up-setup-connection{
+    -fx-background-color: white;
+    -fx-padding: 10;
+    -fx-border-color: #CCCCCC;
+    -fx-border-radius: 5;
 }

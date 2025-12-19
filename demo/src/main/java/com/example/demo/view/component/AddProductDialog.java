@@ -12,17 +12,17 @@ import javafx.stage.Stage;
 
 public class AddProductDialog {
 
-    // MODALITA' AGGIUNTA
+
     public static void display() {
         showDialog(null);
     }
 
-    // MODALITA' MODIFICA
+
     public static void displayEdit(MenuProduct productToEdit) {
         showDialog(productToEdit);
     }
 
-    // Logica Unica
+
     private static void showDialog(MenuProduct productToEdit) {
         boolean isEditMode = (productToEdit != null);
 
@@ -37,7 +37,7 @@ public class AddProductDialog {
         layout.setPadding(new Insets(20));
         layout.setStyle("-fx-background-color: white;");
 
-        // Campi
+
         TextField txtName = new TextField(isEditMode ? productToEdit.getNome() : "");
         txtName.setPromptText("Nome");
 

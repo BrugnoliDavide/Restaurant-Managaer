@@ -6,8 +6,11 @@ import com.example.demo.service.SecurityService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
@@ -20,8 +23,24 @@ public class LoginController {
     @FXML private FontIcon gearIcon;
     @FXML private TextField userField;
     @FXML private PasswordField passField;
+    private javafx.stage.Popup dbConfigPopup;
+
 
     public static final Logger logger = Logger.getLogger(LoginController.class.getName());
+
+    @FXML
+    public void initialize() {
+
+        if (gearIcon == null) {
+            throw new IllegalStateException("gearIcon non è stato iniettato correttamente dal file FXML");
+        }
+        gearIcon.setOnMouseClicked(event -> openDBConfigPopup());
+    }
+
+
+
+
+
 
 
     @FXML
@@ -36,7 +55,7 @@ public class LoginController {
                 Level.INFO, "Tentativo di autenticazione per l'username: '{0}'", user
         );
 
-        // CONTROLLO CAMPI VUOTI
+
         if (user.isEmpty() || pass.isEmpty()) {
             //logger.warning("campi vuoti");
             showError(); // Mette i bordi rossi
@@ -64,22 +83,21 @@ public class LoginController {
 
         } else {
             logger.log(Level.WARNING,"Login FALLITO per credenziali errate per username: '{0}'" , user );
-            //questo print viene lasciato per far in modo che se si vedesse la console è evidente l'errpre
+            //questo print viene lasciato per far in modo che se si vedesse la console è evidente l'errOre
             //System.out.println("Credenziali Errate");
             showError(); // Mette i bordi rossi
         }
     }
 
 
-
     private void showError() {
-        // Applica bordo rosso e raggio curvatura
+        // bordo rosso
         String errorStyle = "-fx-border-color: #E02E2E; -fx-border-width: 2px; -fx-border-radius: 5px; -fx-background-radius: 5px;";
 
         userField.setStyle(errorStyle);
         passField.setStyle(errorStyle);
 
-        // Opzionale: Animazione scossa (shake) potrebbe essere aggiunta qui in futuro
+        //  Animazione scossa (shake) aggiungere qui in futuro
     }
 
     private void resetStyle() {
@@ -120,7 +138,62 @@ public class LoginController {
         }
     }
 
-    // Helper statico
+    /*private void openDBConfigPopup() {
+
+        if (dbConfigPopup != null && dbConfigPopup.isShowing()) {
+            dbConfigPopup.hide();
+            return;
+        }
+
+        if (dbConfigPopup == null) {
+            dbConfigPopup = new javafx.stage.Popup();
+
+            javafx.scene.control.Label label =
+                    new javafx.scene.control.Label("Configurazione DB");
+
+            javafx.scene.layout.VBox content =
+                    new javafx.scene.layout.VBox(label);
+
+            content.getStyleClass().add("login-pop-up-setup-connection");
+
+
+            dbConfigPopup.getContent().add(content);
+        }
+
+        var bounds = gearIcon.localToScreen(gearIcon.getBoundsInLocal());
+
+        dbConfigPopup.show(
+                gearIcon,
+                bounds.getMinX(),
+                bounds.getMaxY()
+        );
+    }*/
+    private void openDBConfigPopup() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/DbConfigPopup.fxml")
+            );
+
+            Parent root = loader.load();
+
+            Stage popupStage = new Stage();
+            popupStage.setTitle("Configurazione Database");
+            popupStage.setScene(new Scene(root));
+            popupStage.initModality(Modality.WINDOW_MODAL);
+            popupStage.initOwner(gearIcon.getScene().getWindow());
+            popupStage.setResizable(false);
+
+            popupStage.showAndWait();
+
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Errore apertura popup configurazione DB", ex);
+        }
+    }
+
+
+
+
+
     public static Parent getFXMLView() {
         try {
             return new FXMLLoader(LoginController.class.getResource("/LoginView.fxml")).load();

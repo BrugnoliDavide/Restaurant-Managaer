@@ -32,7 +32,7 @@ public class ManagerController {
 
             UserSession session = UserSession.getInstance();
 
-            // Valori di default
+
             String displayName = "Utente";
             String displayRole = "Ruolo";
             String welcomeMsg = "Welcome";
@@ -53,7 +53,7 @@ public class ManagerController {
             // Impostiamo il messaggio personalizzato
             lblWelcomeTop.setText(welcomeMsg);
 
-        // --- TOOLTIP ---
+
 
         Tooltip tooltip = new Tooltip("Opzioni");
         tooltip.setShowDelay(Duration.millis(50));

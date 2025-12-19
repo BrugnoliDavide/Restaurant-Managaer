@@ -3,6 +3,7 @@ package com.example.demo.service;
 import com.example.demo.model.MenuProduct;
 import com.example.demo.model.Order;
 import com.example.demo.model.OrderItem;
+import com.example.demo.model.User;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,13 +15,11 @@ import java.util.stream.Collectors;
 
 public class DatabaseService {
 
-   private static final Logger logger = Logger.getLogger(DatabaseService.class.getName());
+    private static final Logger logger = Logger.getLogger(DatabaseService.class.getName());
 
-   private static  String URL = "jdbc:postgresql://localhost:5432/restaurant_db";
-    private static  String USER = "admin";
-    private static  String PASS = "password123";
-
-
+    private static String URL = "jdbc:postgresql://localhost:5432/restaurant_db";
+    private static String USER = "admin";
+    private static String PASS = "password123";
 
 
     private DatabaseService() {
@@ -33,8 +32,6 @@ public class DatabaseService {
         PASS = password;
         logger.info("Configurazione DB aggiornata: " + URL);
     }
-
-
 
 
     public static List<MenuProduct> getAllProducts() {
@@ -366,7 +363,7 @@ public class DatabaseService {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
-            while(rs.next()) {
+            while (rs.next()) {
                 String u = rs.getString("username");
                 String r = rs.getString("role");
                 // Qui usiamo la Factory che hai appena corretto!
@@ -406,4 +403,28 @@ public class DatabaseService {
             logger.warning("Chiusura risorsa ignorata: " + e.getMessage());
         }
     }
+
+
+    //metodi necessari per mostrare all'utente i dati di connessione usati l'ultima volta e permettervi la modifica
+    public static String getDBHost() {
+        String noPrefix = URL.replace("jdbc:postgresql://", "");
+        return noPrefix.substring(0, noPrefix.indexOf(":"));
+    }
+
+    public static String getDBPort() {
+        String noPrefix = URL.replace("jdbc:postgresql://"+getDBHost(), "");
+        int start = noPrefix.indexOf(":") + 1;
+        int end = noPrefix.indexOf("/");
+        return noPrefix.substring(start, end);
+    }
+    public static String getDBName(){
+        String noPrefix = URL.replace("jdbc:postgresql://", "");
+        return noPrefix.substring(0, noPrefix.lastIndexOf("/")+1);
+    }
+    public static String getDBUser(){
+        return USER;
+    }
+
+
+
 }

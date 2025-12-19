@@ -1,59 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.ImageView?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 
+<StackPane
+        xmlns="http://javafx.com/javafx/17.0.12"
+        xmlns:fx="http://javafx.com/fxml/1"
+        fx:controller="com.example.demo.view.LoginController"
+        styleClass="login-root-fixed"
+        stylesheets="@/style.css">
 
-<StackPane xmlns="http://javafx.com/javafx/17"
-           xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.example.demo.view.LoginController"
-           styleClass="login-root-fixed"
-           stylesheets="@/style.css">
-
-    <VBox maxWidth="400"
+    <VBox alignment="CENTER_LEFT"
           maxHeight="500"
-          alignment="CENTER_LEFT"
-          styleClass="login-card-fixed">
+          maxWidth="400"
+          styleClass="login-card-fixed"
+          spacing="20">
 
-        <!--<VBox alignment="TOP_RIGHT">
-            <FontIcon
-                    fx:id="gearIcon"
-                    iconLiteral="fa-gear"
-                    iconSize="20"
-                    styleClass="login-gear-icon"/>
+        <HBox alignment="CENTER" spacing="10">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
 
-            <VBox.margin>
-                <Insets bottom="30.0" left="5.0"/>
-            </VBox.margin>
-        </VBox>-->
+            <ImageView preserveRatio="true" fitHeight="50">
+                <image>
+                    <Image url="@/logo.png"/>
+                </image>
+            </ImageView>
 
-        <VBox spacing="8">
+        </HBox>
+
+
+        <VBox alignment="TOP_RIGHT" spacing="10">
+            <FontIcon fx:id="gearIcon"
+                      iconLiteral="fas-cog"
+                      styleClass="login-gear-icon"/>
+        </VBox>
+
+
+
+        <VBox spacing="6">
             <Label text="Username" styleClass="login-label-fixed"/>
-            <TextField fx:id="userField" promptText="username" styleClass="login-input-fixed"/>
+            <TextField fx:id="userField"
+                       promptText="username"
+                       styleClass="login-input-fixed"/>
             <VBox.margin>
-                <Insets bottom="25.0" />
+                <Insets bottom="25"/>
             </VBox.margin>
         </VBox>
 
         <VBox spacing="8">
             <Label text="Password" styleClass="login-label-fixed"/>
-            <PasswordField fx:id="passField" promptText="password" styleClass="login-input-fixed"/>
+            <PasswordField fx:id="passField"
+                           promptText="password"
+                           styleClass="login-input-fixed"/>
             <VBox.margin>
-                <Insets bottom="40.0" />
+                <Insets bottom="40"/>
             </VBox.margin>
         </VBox>
 
         <Button text="Sign In"
                 maxWidth="Infinity"
-                styleClass="login-btn-fixed"
-                onAction="#handleLogin"/>
+                onAction="#handleLogin"
+                styleClass="login-btn-fixed"/>
 
     </VBox>
 </StackPane>
