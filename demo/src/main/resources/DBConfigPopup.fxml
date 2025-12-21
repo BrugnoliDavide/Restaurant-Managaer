@@ -12,6 +12,13 @@
 
     <Label styleClass="text-title" text="Configurazione Database" />
 
+    <Label fx:id="lblPasswordStatus"
+           text=""
+           style="-fx-font-size: 11px;"
+           GridPane.columnIndex="1"
+           GridPane.rowIndex="5"/>
+
+
     <TextField fx:id="addressField" promptText="Indirizzo " styleClass="input-standard" />
 
     <TextField fx:id="portField" promptText="Porta " styleClass="input-standard" />

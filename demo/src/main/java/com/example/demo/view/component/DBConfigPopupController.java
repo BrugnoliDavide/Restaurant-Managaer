@@ -1,8 +1,10 @@
 package com.example.demo.view.component;
 
+import com.example.demo.service.DBConfigStore;
 import com.example.demo.service.DatabaseService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
@@ -14,6 +16,8 @@ public class DBConfigPopupController {
     @FXML private TextField dbNameField;
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
+    @FXML private Label lblPasswordStatus;
+
 
     @FXML private Button saveButton;
     @FXML private Button cancelButton;
@@ -21,13 +25,19 @@ public class DBConfigPopupController {
 
     @FXML
     private void initialize() {
-        // Precompilazione dei campi con i valori correnti
+
         addressField.setText(DatabaseService.getDBHost());
         portField.setText(DatabaseService.getDBPort());
         dbNameField.setText(DatabaseService.getDBName());
         usernameField.setText(DatabaseService.getDBUser());
-                //passwordField.setText(DatabaseService.getDBPassword());
 
+        if (DatabaseService.hasPassword()) {
+            lblPasswordStatus.setText("Password già configurata");
+            lblPasswordStatus.setStyle("-fx-text-fill: green;");
+        } else {
+            lblPasswordStatus.setText("Password non impostata");
+            lblPasswordStatus.setStyle("-fx-text-fill: orange;");
+        }
 
         saveButton.setOnAction(e -> handleSave());
         cancelButton.setOnAction(e -> closePopup());
@@ -35,22 +45,38 @@ public class DBConfigPopupController {
 
 
     private void handleSave() {
+
         String address = addressField.getText().trim();
-        String port = portField.getText().trim();
-        String dbName = dbNameField.getText().trim();
-        String user = usernameField.getText().trim();
-        String pass = "inserisci password";//passwordField.getText();
+        String port    = portField.getText().trim();
+        String dbName  = dbNameField.getText().trim();
+        String user    = usernameField.getText().trim();
+
+        String newPass = passwordField.getText().trim();
+
+        String finalPass = newPass.isBlank()
+                ? DBConfigStore.getPassword()
+                : newPass;
+
+
+        DBConfigStore.save(
+                address,
+                port,
+                dbName,
+                user,
+                finalPass
+        );
 
         DatabaseService.setConnectionConfig(
                 address,
                 port,
                 dbName,
                 user,
-                pass
+                finalPass
         );
 
         closePopup();
     }
+
 
 
     private void closePopup() {

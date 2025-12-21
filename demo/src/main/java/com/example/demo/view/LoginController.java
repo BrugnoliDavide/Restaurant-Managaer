@@ -1,7 +1,9 @@
 package com.example.demo.view;
 
+import com.example.demo.app.AppStatus;
 import com.example.demo.app.UsersFactory;
 import com.example.demo.app.UserSession;
+import com.example.demo.service.DatabaseService;
 import com.example.demo.service.SecurityService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -9,6 +11,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -18,21 +22,26 @@ import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
-import com.example.demo.view.View;
-import com.example.demo.view.ViewFactory;
 
 public class LoginController {
 
     @FXML private FontIcon gearIcon;
     @FXML private TextField userField;
     @FXML private PasswordField passField;
-    private javafx.stage.Popup dbConfigPopup;
+
+    @FXML private Circle dbStatusCircle;
+
+
+    //private javafx.stage.Popup dbConfigPopup;
 
 
     public static final Logger logger = Logger.getLogger(LoginController.class.getName());
 
     @FXML
     public void initialize() {
+
+        updateDbStatusIndicator();
+
 
         if (gearIcon == null) {
             throw new IllegalStateException("gearIcon non è stato iniettato correttamente dal file FXML");
@@ -41,26 +50,36 @@ public class LoginController {
     }
 
 
+    /* !! eliminare se tutti i test vanno a buon fine
     @FXML
     private void handleLoginTest() {
         Parent root = new com.example.demo.view.screens.ManagerView().getRoot();
         userField.getScene().setRoot(root);
-    }
+    } */
 
 
 
-
-    //!! da sostituire con la vera funzione
     @FXML
     private void handleLogin() {
         // Rimuove il rosso nei campi ca compilare se precedentemente era presente
         resetStyle();
 
+        boolean ok = DatabaseService.testConnection();
+        AppStatus.setDbConnectionOk(ok);
+        updateDbStatusIndicator();
+
+        if (!ok) {
+            logger.warning("Login bloccato: DB non raggiungibile");
+            return;
+        }
+
+
+
         String user = userField.getText() != null ? userField.getText().trim() : "";
         String pass = passField.getText() != null ? passField.getText().trim() : "";
 
         logger.log(
-                Level.INFO, "Tentativo di autenticazione per l'username: '{0}'", user
+                Level.INFO, "Tentativo di autenticazione per  username: {0} ", user
         );
 
 
@@ -90,7 +109,7 @@ public class LoginController {
             navigateToRole(role.toLowerCase());
 
         } else {
-            logger.log(Level.WARNING,"Login FALLITO per credenziali errate per username: '{0}'" , user );
+            logger.log(Level.WARNING,"Login FALLITO per credenziali errate per username: {0}" , user );
             //questo print viene lasciato per far in modo che se si vedesse la console è evidente l'errOre
             //System.out.println("Credenziali Errate");
             showError(); // Mette i bordi rossi
@@ -205,10 +224,56 @@ public class LoginController {
             popupStage.initOwner(gearIcon.getScene().getWindow());
             popupStage.setResizable(false);
 
+
             popupStage.showAndWait();
+
+            boolean ok = DatabaseService.testConnection();
+            AppStatus.setDbConnectionOk(ok);
+            updateDbStatusIndicator();
+
+            if (!ok) {
+                logger.warning("Login bloccato: DB non raggiungibile");
+                return;
+            }
+
+
 
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Errore apertura popup configurazione DB", ex);
+
+            boolean ok = DatabaseService.testConnection();
+            AppStatus.setDbConnectionOk(ok);
+
+        }
+    }
+
+    /*
+    //metodi per gestire il semaforo di connessione al DB
+    private void setDbStatusPending() {
+        dbStatusIndicator.setFill(Color.web("#FBC02D")); // Giallo
+    }
+
+    private void setDbStatusOk() {
+        dbStatusIndicator.setFill(Color.web("#2E7D32")); // Verde
+    }
+
+    private void setDbStatusError() {
+        dbStatusIndicator.setFill(Color.web("#C62828")); // Rosso
+    }*/
+
+
+
+    private void updateDbStatusIndicator() {
+
+        if (!DatabaseService.isConfigured()) {
+            dbStatusCircle.setFill(Color.GOLD);   // giallo → non configurato
+            return;
+        }
+
+        if (AppStatus.isDbConnectionOk()) {
+            dbStatusCircle.setFill(Color.LIMEGREEN); // verde
+        } else {
+            dbStatusCircle.setFill(Color.RED);       // rosso
         }
     }
 

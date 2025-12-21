@@ -76,9 +76,12 @@ public class ManagerController {
         MenuItem itemStaff = new MenuItem("Gestione Staff");
         itemStaff.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10;");
         itemStaff.setOnAction(e -> {
-            //System.out.println("Navigazione -> Gestione Staff");
-            // Carica la vista UsersController che abbiamo creato prima
-            profileBtn.getScene().setRoot(UsersController.getFXMLView());
+
+            View usersView = ViewFactory.forRole("users");
+            profileBtn.getScene().setRoot(usersView.getRoot());
+
+
+            // !! deprecato profileBtn.getScene().setRoot(UsersController.getFXMLView());
         });
 
 

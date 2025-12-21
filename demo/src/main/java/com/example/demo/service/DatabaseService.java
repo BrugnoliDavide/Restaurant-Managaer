@@ -17,9 +17,9 @@ public class DatabaseService {
 
     private static final Logger logger = Logger.getLogger(DatabaseService.class.getName());
 
-    private static String URL = "jdbc:postgresql://localhost:5432/restaurant_db";
-    private static String USER = "admin";
-    private static String PASS = "password123";
+    private static String URL = null;    //"jdbc:postgresql://localhost:5432/restaurant_db";
+    private static String USER = null;   //"admin";
+    private static String PASS = null;   //"password123";
 
     private static String USERNAME = "username";
     private static String STATUS = "status";
@@ -39,8 +39,21 @@ public class DatabaseService {
         URL = "jdbc:postgresql://" + ip + ":" + port + "/" + dbName;
         USER = username;
         PASS = password;
-        logger.log(Level.INFO,"Configurazione DB aggiornata: ", URL);
+        logger.log(Level.INFO,"Configurazione DB aggiornata: {0}", URL);
     }
+
+    public static void setConnectionConfig(
+            String ip,
+            String port,
+            String dbName,
+            String username
+    ) {
+        URL  = "jdbc:postgresql://" + ip + ":" + port + "/" + dbName;
+        USER = username;
+        // la PASSWORD resta invariata
+    }
+
+
 
 
     public static List<MenuProduct> getAllProducts() {
@@ -417,23 +430,80 @@ public class DatabaseService {
 
     //metodi necessari per mostrare all'utente i dati di connessione usati l'ultima volta e permettervi la modifica
     public static String getDBHost() {
+        if (URL == null) return "";
         String noPrefix = URL.replace("jdbc:postgresql://", "");
         return noPrefix.substring(0, noPrefix.indexOf(":"));
     }
 
     public static String getDBPort() {
+        if (URL == null) return "";
         String noPrefix = URL.replace("jdbc:postgresql://"+getDBHost(), "");
         int start = noPrefix.indexOf(":") + 1;
         int end = noPrefix.indexOf("/");
         return noPrefix.substring(start, end);
     }
     public static String getDBName(){
-        String noPrefix = URL.replace("jdbc:postgresql://", "");
-        return noPrefix.substring(0, noPrefix.lastIndexOf("/")+1);
+        if (URL == null) return "";
+        return URL.substring(URL.lastIndexOf("/") + 1);
     }
     public static String getDBUser(){
+        if (URL == null) return "";
         return USER;
     }
+    public static boolean hasPassword() {
+        return PASS != null && !PASS.isBlank();
+    }
+
+    public static String getDBPassword() {
+        return PASS;
+    }
+
+
+
+    public static boolean isConfigured() {
+        return URL != null && USER != null && PASS != null;
+    }
+
+    public static boolean testConnection() {
+        if (URL == null || USER == null || PASS == null) {
+            logger.warning("Tentativo test DB senza configurazione completa");
+            return false;
+        }
+
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASS)) {
+            logger.info("Connessione al DB riuscita");
+            return true;
+        } catch (SQLException e) {
+            logger.log(Level.WARNING, "Connessione al DB fallita", e);
+            return false;
+        }
+    }
+
+    public static void loadFromPreferences() {
+        String host = DBConfigStore.getHost();
+        String port = DBConfigStore.getPort();
+        String db   = DBConfigStore.getDbName();
+        String user = DBConfigStore.getUser();
+        String pass = DBConfigStore.getPassword();
+
+        if (!host.isBlank() && !port.isBlank() && !db.isBlank() && !user.isBlank()) {
+            setConnectionConfig(host, port, db, user, pass);
+        }
+    }
+
+
+    public static Connection getConnection() throws SQLException {
+
+        if (URL == null || USER == null || PASS == null) {
+            throw new IllegalStateException(
+                    "Database non configurato correttamente"
+            );
+        }
+
+        return DriverManager.getConnection(URL, USER, PASS);
+    }
+
+
 
 
 

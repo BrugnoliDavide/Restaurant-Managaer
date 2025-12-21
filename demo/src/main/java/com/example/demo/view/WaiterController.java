@@ -1,6 +1,7 @@
 package com.example.demo.view;
 
 import com.example.demo.app.UserSession;
+import com.example.demo.view.screens.TakeOrderView;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -36,8 +37,6 @@ public class WaiterController {
         setupUserSession();
         setupHoverEffects();
 
-        // --- CORREZIONE: Creazione Tooltip da Codice ---
-        // Poiché StackPane non supporta <tooltip> in FXML, lo installiamo qui
         if (profileBtn != null) {
             Tooltip t = new Tooltip("Logout");
             t.setShowDelay(Duration.millis(50)); // Appare subito
@@ -83,15 +82,10 @@ public class WaiterController {
 
         UserSession.cleanUserSession();
 
-        try {
-            Parent loginView = new FXMLLoader(getClass().getResource("/LoginView.fxml")).load();
-            if (profileBtn.getScene() != null) {
-                profileBtn.getScene().setRoot(loginView);
-            }
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Impossibile caricare LoginView dopo il logout", e);
-        }
+        View loginView = ViewFactory.forRole("login");
+        profileBtn.getScene().setRoot(loginView.getRoot());
     }
+
 
     @FXML
     private void handleNewOrder() {
@@ -108,7 +102,8 @@ public class WaiterController {
 
             // Navigazione (Assicurati che TakeOrderView esista)
             if (btnNewOrder.getScene() != null) {
-                btnNewOrder.getScene().setRoot(TakeOrderView.getView(tavoloSelezionato));
+                View takeOrderView = new TakeOrderView(tavoloSelezionato);
+                btnNewOrder.getScene().setRoot(takeOrderView.getRoot());
             }
 
         } catch (NumberFormatException ex) {
@@ -117,6 +112,10 @@ public class WaiterController {
         }
     }
 
+
+
+
+    /* !! deprecato eliminare a seguito di un attento testing
     public static Parent getFXMLView() {
         try {
             return new FXMLLoader(WaiterController.class.getResource("/WaiterView.fxml")).load();
@@ -124,5 +123,5 @@ public class WaiterController {
             logger.log(Level.SEVERE, "Errore caricamento WaiterView.fxml", e);
             throw new RuntimeException(e);
         }
-    }
+    }*/
 }

@@ -1,66 +1,96 @@
 package com.example.demo.service;
 
 import org.mindrot.jbcrypt.BCrypt;
-import java.sql.*;
-import java.util.logging.Level;
 
-import static com.example.demo.view.LoginController.logger;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class SecurityService {
 
-
-
-        private static final String URL = "jdbc:postgresql://localhost:5432/restaurant_db";
-        private static final String USER = "admin";
-        private static final String PASS = "password123";
+    private static final Logger logger =
+            Logger.getLogger(SecurityService.class.getName());
 
     private SecurityService() {
         throw new AssertionError("Classe di utilità non istanziabile");
     }
 
-        public static String authenticate(String username, String candidatePassword) {
-            String sql = "SELECT password, role FROM users WHERE username = ?";
+    /**
+     * Autentica un utente confrontando la password inserita con l'hash salvato.
+     *
+     * @param username          username
+     * @param candidatePassword password in chiaro inserita
+     * @return ruolo se autenticato, null altrimenti
+     */
+    public static String authenticate(String username, String candidatePassword) {
 
-            try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        final String sql =
+                "SELECT password, role FROM users WHERE username = ?";
 
-                pstmt.setString(1, username);
-                ResultSet rs = pstmt.executeQuery();
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-                if (rs.next()) {
-                    String storedHash = rs.getString("password");
-                    String role = rs.getString("role");
+            pstmt.setString(1, username);
 
+            try (ResultSet rs = pstmt.executeQuery()) {
 
-                    if (BCrypt.checkpw(candidatePassword, storedHash)) {
-                        return role;
-                    }
+                if (!rs.next()) {
+                    return null;
                 }
-            } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Si è verificato un errore imprevisto nel nel login:", e);
+
+                String storedHash = rs.getString("password");
+                String role       = rs.getString("role");
+
+                if (BCrypt.checkpw(candidatePassword, storedHash)) {
+                    return role;
+                }
             }
-            return null;
+
+        } catch (SQLException e) {
+            logger.log(
+                    Level.SEVERE,
+                    "Errore imprevisto durante il login per utente: " + username,
+                    e
+            );
         }
 
-        public static boolean registerUser(String username, String plainPassword, String role) {
+        return null;
+    }
 
-            String hashedPassword = BCrypt.hashpw(plainPassword, BCrypt.gensalt(12)); // 12 è il "costo" (più è alto, più è sicuro e lento)
+    /**
+     * Registra un nuovo utente salvando SOLO l'hash della password.
+     */
+    public static boolean registerUser(
+            String username,
+            String plainPassword,
+            String role
+    ) {
 
-            String sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
+        final String sql =
+                "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
 
-            try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        String hashedPassword =
+                BCrypt.hashpw(plainPassword, BCrypt.gensalt(12));
 
-                pstmt.setString(1, username);
-                pstmt.setString(2, hashedPassword); // si salva SOLO l'hash
-                pstmt.setString(3, role);
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-                return pstmt.executeUpdate() > 0;
+            pstmt.setString(1, username);
+            pstmt.setString(2, hashedPassword);
+            pstmt.setString(3, role);
 
-            } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Errore creazione utente: ", e);
-                return false;
-            }
+            return pstmt.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            logger.log(
+                    Level.SEVERE,
+                    "Errore durante la creazione dell'utente: " + username,
+                    e
+            );
+            return false;
         }
-
+    }
 }

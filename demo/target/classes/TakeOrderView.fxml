@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.demo.view.TakeOrderController"
+            stylesheets="@/style.css">
+
+    <!-- HEADER -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <padding>
+                <Insets top="10" left="10" right="10" bottom="10"/>
+            </padding>
+
+            <VBox spacing="2">
+                <Label fx:id="lblSubtitle" text="Waiter"
+                       style="-fx-font-size: 14px; -fx-text-fill: #888;"/>
+                <Label fx:id="lblTitle"
+                       style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button text="Cancel"
+                    onAction="#handleCancel"
+                    style="-fx-background-color: #E02E2E; -fx-text-fill: white;"/>
+        </HBox>
+    </top>
+
+    <!-- LISTA PRODOTTI -->
+    <center>
+        <ScrollPane fx:id="scrollPane"
+                    fitToWidth="true"
+                    style="-fx-background-color: transparent;">
+            <VBox fx:id="productsContainer"
+                  spacing="5"
+                  padding="20"/>
+        </ScrollPane>
+    </center>
+
+    <!-- BOTTOM -->
+    <bottom>
+        <StackPane alignment="CENTER">
+            <padding>
+                <Insets bottom="10"/>
+            </padding>
+
+            <Button fx:id="btnSend"
+                    text="Send Order"
+                    onAction="#handleSend"
+                    style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+        </StackPane>
+    </bottom>
+
+</BorderPane>

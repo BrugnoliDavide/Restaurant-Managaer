@@ -125,7 +125,7 @@ public class UsersController {
         alert.show();
     }
 
-    /* funzione da deprecare, testare e  eliminare se i test vanno a buon fine */
+    /* funzione da deprecare, testare e eliminare se i test vanno a buon fine
     // Helper statico per caricare questa vista
     public static Parent getFXMLView() {
         try {

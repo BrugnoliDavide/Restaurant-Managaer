@@ -16,6 +16,8 @@ public final class ViewFactory {
             case "manager"   -> new ManagerView();
             case "cameriere" -> new WaiterView();
             case "cucina"    -> new KitchenView();
+            case "users" -> new UsersView();
+
             default -> throw new IllegalArgumentException(
                     "Ruolo non supportato: " + role
             );

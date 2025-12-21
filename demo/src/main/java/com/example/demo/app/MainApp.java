@@ -1,5 +1,7 @@
 package com.example.demo.app;
 
+import com.example.demo.service.DatabaseService;
+import com.example.demo.view.LoginController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -17,9 +19,38 @@ public class MainApp extends Application {
     public void start(Stage primaryStage) throws IOException {
         // 1. Carica il file FXML
         // Nota: Assicurati che LoginView.fxml sia dentro src/main/resources
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/LoginView.fxml"));
-        Parent root = loader.load();
+        //FXMLLoader loader = new FXMLLoader(getClass().getResource("/LoginView.fxml"));
+        //Parent root = loader.load();
 
+        DatabaseService.loadFromPreferences();
+
+
+        boolean dbOk = DatabaseService.testConnection();
+
+
+        AppStatus.setDbConnectionOk(dbOk);
+
+        Parent root = LoginController.getFXMLView();
+        primaryStage.setScene(new Scene(root));
+
+
+        primaryStage.setTitle("Restaurant Manager");
+
+        primaryStage.setMinWidth(400);
+        primaryStage.setMinHeight(500);
+        primaryStage.setResizable(true);
+
+        setLogo(primaryStage);
+
+        primaryStage.show();
+
+
+
+
+        primaryStage.show();
+
+
+        /*
         // 2. Crea la scena
         Scene scene = new Scene(root, 450, 550);
 
@@ -36,7 +67,7 @@ public class MainApp extends Application {
         setLogo(primaryStage);
 
         primaryStage.show();
-    }
+    }*/}
 
     public static void setLogo(Stage stage) {
         try {
