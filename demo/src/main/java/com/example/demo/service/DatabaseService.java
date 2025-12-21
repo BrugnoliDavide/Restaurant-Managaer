@@ -21,6 +21,15 @@ public class DatabaseService {
     private static String USER = "admin";
     private static String PASS = "password123";
 
+    private static String USERNAME = "username";
+    private static String STATUS = "status";
+    private static String DATA_ORA = "data_ora";
+
+    private static String ORDERID = "orderid";
+    private static String TAVOLO = "tavolo";
+
+
+
 
     private DatabaseService() {
         throw new IllegalStateException("Utility class");
@@ -30,7 +39,7 @@ public class DatabaseService {
         URL = "jdbc:postgresql://" + ip + ":" + port + "/" + dbName;
         USER = username;
         PASS = password;
-        logger.info("Configurazione DB aggiornata: " + URL);
+        logger.log(Level.INFO,"Configurazione DB aggiornata: ", URL);
     }
 
 
@@ -105,7 +114,7 @@ public class DatabaseService {
     }
 
     public static boolean deleteProduct(int id) {
-        logger.info("Tentativo eliminazione prodotto ID: {0}" + id);
+        logger.log(Level.INFO,"Tentativo eliminazione prodotto ID: {0}", id);
 
         if (id <= 0) {
             logger.log(Level.WARNING, "ID non valido per eliminazione: {0}", id);
@@ -124,7 +133,9 @@ public class DatabaseService {
                 logger.info("SUCCESSO: Prodotto eliminato.");
                 return true;
             } else {
-                logger.warning("FALLIMENTO: Nessuna riga trovata con ID: {0}" + id);
+
+                logger.log(Level.WARNING,"FALLIMENTO: Nessuna riga trovata con ID: {0}", id);
+
                 return false;
             }
 
@@ -267,11 +278,11 @@ public class DatabaseService {
             while (rs.next()) {
                 list.add(new Order(
                         rs.getInt("id"),
-                        rs.getTimestamp("data_ora").toLocalDateTime(),
-                        rs.getInt("tavolo"),
-                        rs.getString("username"),
+                        rs.getTimestamp(DATA_ORA).toLocalDateTime(),
+                        rs.getInt(TAVOLO),
+                        rs.getString(USERNAME),
                         rs.getString("note"),
-                        rs.getString("status"),
+                        rs.getString(STATUS),
                         rs.getDouble("totale")
                 ));
             }
@@ -295,11 +306,11 @@ public class DatabaseService {
             while (rs.next()) {
                 list.add(new com.example.demo.model.Order(
                         rs.getInt("id"),
-                        rs.getTimestamp("data_ora").toLocalDateTime(),
-                        rs.getInt("tavolo"),
-                        rs.getString("username"),
+                        rs.getTimestamp(DATA_ORA).toLocalDateTime(),
+                        rs.getInt(TAVOLO),
+                        rs.getString(USERNAME),
                         rs.getString("note"),
-                        rs.getString("status"),
+                        rs.getString(STATUS),
                         rs.getDouble("totale_calcolato")
                 ));
             }
@@ -325,11 +336,11 @@ public class DatabaseService {
             while (rs.next()) {
                 list.add(new Order(
                         rs.getInt("id"),
-                        rs.getTimestamp("data_ora").toLocalDateTime(),
-                        rs.getInt("tavolo"),
-                        rs.getString("username"),
+                        rs.getTimestamp(DATA_ORA).toLocalDateTime(),
+                        rs.getInt(TAVOLO),
+                        rs.getString(USERNAME),
                         rs.getString("note"),
-                        rs.getString("status"),
+                        rs.getString(STATUS),
                         rs.getDouble("totale_calcolato")
                 ));
             }
@@ -366,7 +377,6 @@ public class DatabaseService {
             while (rs.next()) {
                 String u = rs.getString("username");
                 String r = rs.getString("role");
-                // Qui usiamo la Factory che hai appena corretto!
                 com.example.demo.model.User userObj = com.example.demo.app.UsersFactory.createUser(u, r);
                 if (userObj != null) list.add(userObj);
             }
