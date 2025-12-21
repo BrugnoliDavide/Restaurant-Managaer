@@ -34,8 +34,10 @@ public class MenuView {
         lblManage.setOnMouseExited(e -> lblManage.setStyle("-fx-text-fill: #888888; -fx-font-size: 14px; -fx-cursor: hand; -fx-underline: false;"));
 
         // Azione: Torna alla Dashboard Manager
-        lblManage.setOnMouseClicked(e -> lblManage.getScene().setRoot(ManagerController.getFXMLView()));
-
+        lblManage.setOnMouseClicked(e -> {
+            View managerView = ViewFactory.forRole("manager");
+            lblManage.getScene().setRoot(managerView.getRoot());
+        });
         // Riga Titolo e Icone
         HBox titleRow = new HBox();
         titleRow.setAlignment(Pos.CENTER_LEFT);

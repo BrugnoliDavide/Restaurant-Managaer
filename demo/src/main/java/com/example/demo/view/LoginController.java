@@ -18,6 +18,9 @@ import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
+import com.example.demo.view.View;
+import com.example.demo.view.ViewFactory;
+
 public class LoginController {
 
     @FXML private FontIcon gearIcon;
@@ -38,11 +41,16 @@ public class LoginController {
     }
 
 
+    @FXML
+    private void handleLoginTest() {
+        Parent root = new com.example.demo.view.screens.ManagerView().getRoot();
+        userField.getScene().setRoot(root);
+    }
 
 
 
 
-
+    //!! da sostituire con la vera funzione
     @FXML
     private void handleLogin() {
         // Rimuove il rosso nei campi ca compilare se precedentemente era presente
@@ -105,8 +113,20 @@ public class LoginController {
         passField.setStyle("");
     }
 
+    private void navigateToRole(String role) {
+
+        View view = ViewFactory.forRole(role);
+
+        userField
+                .getScene()
+                .setRoot(view.getRoot());
+    }
 
 
+
+
+
+/* se i test vanno a buon fine eliminare tutto
     private void navigateToRole(String role) {
         try {
 
@@ -168,6 +188,8 @@ public class LoginController {
                 bounds.getMaxY()
         );
     }*/
+
+
     private void openDBConfigPopup() {
         try {
             FXMLLoader loader = new FXMLLoader(

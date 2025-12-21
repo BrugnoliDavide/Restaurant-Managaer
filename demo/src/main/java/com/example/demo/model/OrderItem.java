@@ -8,7 +8,7 @@ public class OrderItem {
     private double prezzoSnapshot;
     private double costoSnapshot;
 
-    // Costruttore per creare un nuovo item (dal carrello)
+    // Costruttore
     public OrderItem(MenuProduct product, int quantita) {
         this.product = product;
         this.quantita = quantita;

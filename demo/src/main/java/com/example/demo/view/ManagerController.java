@@ -1,5 +1,6 @@
 package com.example.demo.view;
 
+import com.example.demo.view.screens.ManagerView;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Side;
@@ -11,6 +12,7 @@ import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 import com.example.demo.app.UserSession;
 
+import javax.swing.tree.DefaultTreeModel;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -53,8 +55,6 @@ public class ManagerController {
             // Impostiamo il messaggio personalizzato
             lblWelcomeTop.setText(welcomeMsg);
 
-
-
         Tooltip tooltip = new Tooltip("Opzioni");
         tooltip.setShowDelay(Duration.millis(50));
         Tooltip.install(profileBtn, tooltip);
@@ -88,7 +88,6 @@ public class ManagerController {
 
 
 
-            //System.out.println("Eseguo Logout...");
             UserSession.cleanUserSession();
             profileBtn.getScene().setRoot(LoginController.getFXMLView());
         });
@@ -119,11 +118,11 @@ public class ManagerController {
         //System.out.println("Click Notifiche");
     }
 
-    public static Parent getFXMLView() {
+    /*public static Parent getFXMLView() {
         try {
             return new FXMLLoader(ManagerController.class.getResource("/ManagerView.fxml")).load();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
+    }*/
 }

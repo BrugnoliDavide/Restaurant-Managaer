@@ -10,6 +10,10 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 import java.io.IOException;
 
+import com.example.demo.view.View;
+import com.example.demo.view.ViewFactory;
+
+
 import static com.example.demo.view.LoginController.logger;
 
 public class UsersController {
@@ -18,6 +22,8 @@ public class UsersController {
     @FXML private TextField txtUser;
     @FXML private TextField txtPass; // Nel FXML usiamo TextField, ma idealmente sarebbe PasswordField
     @FXML private ComboBox<String> comboRole;
+    @FXML private Parent rootPane;
+
 
     @FXML
     public void initialize() {
@@ -89,11 +95,26 @@ public class UsersController {
         }
     }
 
+
+    @FXML
+    private void goBack() {
+
+        View managerView = ViewFactory.forRole("manager");
+
+        rootPane
+                .getScene()
+                .setRoot(managerView.getRoot());
+    }
+
+
+
+
+/* metodo deprecato eliminare se tutto funziona
     @FXML
     private void goBack() {
         // Torna alla dashboard del Manager
         usersTable.getScene().setRoot(ManagerController.getFXMLView());
-    }
+    } */
 
     // Helper per mostrare messaggi
     private void showAlert(String title, String content) {
@@ -104,6 +125,7 @@ public class UsersController {
         alert.show();
     }
 
+    /* funzione da deprecare, testare e  eliminare se i test vanno a buon fine */
     // Helper statico per caricare questa vista
     public static Parent getFXMLView() {
         try {
@@ -111,5 +133,5 @@ public class UsersController {
         } catch (IOException e) {
             throw new RuntimeException("Impossibile caricare UsersView.fxml", e);
         }
-    }
+    } /*  */
 }

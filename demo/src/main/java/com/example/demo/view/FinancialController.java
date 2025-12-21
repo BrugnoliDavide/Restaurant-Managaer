@@ -22,6 +22,9 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import com.example.demo.view.View;
+import com.example.demo.view.ViewFactory;
+
 import static com.example.demo.view.LoginController.logger;
 
 public class FinancialController {
@@ -181,6 +184,20 @@ public class FinancialController {
 
     @FXML
     private void goBack() {
+
+        View managerView = ViewFactory.forRole("manager");
+
+        ordersContainer
+                .getScene()
+                .setRoot(managerView.getRoot());
+    }
+
+
+
+
+    /* metodo deprecato, eliminare se tutto va a buon fine
+    @FXML
+    private void goBack() {
         try {
             ordersContainer.getScene().setRoot(ManagerController.getFXMLView());
         } catch (Exception e)
@@ -188,7 +205,7 @@ public class FinancialController {
             logger.log(Level.SEVERE, "errore nel tornare alla ManagerView", e);
 
         }
-    }
+    }*/
 
     public static Parent getFXMLView() {
         try {

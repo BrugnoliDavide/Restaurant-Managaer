@@ -23,7 +23,6 @@ public class WaiterController {
 
     @FXML private StackPane profileBtn;
     @FXML private Circle profileCircle;
-    // Rimosso @FXML private Tooltip logoutTooltip; -> Lo creiamo qui sotto
 
     @FXML private Label lblHeaderName;
     @FXML private Label lblHeaderRole;
