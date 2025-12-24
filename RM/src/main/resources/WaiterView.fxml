@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
+
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<BorderPane fx:id="root"
+            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.RM.view.WaiterController"
+            styleClass="view-background" stylesheets="@/style.css">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="15">
+
+            <StackPane fx:id="profileBtn" style="-fx-cursor: hand;" onMouseClicked="#handleLogout">
+                <Circle fx:id="profileCircle" radius="25" fill="CORNFLOWERBLUE" stroke="TOMATO" strokeWidth="0" />
+            </StackPane>
+
+            <VBox spacing="2">
+                <Label fx:id="lblHeaderName" style="-fx-font-size: 16px;" styleClass="text-title" text="..." />
+                <Label fx:id="lblHeaderRole" style="-fx-font-size: 14px;" styleClass="text-body" text="..." />
+            </VBox>
+
+            <Label fx:id="lblWelcomeTop" text="..." style="-fx-text-fill: #888; -fx-padding: 0 0 0 20; -fx-font-style: italic;"/>
+
+            <Region HBox.hgrow="ALWAYS" />
+
+            <StackPane>
+                <SVGPath content="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"
+                         styleClass="icon-svg" scaleX="1.5" scaleY="1.5"/>
+            </StackPane>
+        </HBox>
+    </top>
+
+    <center>
+        <StackPane />
+    </center>
+
+    <bottom>
+        <VBox spacing="10" alignment="CENTER">
+            <padding><Insets top="20" bottom="10"/></padding>
+
+            <Button fx:id="btnNewOrder" text="new&#10;order" textAlignment="CENTER" onAction="#handleNewOrder"
+                    style="-fx-background-color: #2B2B2B; -fx-text-fill: white; -fx-background-radius: 15; -fx-font-size: 16px; -fx-font-weight: bold; -fx-min-width: 140; -fx-min-height: 60; -fx-cursor: hand;"/>
+
+            <Label text="table" styleClass="text-body" style="-fx-font-size: 14px;"/>
+
+            <TextField fx:id="txtTable" promptText="number" alignment="CENTER"
+                       style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #DDD; -fx-border-radius: 10; -fx-min-width: 200; -fx-font-size: 14px;"/>
+        </VBox>
+    </bottom>
+
+</BorderPane>

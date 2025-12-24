@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
+
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.RM.view.ManagerController">
+
+    <padding>
+        <Insets bottom="20" left="20" right="20" top="20" />
+    </padding>
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="15">
+
+            <StackPane fx:id="profileBtn" onMouseClicked="#handleProfileMenu" style="-fx-cursor: hand;">
+                <Circle fx:id="profileCircle" fill="LIGHTBLUE" radius="25" stroke="#3b3580" strokeWidth="0" />
+            </StackPane>
+
+            <VBox spacing="2">
+                <Label fx:id="lblHeaderName" style="-fx-font-size: 16px;" styleClass="text-title" text="..." />
+                <Label fx:id="lblHeaderRole" style="-fx-font-size: 14px;" styleClass="text-body" text="Manager" />
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS" />
+
+            <?import org.kordamp.ikonli.javafx.FontIcon?>
+
+            <StackPane styleClass="icon-container">
+                <FontIcon iconLiteral="fas-bell" iconSize="24" iconColor="gray"/>
+            </StackPane>
+
+        </HBox>
+    </top>
+
+    <center>
+        <VBox alignment="CENTER">
+            <Label fx:id="lblWelcomeTop" styleClass="welcome-text" text="welcome..." />
+            <Label fx:id="lblWelcomeName" styleClass="welcome-text-bold" text="..." />
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox alignment="CENTER" spacing="20">
+            <padding>
+                <Insets bottom="50" />
+            </padding>
+
+            <Button onAction="#goToMenu" prefHeight="50" prefWidth="140" styleClass="dashboard-btn" stylesheets="@style.css" text="Menu" />
+            <Button onAction="#goToFinancial" prefHeight="50" prefWidth="140" styleClass="dashboard-btn" stylesheets="@style.css" text="Financial" />
+
+        </HBox>
+    </bottom>
+
+</BorderPane>

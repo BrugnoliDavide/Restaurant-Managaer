@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.RM.view.component.ProductRowController"
+      fx:id="root"
+      alignment="CENTER_LEFT"
+      spacing="10"
+      styleClass="row-item"
+      onMouseEntered="#onHover"
+      onMouseExited="#onExit"
+      onMouseClicked="#onClick">
+
+    <!-- INFO PRODOTTO -->
+    <VBox spacing="4">
+        <Label fx:id="lblName"
+               styleClass="row-title"/>
+
+        <Label fx:id="lblDetails"
+               styleClass="row-subtitle"/>
+    </VBox>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <!-- MENU AZIONI -->
+    <Label fx:id="dots"
+           text="..."
+           styleClass="row-dots"
+           onMouseClicked="#onDotsClick"/>
+</HBox>

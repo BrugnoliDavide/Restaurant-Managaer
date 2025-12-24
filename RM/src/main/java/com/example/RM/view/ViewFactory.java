@@ -1,0 +1,30 @@
+package com.example.RM.view;
+
+import com.example.RM.view.screens.*;
+
+public final class ViewFactory {
+
+    private ViewFactory() {}
+
+    public static View forRole(String role) {
+
+        if (role == null) {
+            throw new IllegalArgumentException("Role nullo");
+        }
+
+        return switch (role.toLowerCase()) {
+
+            case "manager"                  -> new ManagerView();
+            case "cameriere"                -> new WaiterView();
+            case "cucina"                   -> new KitchenView();
+            case "users"                    -> new UsersView();
+            case "financial"                -> new FinancialView();
+            case "menu"                     -> new MenuView();
+
+            default -> throw new IllegalArgumentException(
+                    "Ruolo non supportato: " + role
+            );
+        };
+    }
+
+}

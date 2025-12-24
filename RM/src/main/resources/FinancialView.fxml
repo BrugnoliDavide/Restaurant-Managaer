@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.RM.view.FinancialController">
+
+
+    <top>
+        <VBox spacing="10">
+            <padding>
+                <Insets bottom="10" left="20" right="20" top="20" />
+            </padding>
+
+             <Label fx:id="lblManage" onMouseClicked="#goBack" prefHeight="15.0" prefWidth="87.0" styleClass="link-label" text="← Manage" />
+
+            <HBox alignment="CENTER_LEFT" spacing="20">
+                <Label styleClass="text-header" text="Financial Overview" />
+            </HBox>
+
+            <TextField fx:id="txtSearch" prefWidth="300" promptText="Search by ID, table, date, total..." styleClass="input-standard" />
+        </VBox>
+    </top>
+
+    <!-- CONTENT -->
+    <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+
+            <VBox fx:id="ordersContainer" spacing="0" styleClass="orders-container">
+
+                <padding>
+                    <Insets bottom="10" left="10" right="10" top="10" />
+                </padding>
+
+            </VBox>
+
+        </ScrollPane>
+
+    </center>
+
+</BorderPane>
