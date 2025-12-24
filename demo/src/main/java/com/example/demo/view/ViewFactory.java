@@ -1,11 +1,6 @@
 package com.example.demo.view;
 
-import com.example.demo.view.screens.FinancialView;
 import com.example.demo.view.screens.*;
-import com.example.demo.model.MenuProduct;
-import com.example.demo.view.ProductDetailController;
-
-import static java.lang.System.load;
 
 public final class ViewFactory {
 

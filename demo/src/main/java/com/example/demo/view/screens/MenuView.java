@@ -6,7 +6,6 @@ public class MenuView extends AbstractView {
     public MenuView(){
         super("/menuView.fxml");
     }
-
 }
 
 
