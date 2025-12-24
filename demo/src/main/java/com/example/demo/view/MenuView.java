@@ -1,4 +1,4 @@
-package com.example.demo.view;
+/*package com.example.demo.view;
 
 import com.example.demo.view.component.AddProductDialog;
 import com.example.demo.service.DatabaseService;
@@ -183,4 +183,4 @@ public class MenuView {
         container.setStyle("-fx-cursor: hand;");
         return container;
     }
-}
+}*/

@@ -8,13 +8,12 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip; // Importante
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
-import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,11 +23,9 @@ public class WaiterController {
 
     @FXML private StackPane profileBtn;
     @FXML private Circle profileCircle;
-
     @FXML private Label lblHeaderName;
     @FXML private Label lblHeaderRole;
     @FXML private Label lblWelcomeTop;
-
     @FXML private Button btnNewOrder;
     @FXML private TextField txtTable;
 
@@ -38,90 +35,69 @@ public class WaiterController {
         setupHoverEffects();
 
         if (profileBtn != null) {
-            Tooltip t = new Tooltip("Logout");
-            t.setShowDelay(Duration.millis(50)); // Appare subito
-            Tooltip.install(profileBtn, t);      // Lo attacca allo StackPane
+            Tooltip t = new Tooltip("Clicca per Logout");
+            t.setShowDelay(Duration.millis(50));
+            Tooltip.install(profileBtn, t);
         }
     }
 
     private void setupUserSession() {
         UserSession session = UserSession.getInstance();
-
-        String displayName = "Utente";
-        String displayRole = "Ruolo";
-        String welcomeMsg = "Welcome";
-
         if (session != null && session.getUser() != null) {
-            com.example.demo.model.User u = session.getUser();
-            displayName = u.getUsername();
-            displayRole = u.getRole();
-            welcomeMsg = u.getWelcomeMessage();
+            lblHeaderName.setText(session.getUser().getUsername());
+            lblHeaderRole.setText(session.getUser().getRole().toUpperCase());
+            lblWelcomeTop.setText(session.getUser().getWelcomeMessage());
         }
-
-        lblHeaderName.setText(displayName);
-        lblHeaderRole.setText(displayRole);
-        lblWelcomeTop.setText(welcomeMsg);
-
-        logger.info("Waiter View inizializzata per: " + displayName);
     }
 
     private void setupHoverEffects() {
         if (profileBtn != null && profileCircle != null) {
-            profileBtn.setOnMouseEntered(e -> {
-                profileCircle.setStroke(Color.TOMATO);
-                profileCircle.setStrokeWidth(3);
-            });
+            profileBtn.setOnMouseEntered(e -> profileCircle.setStrokeWidth(3));
             profileBtn.setOnMouseExited(e -> profileCircle.setStrokeWidth(0));
         }
     }
 
     @FXML
     private void handleLogout() {
-        String currentUser = lblHeaderName.getText();
-        logger.log(Level.INFO, "Eseguo Logout da: " + currentUser);
+        logger.log(Level.INFO, "Eseguo Logout.");
 
+        // 1. Pulisci la sessione
         UserSession.cleanUserSession();
 
-        View loginView = ViewFactory.forRole("login");
-        profileBtn.getScene().setRoot(loginView.getRoot());
+        // 2. Torna al Login usando il ViewFactory (metodo più pulito)
+        // Se ViewFactory non ha .login(), usa FXMLLoader come nel KitchenController
+        try {
+            if (profileBtn.getScene() != null) {
+                // Carichiamo la View di login tramite ViewFactory o manualmente
+                Parent loginView = new FXMLLoader(getClass().getResource("/LoginView.fxml")).load();
+                // Otteniamo la scena attuale dal bottone profilo e cambiamo la root
+                if (profileBtn.getScene() != null) {
+                    profileBtn.getScene().setRoot(loginView);
+                }
+            }
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Errore durante il logout", e);
+        }
     }
-
 
     @FXML
     private void handleNewOrder() {
         String input = txtTable.getText().trim();
-        String normalStyle = "-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #DDD; -fx-border-radius: 10; -fx-min-width: 200; -fx-font-size: 14px;";
-        String errorStyle  = "-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: red; -fx-border-radius: 10; -fx-min-width: 200; -fx-font-size: 14px;";
-
         try {
             int tavoloSelezionato = Integer.parseInt(input);
             if (tavoloSelezionato <= 0) throw new NumberFormatException();
 
-            txtTable.setStyle(normalStyle);
-            logger.log(Level.INFO, "Apro menu per tavolo: " + tavoloSelezionato);
+            txtTable.setStyle("-fx-border-color: #DDD;"); // Reset stile
 
-            // Navigazione (Assicurati che TakeOrderView esista)
             if (btnNewOrder.getScene() != null) {
+                // Navigazione verso la presa ordine
                 View takeOrderView = new TakeOrderView(tavoloSelezionato);
                 btnNewOrder.getScene().setRoot(takeOrderView.getRoot());
             }
 
         } catch (NumberFormatException ex) {
-            txtTable.setStyle(errorStyle);
-            logger.warning("Tentativo inserimento tavolo non valido: '" + input + "'");
+            txtTable.setStyle("-fx-border-color: red; -fx-border-width: 2;");
+            logger.warning("Tavolo non valido: " + input);
         }
     }
-
-
-
-
-    /* !! deprecato eliminare a seguito di un attento testing
-    public static Parent getFXMLView() {
-        try {
-            return new FXMLLoader(WaiterController.class.getResource("/WaiterView.fxml")).load();
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Errore caricamento WaiterView.fxml", e);
-            throw new RuntimeException(e);
-        }
-    }*/
 }

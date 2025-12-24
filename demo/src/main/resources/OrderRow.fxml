@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.Region?>
+
+
+<HBox fx:id="root"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.demo.view.component.OrderRowController"
+      alignment="CENTER_LEFT"
+      spacing="10"
+      style="-fx-border-color: #EEE; -fx-border-width: 0 0 1 0;
+             -fx-background-color: white; -fx-cursor: hand;"
+      onMouseEntered="#onHover"
+      onMouseExited="#onExit"
+      onMouseClicked="#onClick">
+
+    <VBox spacing="4">
+        <Label fx:id="lblTitle"
+               style="-fx-font-size: 16px; -fx-text-fill: #333;" />
+        <Label fx:id="lblSubtitle"
+               style="-fx-font-size: 14px; -fx-text-fill: #888;" />
+    </VBox>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <Label text="..."
+           style="-fx-font-size: 20px; -fx-text-fill: #555;
+                  -fx-padding: 0 10 0 0;" />
+</HBox>

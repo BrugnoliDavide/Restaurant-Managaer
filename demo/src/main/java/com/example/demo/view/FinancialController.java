@@ -2,10 +2,11 @@ package com.example.demo.view;
 
 import com.example.demo.model.Order;
 import com.example.demo.service.DatabaseService;
+import com.example.demo.view.component.DateHeaderController;
+import com.example.demo.view.component.OrderRowController;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -22,9 +23,6 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-import com.example.demo.view.View;
-import com.example.demo.view.ViewFactory;
-
 import static com.example.demo.view.LoginController.logger;
 
 public class FinancialController {
@@ -38,6 +36,8 @@ public class FinancialController {
 
     @FXML
     public void initialize() {
+
+        //provare a rimuovere la riga seguente
         setupManageButton();
 
         // 1. Scarichiamo i dati dal DB una volta sola
@@ -97,8 +97,8 @@ public class FinancialController {
         // Disegniamo tutto all'inizio
         renderOrders(allOrdersMaster);
     }
-
     private void renderOrders(List<Order> ordersToRender) {
+
         ordersContainer.getChildren().clear();
 
         if (ordersToRender.isEmpty()) {
@@ -108,7 +108,6 @@ public class FinancialController {
             return;
         }
 
-        // Raggruppamento per Data
         Map<LocalDate, List<Order>> grouped = ordersToRender.stream()
                 .collect(Collectors.groupingBy(
                         o -> o.getDataOra().toLocalDate(),
@@ -116,27 +115,56 @@ public class FinancialController {
                         Collectors.toList()
                 ));
 
-        DateTimeFormatter headerFormatter = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALY);
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter headerFormatter =
+                DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALY);
 
-        for (Map.Entry<LocalDate, List<Order>> entry : grouped.entrySet()) {
-            LocalDate date = entry.getKey();
-            List<Order> ordersOfDay = entry.getValue();
+        for (var entry : grouped.entrySet()) {
 
-            // Intestazione Data
-            Label dateHeader = new Label(date.format(headerFormatter).toUpperCase());
-            dateHeader.setStyle("-fx-font-size: 12px; -fx-text-fill: #999; -fx-font-weight: bold; -fx-padding: 15 0 5 0;");
-            ordersContainer.getChildren().add(dateHeader);
+            ordersContainer.getChildren().add(
+                    loadDateHeader(
+                            entry.getKey()
+                                    .format(headerFormatter)
+                                    .toUpperCase()
+                    )
+            );
 
 
-            for (Order order : ordersOfDay) {
-                HBox row = createOrderRow(order, timeFormatter);
-                ordersContainer.getChildren().add(row);
+            /* !! deprecato eliminare
+            Label dateHeader = new Label(
+                    entry.getKey().format(headerFormatter).toUpperCase()
+            );
+            dateHeader.setStyle(
+                    "-fx-font-size: 12px; -fx-text-fill: #999; -fx-font-weight: bold; -fx-padding: 15 0 5 0;"
+            );
+
+            ordersContainer.getChildren().add(dateHeader);*/
+
+            for (Order order : entry.getValue()) {
+                ordersContainer.getChildren().add(loadOrderRow(order));
             }
         }
     }
 
+    private Parent loadOrderRow(Order order) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/OrderRow.fxml")
+            );
+            Parent root = loader.load();
 
+            OrderRowController controller = loader.getController();
+            controller.setOrder(order);
+
+            return root;
+
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Errore caricamento OrderRow.fxml", e);
+            return new Label("Errore caricamento ordine");
+        }
+    }
+
+
+    /* !! deprecato
     private HBox createOrderRow(Order order, DateTimeFormatter timeFormatter) {
         HBox row = new HBox();
         row.setAlignment(Pos.CENTER_LEFT);
@@ -171,6 +199,7 @@ public class FinancialController {
         row.getChildren().addAll(infoBox, spacer, dots);
         return row;
     }
+*/
 
     private void setupManageButton() {
         if (lblManage == null) return;
@@ -184,12 +213,9 @@ public class FinancialController {
 
     @FXML
     private void goBack() {
-
+        logger.log(Level.INFO,"invocazione goBack");
         View managerView = ViewFactory.forRole("manager");
-
-        ordersContainer
-                .getScene()
-                .setRoot(managerView.getRoot());
+        ordersContainer.getScene().setRoot(managerView.getRoot());
     }
 
 
@@ -203,15 +229,36 @@ public class FinancialController {
         } catch (Exception e)
         {
             logger.log(Level.SEVERE, "errore nel tornare alla ManagerView", e);
-
         }
     }*/
 
+    /*
     public static Parent getFXMLView() {
         try {
             return new FXMLLoader(FinancialController.class.getResource("/FinancialView.fxml")).load();
         } catch (IOException e) {
             throw new RuntimeException("Impossibile caricare FinancialView.fxml", e);
         }
+    }*/
+
+
+
+    private Parent loadDateHeader(String text) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/DateHeader.fxml")
+            );
+            Parent root = loader.load();
+
+            DateHeaderController controller = loader.getController();
+            controller.setDateText(text);
+
+            return root;
+
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Errore caricamento DateHeader.fxml", e);
+            return new Label(text);
+        }
     }
+
 }

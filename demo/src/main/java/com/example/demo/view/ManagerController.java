@@ -106,14 +106,23 @@ public class ManagerController {
 
     @FXML
     private void goToMenu() {
+        // !! togliere import inutilizzati
         //System.out.println("Navigazione -> Menu");
-        profileBtn.getScene().setRoot(MenuView.getView());
+        //profileBtn.getScene().setRoot(MenuView.getView());
+        View MenuView = ViewFactory.forRole("menu");
+        profileBtn
+                .getScene()
+                .setRoot(MenuView.getRoot());
     }
 
     @FXML
     private void goToFinancial() {
-        //System.out.println("Navigazione -> Financial");
-        profileBtn.getScene().setRoot(FinancialController.getFXMLView());
+
+        View financialView = ViewFactory.forRole("financial");
+
+        profileBtn
+                .getScene()
+                .setRoot(financialView.getRoot());
     }
 
     @FXML

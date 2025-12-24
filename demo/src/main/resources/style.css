@@ -117,6 +117,15 @@
     -fx-font-weight: bold;
     -fx-text-fill: -fx-text-primary;
 }
+.text-header{
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -fx-text-primary;
+}
+
+
+
+
 
 /* Bottoni Standard */
 .btn-primary {
@@ -230,3 +239,38 @@
     -fx-border-color: #CCCCCC;
     -fx-border-radius: 5;
 }
+
+
+.row-item {
+    -fx-border-color: #EEE;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 15 0 15 0;
+    -fx-background-color: white;
+    -fx-cursor: hand;
+}
+
+.row-title {
+    -fx-font-size: 16px;
+    -fx-text-fill: #333;
+}
+
+.row-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #777;
+}
+
+.row-dots {
+    -fx-font-size: 20px;
+    -fx-text-fill: #555;
+    -fx-padding: 0 10 0 0;
+    -fx-cursor: hand;
+}
+
+.menu-section-title {
+    -fx-font-size: 12px;
+    -fx-text-fill: #999;
+    -fx-font-weight: bold;
+    -fx-padding: 15 0 5 0;
+}
+
+

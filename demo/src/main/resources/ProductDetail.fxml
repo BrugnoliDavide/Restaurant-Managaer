@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.demo.view.ProductDetailController"
+            style="-fx-background-color: white;">
+
+    <!-- HEADER -->
+    <top>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="20" left="20" right="20" bottom="10"/>
+            </padding>
+
+            <Label fx:id="lblBack"
+                   text="← Menu"
+                   style="-fx-text-fill: #888; -fx-cursor: hand;"/>
+
+            <HBox spacing="15" alignment="CENTER_LEFT">
+                <Label fx:id="lblName"
+                       style="-fx-font-size: 26px; -fx-font-weight: bold;"/>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <StackPane fx:id="btnDelete"/>
+                <StackPane fx:id="btnEdit"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- CONTENT -->
+    <center>
+        <VBox fx:id="contentBox"
+              spacing="25"
+              padding="30 20 20 20"/>
+    </center>
+
+</BorderPane>
