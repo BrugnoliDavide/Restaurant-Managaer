@@ -31,10 +31,6 @@ public class LoginController {
 
     @FXML private Circle dbStatusCircle;
 
-
-    //private javafx.stage.Popup dbConfigPopup;
-
-
     public static final Logger logger = Logger.getLogger(LoginController.class.getName());
 
     @FXML
@@ -74,7 +70,6 @@ public class LoginController {
 
 
         if (user.isEmpty() || pass.isEmpty()) {
-            //logger.warning("campi vuoti");
             showError(); // Mette i bordi rossi
             return;
         }

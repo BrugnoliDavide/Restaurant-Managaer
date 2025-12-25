@@ -9,6 +9,8 @@ import javafx.scene.Parent;
 import javafx.scene.control.*;
 
 
+import java.util.logging.Level;
+
 import static com.example.rm.view.LoginController.logger;
 
 public class UsersController {
@@ -57,7 +59,7 @@ public class UsersController {
             txtPass.clear();
             comboRole.getSelectionModel().clearSelection();
             loadData();
-            logger.info("Utente " + txtUser +"creato con successo!");
+            logger.log(Level.INFO,"Utente {0} creato con successo!", txtUser);
 
         } else {
             showAlert("Errore", "Impossibile creare l'utente. Forse lo username esiste già?");
@@ -101,16 +103,6 @@ public class UsersController {
                 .setRoot(managerView.getRoot());
     }
 
-
-
-
-/* metodo deprecato eliminare se tutto funziona
-    @FXML
-    private void goBack() {
-        // Torna alla dashboard del Manager
-        usersTable.getScene().setRoot(ManagerController.getFXMLView());
-    } */
-
     // Helper per mostrare messaggi
     private void showAlert(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -119,14 +111,4 @@ public class UsersController {
         alert.setContentText(content);
         alert.show();
     }
-
-    /* funzione da deprecare, testare e eliminare se i test vanno a buon fine
-    // Helper statico per caricare questa vista
-    public static Parent getFXMLView() {
-        try {
-            return new FXMLLoader(UsersController.class.getResource("/UsersView.fxml")).load();
-        } catch (IOException e) {
-            throw new RuntimeException("Impossibile caricare UsersView.fxml", e);
-        }
-    } /*  */
 }

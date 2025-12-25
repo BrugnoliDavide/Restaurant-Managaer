@@ -48,6 +48,6 @@ public class OrderRowController {
 
     @FXML
     private void onClick() {
-        logger.log(Level.INFO, "Apro dettagli ordine #" + order.getId());
+        logger.log(Level.INFO, "Apro dettagli ordine # {0} ", order.getId());
     }
 }

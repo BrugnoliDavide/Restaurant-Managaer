@@ -75,16 +75,14 @@ public class FinancialController {
     // Qui definiamo le regole: controlliamo ID, Tavolo, Prezzo e Data
     private boolean matchesFilter(Order order, String query) {
         // Cerca nell'ID
-        if (String.valueOf(order.getId()).contains(query)) return true;
-
-        // Cerca nel Tavolo
-        if (String.valueOf(order.getTavolo()).contains(query)) return true;
-
-        // Cerca nel Totale (convertito in stringa es: "15.50")
-        if (String.valueOf(order.getTotale()).contains(query)) return true;
-
-        // Cerca nella Data (es: cerco "2025" o "12")
-        if (order.getDataOra().toString().contains(query)) return true;
+        if (String.valueOf(order.getId()).contains(query)
+            // Cerca nel Tavolo
+            || String.valueOf(order.getTavolo()).contains(query)
+            // Cerca nel Totale (convertito in stringa)
+            || String.valueOf(order.getTotale()).contains(query)
+            // Cerca nella Data (es: cerco "2025" o "12")
+            || order.getDataOra().toString().contains(query))
+                return true;
 
         return false;
     }

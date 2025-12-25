@@ -52,8 +52,7 @@ public final class SecurityService {
         } catch (SQLException e) {
             logger.log(
                     Level.SEVERE,
-                    "Errore imprevisto durante il login per utente: " + username,
-                    e
+                    "Errore imprevisto durante il login per utente: {0}", new Object[]{username, e}
             );
         }
 
@@ -85,9 +84,10 @@ public final class SecurityService {
         } catch (SQLException e) {
             logger.log(
                     Level.SEVERE,
-                    "Errore durante la creazione dell'utente: " + username,
-                    e
+                    "Errore durante la creazione dell'utente:  {0}", new Object[]{username, e}
             );
+
+
             return false;
         }
     }

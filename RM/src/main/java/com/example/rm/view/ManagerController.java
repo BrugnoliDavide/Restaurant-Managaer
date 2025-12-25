@@ -96,10 +96,10 @@ public class ManagerController {
 
     @FXML
     private void goToMenu() {
-        View MenuView = ViewFactory.forRole("menu");
+        View menuView = ViewFactory.forRole("menu");
         profileBtn
                 .getScene()
-                .setRoot(MenuView.getRoot());
+                .setRoot(menuView.getRoot());
     }
 
     @FXML
@@ -114,7 +114,7 @@ public class ManagerController {
 
     @FXML
     private void handleNotifications() {
-        //System.out.println("Click Notifiche");
+        // !! Cooming Soon
     }
 
 

@@ -16,18 +16,19 @@ public class DatabaseService {
 
     private static final Logger logger = Logger.getLogger(DatabaseService.class.getName());
 
-    private static String URL = null;
-    private static String USER = null;
-    private static String PASS = null;
+    private static String url = null;
+    private static String user = null;
+    private static String pass = null;
 
-    private static String USERNAME = "username";
-    private static String STATUS = "status";
-    private static String DATA_ORA = "data_ora";
+    private static String username = "username";
+    private static String status = "status";
+    private static String dataOra = "data_ora";
 
-    private static String ORDERID = "orderid";
-    private static String TAVOLO = "tavolo";
+    //!! riabilitare quando e se necessario
+    //private static String OrderId = "orderid";
+    private static String table = "tavolo";
 
-
+    private static String postgressConnectionPrefix = "jdbc:postgresql://";
 
 
     private DatabaseService() {
@@ -35,10 +36,10 @@ public class DatabaseService {
     }
 
     public static void setConnectionConfig(String ip, String port, String dbName, String username, String password) {
-        URL = "jdbc:postgresql://" + ip + ":" + port + "/" + dbName;
-        USER = username;
-        PASS = password;
-        logger.log(Level.INFO,"Configurazione DB aggiornata: {0}", URL);
+        url = postgressConnectionPrefix + ip + ":" + port + "/" + dbName;
+        user = username;
+        pass = password;
+        logger.log(Level.INFO,"Configurazione DB aggiornata: {0}", url);
     }
 
     public static void setConnectionConfig(
@@ -47,8 +48,8 @@ public class DatabaseService {
             String dbName,
             String username
     ) {
-        URL  = "jdbc:postgresql://" + ip + ":" + port + "/" + dbName;
-        USER = username;
+        url  = postgressConnectionPrefix + ip + ":" + port + "/" + dbName;
+        user = username;
         // la PASSWORD resta invariata
     }
 
@@ -59,7 +60,7 @@ public class DatabaseService {
         List<MenuProduct> prodotti = new ArrayList<>();
         String sql = "SELECT id, nome, tipologia, prezzo_vendita, costo_realizzazione, allergeni FROM menu_items";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -87,7 +88,7 @@ public class DatabaseService {
     public static boolean addProduct(MenuProduct p) {
         String sql = "INSERT INTO menu_items (nome, tipologia, prezzo_vendita, costo_realizzazione, allergeni) VALUES (?, ?, ?, ?, ?)";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, p.getNome());
@@ -107,7 +108,7 @@ public class DatabaseService {
     public static boolean updateProduct(MenuProduct p) {
         String sql = "UPDATE menu_items SET nome = ?, tipologia = ?, prezzo_vendita = ?, costo_realizzazione = ?, allergeni = ? WHERE id = ?";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, p.getNome());
@@ -135,7 +136,7 @@ public class DatabaseService {
 
         String sql = "DELETE FROM menu_items WHERE id = ?";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, id);
@@ -161,7 +162,7 @@ public class DatabaseService {
         List<String> categories = new ArrayList<>();
         String sql = "SELECT DISTINCT tipologia FROM menu_items ORDER BY tipologia";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -191,7 +192,7 @@ public class DatabaseService {
         PreparedStatement pstmtItem = null;
 
         try {
-            conn = DriverManager.getConnection(URL, USER, PASS);
+            conn = DriverManager.getConnection(url, user, pass);
             conn.setAutoCommit(false); // Transazione
 
             // A. Testata Ordine
@@ -215,8 +216,10 @@ public class DatabaseService {
 
             // B. Righe Ordine
             pstmtItem = conn.prepareStatement(sqlItem);
+
+            pstmtItem.setInt(1, orderId);
+
             for (OrderItem item : items) {
-                pstmtItem.setInt(1, orderId);
                 pstmtItem.setInt(2, item.getProduct().getId());
                 pstmtItem.setInt(3, item.getQuantita());
                 pstmtItem.setDouble(4, item.getPrezzoSnapshot());
@@ -256,7 +259,7 @@ public class DatabaseService {
 
     public static long getQuantitySold(String nomeProdotto) {
         String sql = "SELECT SUM(oi.quantita) FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE mi.nome = ?";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, nomeProdotto);
             ResultSet rs = pstmt.executeQuery();
@@ -269,7 +272,7 @@ public class DatabaseService {
 
     public static boolean setOrderStatus(int orderId, String newStatus) {
         String sql = "UPDATE orders SET status = ? WHERE id = ?";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, newStatus);
             pstmt.setInt(2, orderId);
@@ -283,18 +286,18 @@ public class DatabaseService {
     public static List<Order> getOrdersByStatus(String targetStatus) {
         List<Order> list = new ArrayList<>();
         String sql = "SELECT id, data_ora, tavolo, username, note, status, totale FROM orders WHERE status = ? ORDER BY data_ora DESC";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, targetStatus);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 list.add(new Order(
                         rs.getInt("id"),
-                        rs.getTimestamp(DATA_ORA).toLocalDateTime(),
-                        rs.getInt(TAVOLO),
-                        rs.getString(USERNAME),
+                        rs.getTimestamp(dataOra).toLocalDateTime(),
+                        rs.getInt(table),
+                        rs.getString(username),
                         rs.getString("note"),
-                        rs.getString(STATUS),
+                        rs.getString(status),
                         rs.getDouble("totale")
                 ));
             }
@@ -312,17 +315,17 @@ public class DatabaseService {
                 "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status " +
                 "ORDER BY o.data_ora DESC";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 list.add(new com.example.rm.model.Order(
                         rs.getInt("id"),
-                        rs.getTimestamp(DATA_ORA).toLocalDateTime(),
-                        rs.getInt(TAVOLO),
-                        rs.getString(USERNAME),
+                        rs.getTimestamp(dataOra).toLocalDateTime(),
+                        rs.getInt(table),
+                        rs.getString(username),
                         rs.getString("note"),
-                        rs.getString(STATUS),
+                        rs.getString(status),
                         rs.getDouble("totale_calcolato")
                 ));
             }
@@ -341,18 +344,18 @@ public class DatabaseService {
                 "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status " +
                 "ORDER BY o.data_ora ASC";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, "ordered");
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 list.add(new Order(
                         rs.getInt("id"),
-                        rs.getTimestamp(DATA_ORA).toLocalDateTime(),
-                        rs.getInt(TAVOLO),
-                        rs.getString(USERNAME),
+                        rs.getTimestamp(dataOra).toLocalDateTime(),
+                        rs.getInt(table),
+                        rs.getString(username),
                         rs.getString("note"),
-                        rs.getString(STATUS),
+                        rs.getString(status),
                         rs.getDouble("totale_calcolato")
                 ));
             }
@@ -365,7 +368,7 @@ public class DatabaseService {
     public static List<String> getOrderItemsForDisplay(int orderId) {
         List<String> details = new ArrayList<>();
         String sql = "SELECT mi.nome, oi.quantita FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE oi.order_id = ?";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, orderId);
             ResultSet rs = pstmt.executeQuery();
@@ -382,7 +385,7 @@ public class DatabaseService {
         List<com.example.rm.model.User> list = new ArrayList<>();
         String sql = "SELECT username, role FROM users ORDER BY role, username";
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -400,7 +403,7 @@ public class DatabaseService {
 
     public static boolean deleteUser(String usernameToDelete) {
         String sql = "DELETE FROM users WHERE username = ?";
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS);
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, usernameToDelete);
             int rowsAffected = pstmt.executeUpdate();
@@ -429,47 +432,47 @@ public class DatabaseService {
 
     //metodi necessari per mostrare all'utente i dati di connessione usati l'ultima volta e permettervi la modifica
     public static String getDBHost() {
-        if (URL == null) return "";
-        String noPrefix = URL.replace("jdbc:postgresql://", "");
+        if (url == null) return "";
+        String noPrefix = url.replace(postgressConnectionPrefix, "");
         return noPrefix.substring(0, noPrefix.indexOf(":"));
     }
 
     public static String getDBPort() {
-        if (URL == null) return "";
-        String noPrefix = URL.replace("jdbc:postgresql://"+getDBHost(), "");
+        if (url == null) return "";
+        String noPrefix = url.replace(postgressConnectionPrefix+getDBHost(), "");
         int start = noPrefix.indexOf(":") + 1;
         int end = noPrefix.indexOf("/");
         return noPrefix.substring(start, end);
     }
     public static String getDBName(){
-        if (URL == null) return "";
-        return URL.substring(URL.lastIndexOf("/") + 1);
+        if (url == null) return "";
+        return url.substring(url.lastIndexOf("/") + 1);
     }
     public static String getDBUser(){
-        if (URL == null) return "";
-        return USER;
+        if (url == null) return "";
+        return user;
     }
     public static boolean hasPassword() {
-        return PASS != null && !PASS.isBlank();
+        return pass != null && !pass.isBlank();
     }
 
     public static String getDBPassword() {
-        return PASS;
+        return pass;
     }
 
 
 
     public static boolean isConfigured() {
-        return URL != null && USER != null && PASS != null;
+        return url != null && user != null && pass != null;
     }
 
     public static boolean testConnection() {
-        if (URL == null || USER == null || PASS == null) {
+        if (url == null || user == null || pass == null) {
             logger.warning("Tentativo test DB senza configurazione completa");
             return false;
         }
 
-        try (Connection conn = DriverManager.getConnection(URL, USER, PASS)) {
+        try (Connection conn = DriverManager.getConnection(url, user, pass)) {
             logger.info("Connessione al DB riuscita");
             return true;
         } catch (SQLException e) {
@@ -493,13 +496,13 @@ public class DatabaseService {
 
     public static Connection getConnection() throws SQLException {
 
-        if (URL == null || USER == null || PASS == null) {
+        if (url == null || user == null || pass == null) {
             throw new IllegalStateException(
                     "Database non configurato correttamente"
             );
         }
 
-        return DriverManager.getConnection(URL, USER, PASS);
+        return DriverManager.getConnection(url, user, pass);
     }
 
 

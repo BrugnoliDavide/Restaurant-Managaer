@@ -3,6 +3,7 @@ package com.example.rm.view.component;
 import com.example.rm.app.MainApp;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.service.DatabaseService;
+import com.example.rm.view.MenuController;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -10,8 +11,24 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
+
+
+
+
 public class AddProductDialog {
 
+    private AddProductDialog() {
+        throw new IllegalStateException("Classe di utilità: non può essere istanziata");
+    }
+
+
+
+    private static final Logger logger =
+            Logger.getLogger(MenuController.class.getName());
 
     public static void display() {
         showDialog(null);
@@ -80,10 +97,11 @@ public class AddProductDialog {
                 }
 
                 if (success) window.close();
-                else System.out.println("Errore salvataggio DB");
+                else logger.log(Level.WARNING,"Errore salvataggio DB");
+
 
             } catch (NumberFormatException ex) {
-                System.out.println("Errore numeri: " + ex.getMessage());
+                logger.log(Level.WARNING,"Errore numeri: {0}", ex.getMessage());
             }
         });
 
