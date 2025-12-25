@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.RM.view.component.DateHeaderController">
+      fx:controller="com.example.rm.view.component.DateHeaderController">
 
     <Label fx:id="lblDate"
            style="-fx-font-size: 12px;

@@ -13,68 +13,62 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="rootPane"
-            xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.demo.view.UsersController"
-            styleClass="view-background"
-            stylesheets="@/style.css">
+<BorderPane fx:id="rootPane" styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.UsersController">
 
     <top>
         <VBox spacing="5">
             <padding>
-                <Insets top="20" left="20" right="20" bottom="10"/>
+                <Insets bottom="10" left="20" right="20" top="20" />
             </padding>
-            <Label text="Gestione Staff" styleClass="text-title" style="-fx-font-size: 24px;"/>
-            <Label text="Aggiungi o rimuovi membri del team" styleClass="text-muted" style="-fx-font-size: 14px;"/>
+            <Label style="-fx-font-size: 24px;" styleClass="text-title" text="Gestione Staff" />
+            <Label style="-fx-font-size: 14px;" styleClass="text-muted" text="Aggiungi o rimuovi membri del team" />
         </VBox>
     </top>
 
     <center>
         <TableView fx:id="usersTable" style="-fx-background-color: transparent;">
             <columns>
-                <TableColumn text="Username" prefWidth="200">
+                <TableColumn prefWidth="200" text="Username">
                     <cellValueFactory>
-                        <PropertyValueFactory property="username"/>
+                        <PropertyValueFactory property="username" />
                     </cellValueFactory>
                 </TableColumn>
 
-                <TableColumn text="Ruolo" prefWidth="150">
+                <TableColumn prefWidth="150" text="Ruolo">
                     <cellValueFactory>
-                        <PropertyValueFactory property="role"/>
+                        <PropertyValueFactory property="role" />
                     </cellValueFactory>
                 </TableColumn>
 
             </columns>
 
             <columnResizePolicy>
-                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
             </columnResizePolicy>
 
             <BorderPane.margin>
-                <Insets left="20" right="20" bottom="10"/>
+                <Insets bottom="10" left="20" right="20" />
             </BorderPane.margin>
         </TableView>
     </center>
 
     <bottom>
-        <HBox spacing="10" alignment="CENTER_LEFT">
+        <HBox alignment="CENTER_LEFT" spacing="10">
             <padding>
-                <Insets top="15" right="20" bottom="20" left="20"/>
+                <Insets bottom="20" left="20" right="20" top="15" />
             </padding>
 
-            <TextField fx:id="txtUser" promptText="Username" prefWidth="150"/>
-            <TextField fx:id="txtPass" promptText="Password" prefWidth="150"/>
-            <ComboBox fx:id="comboRole" promptText="Seleziona Ruolo" prefWidth="150"/>
+            <TextField fx:id="txtUser" prefWidth="150" promptText="Username" styleClass="input-standard" stylesheets="@style.css" />
+            <TextField fx:id="txtPass" prefWidth="150" promptText="Password" styleClass="input-standard" stylesheets="@style.css" />
+            <ComboBox fx:id="comboRole" prefWidth="150" promptText="Seleziona Ruolo" styleClass="btn-primary" stylesheets="@style.css" />
 
-            <Button text="Aggiungi" onAction="#handleAdd" styleClass="btn-primary"/>
+            <Button onAction="#handleAdd" styleClass="btn-save" stylesheets="@style.css" text="Aggiungi" />
 
-            <Region HBox.hgrow="ALWAYS"/>
+            <Region HBox.hgrow="ALWAYS" />
 
-            <Button text="Rimuovi Selezionato" onAction="#handleDelete"
-                    style="-fx-background-color: #E02E2E; -fx-text-fill: white; -fx-cursor: hand;"/>
+            <Button onAction="#handleDelete" style="-fx-background-color: #E02E2E; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@style.css" text="Rimuovi Selezionato" />
 
-            <Button text="Indietro" onAction="#goBack" styleClass="dashboard-btn"/>
+            <Button onAction="#goBack" styleClass="dashboard-btn" stylesheets="@style.css" text="Indietro" />
         </HBox>
     </bottom>
 

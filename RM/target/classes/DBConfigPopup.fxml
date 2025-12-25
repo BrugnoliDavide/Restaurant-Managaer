@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox spacing="10" styleClass="login-pop-up-setup-connection" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.demo.view.component.DBConfigPopupController">
+<VBox spacing="10" styleClass="login-pop-up-setup-connection" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.component.DBConfigPopupController">
 
     <padding>
         <Insets bottom="10" left="10" right="10" top="10" />

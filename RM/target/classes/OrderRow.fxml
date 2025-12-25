@@ -9,7 +9,7 @@
 <HBox fx:id="root"
       xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.demo.view.component.OrderRowController"
+      fx:controller="com.example.rm.view.component.OrderRowController"
       alignment="CENTER_LEFT"
       spacing="10"
       style="-fx-border-color: #EEE; -fx-border-width: 0 0 1 0;

@@ -130,7 +130,7 @@
 /* Bottoni Standard */
 .btn-primary {
     -fx-background-color: -fx-accent;
-    -fx-text-fill: -fx-text-secondary;
+    -fx-text-fill: -fx-text-primary;
     -fx-background-radius: 8;
     -fx-cursor: hand;
     -fx-font-weight: bold;
@@ -172,7 +172,7 @@
     -fx-background-color: -fx-bg-surface;
     -fx-text-fill: -fx-text-primary;
     -fx-border-color: -fx-text-secondary;
-    /* -fx-border-radius: 20; */
+    -fx-border-radius: 20;
     -fx-background-radius: 20;
     -fx-cursor: hand;
     -fx-font-size: 14px;

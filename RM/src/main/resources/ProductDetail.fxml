@@ -6,7 +6,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.RM.view.ProductDetailController"
+            fx:controller="com.example.rm.view.ProductDetailController"
             style="-fx-background-color: white;">
 
     <!-- HEADER -->
