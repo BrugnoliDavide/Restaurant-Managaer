@@ -201,7 +201,7 @@ public class DatabaseService {
             if (tavolo != null) pstmtOrder.setInt(2, tavolo);
             else pstmtOrder.setNull(2, Types.INTEGER);
             pstmtOrder.setString(3, note);
-            pstmtOrder.setString(4, "ordered");
+            pstmtOrder.setString(4, "to-do");
 
             if (pstmtOrder.executeUpdate() == 0) throw new SQLException("Creazione ordine fallita.");
 
@@ -282,28 +282,46 @@ public class DatabaseService {
             return false;
         }
     }
-
-    public static List<Order> getOrdersByStatus(String targetStatus) {
+    public static List<Order> getOrdersByStatus(String statusTarget) {
         List<Order> list = new ArrayList<>();
-        String sql = "SELECT id, data_ora, tavolo, username, note, status, totale FROM orders WHERE status = ? ORDER BY data_ora DESC";
-        try (Connection conn = DriverManager.getConnection(url, user, pass);
+
+
+        String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
+                "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) AS totale_calcolato " +
+                "FROM orders o " +
+                "LEFT JOIN order_items oi ON o.id = oi.order_id " +
+                "WHERE o.status = ? " +
+                "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status " +
+                "ORDER BY o.data_ora DESC";
+
+        try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, targetStatus);
+
+            pstmt.setString(1, statusTarget);
             ResultSet rs = pstmt.executeQuery();
+
             while (rs.next()) {
-                list.add(new Order(
+                // Estraiamo il totale calcolato dalla query
+                double totale = rs.getDouble("totale_calcolato");
+
+                // Creiamo l'oggetto Order passando il totale appena calcolato
+                Order order = new Order(
                         rs.getInt("id"),
-                        rs.getTimestamp(dataOra).toLocalDateTime(),
-                        rs.getInt(table),
-                        rs.getString(username),
+                        rs.getTimestamp("data_ora").toLocalDateTime(),
+                        rs.getInt("tavolo"),
+                        rs.getString("username"),
                         rs.getString("note"),
-                        rs.getString(status),
-                        rs.getDouble("totale")
-                ));
+                        rs.getString("status"),
+                        totale
+                );
+
+                list.add(order);
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore recupero ordini per stato", e);
+            // Log professionale come discusso precedentemente
+            logger.log(Level.SEVERE, "Errore durante il recupero degli ordini con totale: " + e.getMessage(), e);
         }
+
         return list;
     }
 
@@ -346,7 +364,7 @@ public class DatabaseService {
 
         try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, "ordered");
+            pstmt.setString(1, "to-do");
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 list.add(new Order(
@@ -505,7 +523,15 @@ public class DatabaseService {
         return DriverManager.getConnection(url, user, pass);
     }
 
+    public static List<Order> getOrdersToPay() {
+        // Recupera gli ordini che sono nello stato 'ready' (pronti ma non pagati)
+        return getOrdersByStatus("ready");
+    }
 
+    public static boolean markOrderAsPaid(int orderId) {
+        // Cambia lo stato in 'pagato' per farlo sparire dalla cassa
+        return setOrderStatus(orderId, "closed");
+    }
 
 
 

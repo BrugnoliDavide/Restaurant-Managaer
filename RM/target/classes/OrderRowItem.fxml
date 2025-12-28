@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.geometry.Insets?>
+
+<!-- IMPORTANTE: Controller deve essere OrderRowItemController -->
+<HBox fx:id="root"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.rm.view.component.OrderRowItemController"
+      alignment="CENTER_LEFT"
+      spacing="10"
+      style="-fx-border-color: #EEE; -fx-border-width: 0 0 1 0;
+             -fx-background-color: white; -fx-cursor: hand; -fx-padding: 12;"
+      onMouseEntered="#onHover"
+      onMouseExited="#onExit"
+      onMouseClicked="#onClick">
+
+    <!-- Contenuto principale: Titolo e Sottotitolo -->
+    <VBox spacing="5" HBox.hgrow="ALWAYS">
+        <!-- Titolo: Ordine #123 - Tavolo 5 - €45.50 -->
+        <Label fx:id="lblTitle"
+               style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;" />
+
+        <!-- Sottotitolo: 18:30 - Manager - 2x Pizza, 1x Pasta -->
+        <Label fx:id="lblSubtitle"
+               style="-fx-font-size: 13px; -fx-text-fill: #666;"
+               wrapText="true"
+               maxWidth="500"/>
+    </VBox>
+
+    <!-- Spacer per spingere l'indicatore a destra -->
+    <Region HBox.hgrow="SOMETIMES"/>
+
+    <!-- Indicatore visivo (freccia) -->
+    <Label text="›"
+           style="-fx-font-size: 24px; -fx-text-fill: #2ecc71; -fx-padding: 0 10 0 0;" />
+</HBox>

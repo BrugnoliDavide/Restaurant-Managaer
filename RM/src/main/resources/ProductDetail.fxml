@@ -1,42 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.rm.view.ProductDetailController"
-            style="-fx-background-color: white;">
-
-    <!-- HEADER -->
+<BorderPane style="-fx-background-color: white;" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.ProductDetailController">
     <top>
         <VBox spacing="10">
             <padding>
-                <Insets top="20" left="20" right="20" bottom="10"/>
+                <Insets bottom="10" left="20" right="20" top="20" />
             </padding>
-
-            <Label fx:id="lblBack"
-                   text="← Menu"
-                   style="-fx-text-fill: #888; -fx-cursor: hand;"/>
-
-            <HBox spacing="15" alignment="CENTER_LEFT">
-                <Label fx:id="lblName"
-                       style="-fx-font-size: 26px; -fx-font-weight: bold;"/>
-
-                <Region HBox.hgrow="ALWAYS"/>
-
-                <StackPane fx:id="btnDelete"/>
-                <StackPane fx:id="btnEdit"/>
+            <HBox alignment="CENTER_LEFT" spacing="15">
+                <Label fx:id="lblBack" onMouseClicked="#goBack" style="-fx-text-fill: #888; -fx-cursor: hand;" text="← Menu" />
+                <Label fx:id="lblName" style="-fx-font-size: 26px; -fx-font-weight: bold;" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button fx:id="btnEdit" onAction="#onEdit">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-edit" iconSize="18" />
+                    </graphic>
+                </Button>
+                <Button fx:id="btnDelete" onAction="#onDelete">
+                    <graphic>
+                        <FontIcon iconLiteral="fas-trash" iconSize="18" />
+                    </graphic>
+                </Button>
             </HBox>
         </VBox>
     </top>
-
-    <!-- CONTENT -->
     <center>
-        <VBox fx:id="contentBox"
-              spacing="25"
-              padding="30 20 20 20"/>
+        <VBox fx:id="contentBox" spacing="25">
+            <padding>
+                <Insets bottom="20" left="20" right="20" top="30" />
+            </padding>
+        </VBox>
     </center>
-
 </BorderPane>

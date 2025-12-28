@@ -7,27 +7,30 @@ import javafx.scene.Parent;
 
 public class TakeOrderView implements View {
 
+    private final Parent root;
     private final int numeroTavolo;
 
     public TakeOrderView(int numeroTavolo) {
         this.numeroTavolo = numeroTavolo;
-    }
 
-    @Override
-    public Parent getRoot() {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/TakeOrderView.fxml")
             );
-            Parent root = loader.load();
+            this.root = loader.load();
 
             TakeOrderController controller = loader.getController();
             controller.init(numeroTavolo);
 
-            return root;
-
         } catch (Exception e) {
-            throw new RuntimeException("Errore caricamento TakeOrderView", e);
+            throw new IllegalStateException(
+                    "Errore caricamento TakeOrderView.fxml", e
+            );
         }
+    }
+
+    @Override
+    public Parent getRoot() {
+        return root;
     }
 }

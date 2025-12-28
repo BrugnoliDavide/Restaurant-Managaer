@@ -13,8 +13,7 @@ public class MenuProduct {
     // --- COSTRUTTORE 1: COMPLETO (6 Argomenti) ---
     // Da usare in DatabaseService quando LEGGI un prodotto esistente
     public MenuProduct(int id, String nome, String tipologia, double prezzo, double costo, String allergeni) {
-        // *** CORREZIONE QUI SOTTO ***
-        this.id = id; // Salviamo l'ID vero che arriva dal Database!
+        this.id = id;
         this.nome = nome;
         this.tipologia = tipologia;
         this.prezzoVendita = prezzo;

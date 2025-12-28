@@ -182,7 +182,7 @@ public class KitchenController {
 
             logger.info("Ordine #" + order.getId() + " completato.");
             // Aggiorna DB
-            DatabaseService.setOrderStatus(order.getId(), "pronto");
+            DatabaseService.setOrderStatus(order.getId(), "ready");
             // Rimuovi visivamente la card
             ordersContainer.getChildren().remove(card);
         });

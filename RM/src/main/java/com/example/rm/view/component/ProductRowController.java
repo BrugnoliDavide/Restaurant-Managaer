@@ -13,6 +13,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 
 import java.io.IOException;
+import java.util.function.Consumer;
+
 
 public class ProductRowController {
 
@@ -24,6 +26,8 @@ public class ProductRowController {
     @FXML private Label lblName;
     @FXML private Label lblDetails;
     @FXML private Label dots;
+
+    private Consumer<MenuProduct> onSelect;
 
     /* =========================
        STATE
@@ -70,34 +74,6 @@ public class ProductRowController {
     }
 
     @FXML
-    private void onClick(MouseEvent event) {
-
-        if (event.getTarget() == dots) {
-            return;
-        }
-
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/ProductDetail.fxml")
-            );
-
-            Parent rootView = loader.load();
-
-            ProductDetailController controller =
-                    loader.getController();
-
-            controller.setProduct(product);
-
-            root.getScene().setRoot(rootView);
-
-        } catch (IOException e) {
-            //da cambiare
-            e.printStackTrace();
-        }
-    }
-
-
-    @FXML
     private void onDotsClick(MouseEvent event) {
         event.consume();
         contextMenu.show(
@@ -127,4 +103,46 @@ public class ProductRowController {
 
         contextMenu.getItems().add(delete);
     }
+
+    public void setProduct(
+            MenuProduct product,
+            Runnable reloadCallback,
+            Consumer<MenuProduct> onSelect
+    ) {
+        this.product = product;
+        this.reloadCallback = reloadCallback;
+        this.onSelect = onSelect;
+
+        lblName.setText(product.getNome());
+
+        long quantitySold =
+                DatabaseService.getQuantitySold(product.getNome());
+
+        lblDetails.setText(
+                String.format("%.2f€ | Q.ta: %d",
+                        product.getPrezzoVendita(),
+                        quantitySold)
+        );
+
+        setupContextMenu();
+    }
+
+
+    @FXML
+    private void onClick(MouseEvent event) {
+
+        if (event.getTarget() == dots) {
+            return;
+        }
+
+        if (onSelect != null) {
+            onSelect.accept(product);
+        }
+    }
+
+
+
+
+
+
 }

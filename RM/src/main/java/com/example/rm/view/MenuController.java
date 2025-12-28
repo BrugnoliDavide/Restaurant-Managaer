@@ -69,15 +69,49 @@ public class MenuController {
         }
     }
 
+
+    private void openProductDetail(MenuProduct product) {
+
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/ProductDetail.fxml")
+            );
+
+            Parent root = loader.load();
+
+            ProductDetailController controller =
+                    loader.getController();
+
+            controller.setProduct(product);
+
+            menuContainer.getScene().setRoot(root);
+
+        } catch (IOException e) {
+            logger.log(Level.SEVERE,
+                    "Errore apertura ProductDetail", e);
+        }
+    }
+
+
+
+
+
+
+
     private Parent loadProductRow(MenuProduct prodotto) {
         try {
             FXMLLoader loader = new FXMLLoader(
+
                     getClass().getResource("/ProductRow.fxml")
             );
             Parent root = loader.load();
 
             ProductRowController controller = loader.getController();
-            controller.setProduct(prodotto, this::reload);
+            controller.setProduct(
+                    prodotto,
+                    this::reload,
+                    this::openProductDetail
+            );
 
             return root;
 

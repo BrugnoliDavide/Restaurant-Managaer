@@ -169,8 +169,8 @@
 
 
 .dashboard-btn {
-    -fx-background-color: -fx-bg-surface;
-    -fx-text-fill: -fx-text-primary;
+    -fx-background-color: #333333;
+    -fx-text-fill: white;
     -fx-border-color: -fx-text-secondary;
     -fx-border-radius: 20;
     -fx-background-radius: 20;
@@ -217,6 +217,15 @@
 
 
 
+
+
+.icon-button{
+    -fx-background-color: #f5f5f5;
+    -fx-border-color: #ccc;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
 
 .login-gear-icon {
     -fx-border-color: gray;

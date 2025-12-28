@@ -84,7 +84,7 @@ public class LoginController {
                     new Object[]{ user, role }
             );
 
-            //Crea l'Utente specifico con la Factory
+
             com.example.rm.model.User currentUser = UsersFactory.createUser(user, role);
 
 
@@ -106,7 +106,7 @@ public class LoginController {
         userField.setStyle(errorStyle);
         passField.setStyle(errorStyle);
 
-        //  Animazione scossa (shake) aggiungere qui in futuro
+        //  Animazione scossa (shake) da aggiungere qui in futuro
     }
 
     private void resetStyle() {

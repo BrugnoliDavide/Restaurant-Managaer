@@ -4,7 +4,7 @@ import com.example.rm.view.AbstractView;
 
 public class MenuView extends AbstractView {
     public MenuView(){
-        super("/menuView.fxml");
+        super("/MenuView.fxml");
     }
 }
 

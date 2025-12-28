@@ -25,7 +25,7 @@ public class UsersController {
     @FXML
     public void initialize() {
         // 1. Inizializza il menu a tendina dei ruoli
-        comboRole.setItems(FXCollections.observableArrayList("manager", "cameriere", "cucina"));
+        comboRole.setItems(FXCollections.observableArrayList("manager", "cameriere", "cucina", "cassiere"));
 
         // 2. Carica i dati nella tabella
         loadData();
