@@ -7,10 +7,12 @@ import com.example.rm.view.MenuController;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,12 +24,22 @@ public class AddProductDialog {
 
     private static final Logger logger = Logger.getLogger(MenuController.class.getName());
 
+    // Metodi legacy per compatibilità (senza callback)
     public static void display() {
-        new DialogBuilder(null).show();
+        new DialogBuilder(null, null).show();
     }
 
     public static void displayEdit(MenuProduct productToEdit) {
-        new DialogBuilder(productToEdit).show();
+        new DialogBuilder(productToEdit, null).show();
+    }
+
+    // Nuovi metodi con callback
+    public static void display(Consumer<Boolean> onComplete) {
+        new DialogBuilder(null, onComplete).show();
+    }
+
+    public static void displayEdit(MenuProduct productToEdit, Consumer<Boolean> onComplete) {
+        new DialogBuilder(productToEdit, onComplete).show();
     }
 
     /**
@@ -37,6 +49,7 @@ public class AddProductDialog {
         private final MenuProduct productToEdit;
         private final boolean isEditMode;
         private final Stage window;
+        private final Consumer<Boolean> onComplete;
 
         private TextField txtName;
         private ComboBox<String> cmbType;
@@ -44,15 +57,20 @@ public class AddProductDialog {
         private TextField txtCost;
         private TextField txtAllergens;
 
-        public DialogBuilder(MenuProduct productToEdit) {
+        public DialogBuilder(MenuProduct productToEdit, Consumer<Boolean> onComplete) {
             this.productToEdit = productToEdit;
             this.isEditMode = (productToEdit != null);
+            this.onComplete = onComplete;
             this.window = createWindow();
         }
 
         public void show() {
             VBox layout = buildLayout();
             window.setScene(new Scene(layout));
+
+            // Gestisce la chiusura della finestra
+            window.setOnCloseRequest(e -> notifyCompletion(false));
+
             window.showAndWait();
         }
 
@@ -72,6 +90,10 @@ public class AddProductDialog {
 
             initializeFormFields();
             Button btnSave = createSaveButton();
+            Button btnCancel = createCancelButton();
+
+            HBox buttonBox = new HBox(10);
+            buttonBox.getChildren().addAll(btnCancel, btnSave);
 
             layout.getChildren().addAll(
                     new Label("Nome:"), txtName,
@@ -79,7 +101,8 @@ public class AddProductDialog {
                     new Label("Prezzo (€):"), txtPrice,
                     new Label("Costo (€):"), txtCost,
                     new Label("Allergeni:"), txtAllergens,
-                    new Label(""), btnSave
+                    new Label(""),
+                    buttonBox
             );
 
             return layout;
@@ -137,27 +160,65 @@ public class AddProductDialog {
             return button;
         }
 
+        private Button createCancelButton() {
+            Button button = new Button("Annulla");
+            button.setStyle("-fx-background-color: #ccc; -fx-text-fill: #333; -fx-cursor: hand;");
+            button.setMaxWidth(Double.MAX_VALUE);
+            button.setOnAction(e -> {
+                notifyCompletion(false);
+                window.close();
+            });
+            return button;
+        }
+
         private void handleSave() {
+            if (!validateInputs()) {
+                showError("Compilare tutti i campi obbligatori");
+                return;
+            }
+
             try {
                 MenuProduct product = buildProductFromForm();
                 boolean success = saveProduct(product);
 
                 if (success) {
+                    logger.log(Level.INFO, "Prodotto {0} salvato con successo",
+                            isEditMode ? "modificato" : "aggiunto");
+                    notifyCompletion(true);
                     window.close();
                 } else {
                     logger.log(Level.WARNING, "Errore salvataggio DB");
+                    showError("Errore durante il salvataggio nel database");
                 }
             } catch (NumberFormatException ex) {
-                logger.log(Level.WARNING, "Errore numeri: {0}", ex.getMessage());
+                logger.log(Level.WARNING, "Errore formato numeri: {0}", ex.getMessage());
+                showError("Formato numerico non valido per prezzo o costo");
             }
         }
 
+        private boolean validateInputs() {
+            return !txtName.getText().trim().isEmpty()
+                    && cmbType.getValue() != null
+                    && !cmbType.getValue().trim().isEmpty()
+                    && !txtPrice.getText().trim().isEmpty()
+                    && !txtCost.getText().trim().isEmpty();
+        }
+
+        private void showError(String message) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Errore");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.initOwner(window);
+            alert.showAndWait();
+        }
+
         private MenuProduct buildProductFromForm() {
-            String nome = txtName.getText();
-            String tipo = cmbType.getValue();
+            String nome = txtName.getText().trim();
+            String tipo = cmbType.getValue().trim();
             double prezzo = parseDoubleValue(txtPrice.getText());
             double costo = parseDoubleValue(txtCost.getText());
-            String allergeni = txtAllergens.getText();
+            String allergeni = txtAllergens.getText().trim();
 
             if (isEditMode) {
                 return new MenuProduct(productToEdit.getId(), nome, tipo, prezzo, costo, allergeni);
@@ -174,6 +235,12 @@ public class AddProductDialog {
             return isEditMode
                     ? DatabaseService.updateProduct(product)
                     : DatabaseService.addProduct(product);
+        }
+
+        private void notifyCompletion(boolean success) {
+            if (onComplete != null) {
+                onComplete.accept(success);
+            }
         }
     }
 }

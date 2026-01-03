@@ -537,5 +537,33 @@ public class DatabaseService {
     }
 
 
+    public static MenuProduct getProductById(int productId) {
+        String sql = "SELECT id, nome, tipologia, prezzo_vendita, costo_realizzazione, allergeni " +
+                "FROM menu_items WHERE id = ?";
+
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, productId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new MenuProduct(
+                            rs.getInt("id"),
+                            rs.getString("nome"),
+                            rs.getString("tipologia"),
+                            rs.getDouble("prezzo_vendita"),
+                            rs.getDouble("costo_realizzazione"),
+                            rs.getString("allergeni")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore durante il recupero del prodotto con ID: " + productId, e);
+        }
+
+        return null;
+    }
+
 
 }
