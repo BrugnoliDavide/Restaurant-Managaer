@@ -12,7 +12,6 @@ import java.util.function.Consumer;
 
 public class OrderRowFactory {
 
-    // Costruttore privato per nascondere quello implicito (Utility Class)
     private OrderRowFactory() {
         throw new IllegalStateException("Utility class");
     }

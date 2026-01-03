@@ -32,7 +32,7 @@
                maxWidth="500"/>
     </VBox>
 
-    <!-- Spacer per spingere l'indicatore a destra -->
+
     <Region HBox.hgrow="SOMETIMES"/>
 
     <!-- Indicatore visivo (freccia) -->

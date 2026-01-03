@@ -21,7 +21,7 @@
                     <Insets bottom="5" left="20" right="20" top="10" />
                 </padding>
                 <StackPane fx:id="profileBtn" onMouseClicked="#handleProfileMenu" style="-fx-cursor: hand;">
-                    <Circle fx:id="profileCircle" fill="LIGHTGRAY" radius="16" styleClass="surface-card" />
+                    <Circle fx:id="profileCircle" fill="LIGHTGRAY" radius="16" stroke="#efd021" strokeWidth="0.0" styleClass="surface-card" />
                 </StackPane>
                 <VBox>
                     <Label fx:id="lblHeaderName" style="-fx-font-weight: bold;" />

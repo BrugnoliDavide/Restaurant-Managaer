@@ -2,25 +2,17 @@ package com.example.rm.view.component;
 
 import com.example.rm.model.MenuProduct;
 import com.example.rm.service.DatabaseService;
-import com.example.rm.view.ProductDetailController;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
+
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
-
-import java.io.IOException;
 import java.util.function.Consumer;
 
 
 public class ProductRowController {
-
-    /* =========================
-       FXML BINDINGS
-       ========================= */
 
     @FXML private HBox root;
     @FXML private Label lblName;
@@ -29,17 +21,9 @@ public class ProductRowController {
 
     private Consumer<MenuProduct> onSelect;
 
-    /* =========================
-       STATE
-       ========================= */
-
     private MenuProduct product;
     private Runnable reloadCallback;
     private ContextMenu contextMenu;
-
-    /* =========================
-       SETUP
-       ========================= */
 
     public void setProduct(MenuProduct product, Runnable reloadCallback) {
         this.product = product;

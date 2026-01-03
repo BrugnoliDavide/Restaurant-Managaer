@@ -14,107 +14,166 @@ import javafx.stage.Stage;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-
-
-
-
 public class AddProductDialog {
 
     private AddProductDialog() {
         throw new IllegalStateException("Classe di utilità: non può essere istanziata");
     }
 
-
-
-    private static final Logger logger =
-            Logger.getLogger(MenuController.class.getName());
+    private static final Logger logger = Logger.getLogger(MenuController.class.getName());
 
     public static void display() {
-        showDialog(null);
+        new DialogBuilder(null).show();
     }
-
 
     public static void displayEdit(MenuProduct productToEdit) {
-        showDialog(productToEdit);
+        new DialogBuilder(productToEdit).show();
     }
 
+    /**
+     * Classe interna per gestire la creazione e la logica del dialog
+     */
+    private static class DialogBuilder {
+        private final MenuProduct productToEdit;
+        private final boolean isEditMode;
+        private final Stage window;
 
-    private static void showDialog(MenuProduct productToEdit) {
-        boolean isEditMode = (productToEdit != null);
+        private TextField txtName;
+        private ComboBox<String> cmbType;
+        private TextField txtPrice;
+        private TextField txtCost;
+        private TextField txtAllergens;
 
-        Stage window = new Stage();
-        window.initModality(Modality.APPLICATION_MODAL);
-        window.setTitle(isEditMode ? "Modifica Prodotto" : "Aggiungi Prodotto");
-        window.setMinWidth(300);
+        public DialogBuilder(MenuProduct productToEdit) {
+            this.productToEdit = productToEdit;
+            this.isEditMode = (productToEdit != null);
+            this.window = createWindow();
+        }
 
-        MainApp.setLogo(window);
+        public void show() {
+            VBox layout = buildLayout();
+            window.setScene(new Scene(layout));
+            window.showAndWait();
+        }
 
-        VBox layout = new VBox(10);
-        layout.setPadding(new Insets(20));
-        layout.setStyle("-fx-background-color: white;");
+        private Stage createWindow() {
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setTitle(isEditMode ? "Modifica Prodotto" : "Aggiungi Prodotto");
+            stage.setMinWidth(300);
+            MainApp.setLogo(stage);
+            return stage;
+        }
 
+        private VBox buildLayout() {
+            VBox layout = new VBox(10);
+            layout.setPadding(new Insets(20));
+            layout.setStyle("-fx-background-color: white;");
 
-        TextField txtName = new TextField(isEditMode ? productToEdit.getNome() : "");
-        txtName.setPromptText("Nome");
+            initializeFormFields();
+            Button btnSave = createSaveButton();
 
-        ComboBox<String> cmbType = new ComboBox<>();
-        cmbType.getItems().addAll(DatabaseService.getAllCategories());
-        cmbType.setEditable(true);
-        if (isEditMode) cmbType.setValue(productToEdit.getTipologia());
-        else if (!cmbType.getItems().isEmpty()) cmbType.getSelectionModel().selectFirst();
+            layout.getChildren().addAll(
+                    new Label("Nome:"), txtName,
+                    new Label("Tipologia:"), cmbType,
+                    new Label("Prezzo (€):"), txtPrice,
+                    new Label("Costo (€):"), txtCost,
+                    new Label("Allergeni:"), txtAllergens,
+                    new Label(""), btnSave
+            );
 
-        TextField txtPrice = new TextField(isEditMode ? String.valueOf(productToEdit.getPrezzoVendita()) : "");
-        txtPrice.setPromptText("Prezzo Vendita");
+            return layout;
+        }
 
-        TextField txtCost = new TextField(isEditMode ? String.valueOf(productToEdit.getCostoRealizzazione()) : "");
-        txtCost.setPromptText("Costo Realizzazione");
+        private void initializeFormFields() {
+            txtName = createTextField(
+                    isEditMode ? productToEdit.getNome() : "",
+                    "Nome"
+            );
 
-        TextField txtAllergens = new TextField(isEditMode ? productToEdit.getAllergeni() : "");
-        txtAllergens.setPromptText("Allergeni");
+            cmbType = createCategoryComboBox();
 
-        Button btnSave = new Button(isEditMode ? "Salva Modifiche" : "Aggiungi al Menu");
-        btnSave.setStyle("-fx-background-color: #2B2B2B; -fx-text-fill: white; -fx-cursor: hand;");
-        btnSave.setMaxWidth(Double.MAX_VALUE);
+            txtPrice = createTextField(
+                    isEditMode ? String.valueOf(productToEdit.getPrezzoVendita()) : "",
+                    "Prezzo Vendita"
+            );
 
-        btnSave.setOnAction(e -> {
-            try {
-                String nome = txtName.getText();
-                String tipo = cmbType.getValue();
-                double prezzo = Double.parseDouble(txtPrice.getText().replace(",", "."));
-                double costo = Double.parseDouble(txtCost.getText().replace(",", "."));
-                String all = txtAllergens.getText();
+            txtCost = createTextField(
+                    isEditMode ? String.valueOf(productToEdit.getCostoRealizzazione()) : "",
+                    "Costo Realizzazione"
+            );
 
-                boolean success;
-                if (isEditMode) {
-                    // MODIFICA: Mantieni l'ID originale!
-                    MenuProduct updated = new MenuProduct(productToEdit.getId(), nome, tipo, prezzo, costo, all);
-                    success = DatabaseService.updateProduct(updated);
-                } else {
-                    // AGGIUNTA: Nuovo prodotto
-                    MenuProduct nuovo = new MenuProduct(nome, tipo, prezzo, costo, all);
-                    success = DatabaseService.addProduct(nuovo);
-                }
+            txtAllergens = createTextField(
+                    isEditMode ? productToEdit.getAllergeni() : "",
+                    "Allergeni"
+            );
+        }
 
-                if (success) window.close();
-                else logger.log(Level.WARNING,"Errore salvataggio DB");
+        private TextField createTextField(String initialValue, String promptText) {
+            TextField textField = new TextField(initialValue);
+            textField.setPromptText(promptText);
+            return textField;
+        }
 
+        private ComboBox<String> createCategoryComboBox() {
+            ComboBox<String> comboBox = new ComboBox<>();
+            comboBox.getItems().addAll(DatabaseService.getAllCategories());
+            comboBox.setEditable(true);
 
-            } catch (NumberFormatException ex) {
-                logger.log(Level.WARNING,"Errore numeri: {0}", ex.getMessage());
+            if (isEditMode) {
+                comboBox.setValue(productToEdit.getTipologia());
+            } else if (!comboBox.getItems().isEmpty()) {
+                comboBox.getSelectionModel().selectFirst();
             }
-        });
 
-        layout.getChildren().addAll(
-                new Label("Nome:"), txtName,
-                new Label("Tipologia:"), cmbType,
-                new Label("Prezzo (€):"), txtPrice,
-                new Label("Costo (€):"), txtCost,
-                new Label("Allergeni:"), txtAllergens,
-                new Label(""), btnSave
-        );
+            return comboBox;
+        }
 
-        window.setScene(new Scene(layout));
-        window.showAndWait();
+        private Button createSaveButton() {
+            Button button = new Button(isEditMode ? "Salva Modifiche" : "Aggiungi al Menu");
+            button.setStyle("-fx-background-color: #2B2B2B; -fx-text-fill: white; -fx-cursor: hand;");
+            button.setMaxWidth(Double.MAX_VALUE);
+            button.setOnAction(e -> handleSave());
+            return button;
+        }
+
+        private void handleSave() {
+            try {
+                MenuProduct product = buildProductFromForm();
+                boolean success = saveProduct(product);
+
+                if (success) {
+                    window.close();
+                } else {
+                    logger.log(Level.WARNING, "Errore salvataggio DB");
+                }
+            } catch (NumberFormatException ex) {
+                logger.log(Level.WARNING, "Errore numeri: {0}", ex.getMessage());
+            }
+        }
+
+        private MenuProduct buildProductFromForm() {
+            String nome = txtName.getText();
+            String tipo = cmbType.getValue();
+            double prezzo = parseDoubleValue(txtPrice.getText());
+            double costo = parseDoubleValue(txtCost.getText());
+            String allergeni = txtAllergens.getText();
+
+            if (isEditMode) {
+                return new MenuProduct(productToEdit.getId(), nome, tipo, prezzo, costo, allergeni);
+            } else {
+                return new MenuProduct(nome, tipo, prezzo, costo, allergeni);
+            }
+        }
+
+        private double parseDoubleValue(String text) {
+            return Double.parseDouble(text.replace(",", "."));
+        }
+
+        private boolean saveProduct(MenuProduct product) {
+            return isEditMode
+                    ? DatabaseService.updateProduct(product)
+                    : DatabaseService.addProduct(product);
+        }
     }
 }

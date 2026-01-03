@@ -20,9 +20,12 @@ public class DatabaseService {
     private static String user = null;
     private static String pass = null;
 
-    private static String username = "username";
-    private static String status = "status";
-    private static String dataOra = "data_ora";
+    private static String usernameString =          "username";
+    private static String totale_calcolatoString =  "usernameString";
+
+    private static String username =                "username";
+    private static String status =                  "status";
+    private static String dataOra =                 "data_ora";
 
     //!! riabilitare quando e se necessario
     //private static String OrderId = "orderid";
@@ -302,14 +305,14 @@ public class DatabaseService {
 
             while (rs.next()) {
                 // Estraiamo il totale calcolato dalla query
-                double totale = rs.getDouble("totale_calcolato");
+                double totale = rs.getDouble(totale_calcolatoString);
 
                 // Creiamo l'oggetto Order passando il totale appena calcolato
                 Order order = new Order(
                         rs.getInt("id"),
                         rs.getTimestamp("data_ora").toLocalDateTime(),
                         rs.getInt("tavolo"),
-                        rs.getString("username"),
+                        rs.getString(usernameString),
                         rs.getString("note"),
                         rs.getString("status"),
                         totale
@@ -344,7 +347,7 @@ public class DatabaseService {
                         rs.getString(username),
                         rs.getString("note"),
                         rs.getString(status),
-                        rs.getDouble("totale_calcolato")
+                        rs.getDouble(totale_calcolatoString)
                 ));
             }
         } catch (SQLException e) {
@@ -374,7 +377,7 @@ public class DatabaseService {
                         rs.getString(username),
                         rs.getString("note"),
                         rs.getString(status),
-                        rs.getDouble("totale_calcolato")
+                        rs.getDouble(totale_calcolatoString)
                 ));
             }
         } catch (SQLException e) {
@@ -408,7 +411,7 @@ public class DatabaseService {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                String u = rs.getString("username");
+                String u = rs.getString(usernameString);
                 String r = rs.getString("role");
                 com.example.rm.model.User userObj = com.example.rm.app.UsersFactory.createUser(u, r);
                 if (userObj != null) list.add(userObj);
