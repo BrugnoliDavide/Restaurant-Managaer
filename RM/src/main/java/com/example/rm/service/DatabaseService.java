@@ -21,7 +21,8 @@ public class DatabaseService {
     private static String pass = null;
 
     private static String usernameString =          "username";
-    private static String totale_calcolatoString =  "usernameString";
+    private static String totaleCalcolatoString =   "usernameString";
+    private static String tipologiaString       =   "tipologia";
 
     private static String username =                "username";
     private static String status =                  "status";
@@ -71,7 +72,7 @@ public class DatabaseService {
                 prodotti.add(new MenuProduct(
                         rs.getInt("id"),
                         rs.getString("nome"),
-                        rs.getString("tipologia"),
+                        rs.getString(tipologiaString),
                         rs.getDouble("prezzo_vendita"),
                         rs.getDouble("costo_realizzazione"),
                         rs.getString("allergeni")
@@ -170,7 +171,7 @@ public class DatabaseService {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                categories.add(rs.getString("tipologia"));
+                categories.add(rs.getString(tipologiaString));
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero categorie", e);
@@ -305,7 +306,7 @@ public class DatabaseService {
 
             while (rs.next()) {
                 // Estraiamo il totale calcolato dalla query
-                double totale = rs.getDouble(totale_calcolatoString);
+                double totale = rs.getDouble(totaleCalcolatoString);
 
                 // Creiamo l'oggetto Order passando il totale appena calcolato
                 Order order = new Order(
@@ -347,7 +348,7 @@ public class DatabaseService {
                         rs.getString(username),
                         rs.getString("note"),
                         rs.getString(status),
-                        rs.getDouble(totale_calcolatoString)
+                        rs.getDouble(totaleCalcolatoString)
                 ));
             }
         } catch (SQLException e) {
@@ -377,7 +378,7 @@ public class DatabaseService {
                         rs.getString(username),
                         rs.getString("note"),
                         rs.getString(status),
-                        rs.getDouble(totale_calcolatoString)
+                        rs.getDouble(totaleCalcolatoString)
                 ));
             }
         } catch (SQLException e) {
@@ -551,7 +552,7 @@ public class DatabaseService {
                     return new MenuProduct(
                             rs.getInt("id"),
                             rs.getString("nome"),
-                            rs.getString("tipologia"),
+                            rs.getString(tipologiaString),
                             rs.getDouble("prezzo_vendita"),
                             rs.getDouble("costo_realizzazione"),
                             rs.getString("allergeni")

@@ -8,7 +8,9 @@ import javafx.scene.Parent;
 public class TakeOrderView implements View {
 
     private final Parent root;
-    private final int numeroTavolo;
+
+    //TODO !! da controllare se public va bene
+    public final int numeroTavolo;
 
     public TakeOrderView(int numeroTavolo) {
         this.numeroTavolo = numeroTavolo;
