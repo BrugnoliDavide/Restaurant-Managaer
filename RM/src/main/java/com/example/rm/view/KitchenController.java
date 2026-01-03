@@ -92,6 +92,8 @@ public class KitchenController {
                     profileBtn.getScene().setRoot(loginView);
                 }
             } catch (IOException ex) {
+
+                logger.log(Level.SEVERE, "errore grave nell'apertura menu a tendina relativo al profilo", ex);
                 ex.printStackTrace();
             }
         });
