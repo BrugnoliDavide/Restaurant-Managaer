@@ -9,8 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.logging.Logger; // Import corretto
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import static com.example.rm.service.DBConstants.*;
 
 public class DatabaseService {
 
@@ -20,19 +21,6 @@ public class DatabaseService {
     private static String user = null;
     private static String pass = null;
 
-    private static String usernameString =          "username";
-    private static String totaleCalcolatoString =   "usernameString";
-    private static String tipologiaString       =   "tipologia";
-
-    private static String username =                "username";
-    private static String status =                  "status";
-    private static String dataOra =                 "data_ora";
-
-    //!! riabilitare quando e se necessario
-    //private static String OrderId = "orderid";
-    private static String table = "tavolo";
-
-    private static String postgressConnectionPrefix = "jdbc:postgresql://";
 
 
     private DatabaseService() {
@@ -40,8 +28,7 @@ public class DatabaseService {
     }
 
     public static void setConnectionConfig(String ip, String port, String dbName, String username, String password) {
-        url = postgressConnectionPrefix + ip + ":" + port + "/" + dbName;
-        user = username;
+        url = POSTGRES_PREFIX + ip + ":" + port + "/" + dbName;user = username;
         pass = password;
         logger.log(Level.INFO,"Configurazione DB aggiornata: {0}", url);
     }
@@ -52,9 +39,8 @@ public class DatabaseService {
             String dbName,
             String username
     ) {
-        url  = postgressConnectionPrefix + ip + ":" + port + "/" + dbName;
-        user = username;
-        // la PASSWORD resta invariata
+        url = POSTGRES_PREFIX + ip + ":" + port + "/" + dbName;user = username;
+
     }
 
 
@@ -70,12 +56,12 @@ public class DatabaseService {
 
             while (rs.next()) {
                 prodotti.add(new MenuProduct(
-                        rs.getInt("id"),
-                        rs.getString("nome"),
-                        rs.getString(tipologiaString),
-                        rs.getDouble("prezzo_vendita"),
-                        rs.getDouble("costo_realizzazione"),
-                        rs.getString("allergeni")
+                        rs.getInt(COL_ID),
+                        rs.getString(COL_NOME),
+                        rs.getString(COL_TIPOLOGIA),  // ✅ costante
+                        rs.getDouble(COL_PREZZO_VENDITA),
+                        rs.getDouble(COL_COSTO_REALIZZAZIONE),
+                        rs.getString(COL_ALLERGENI)
                 ));
             }
         } catch (SQLException e) {
@@ -171,7 +157,7 @@ public class DatabaseService {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                categories.add(rs.getString(tipologiaString));
+                categories.add(rs.getString(COL_TIPOLOGIA));
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero categorie", e);
@@ -305,22 +291,20 @@ public class DatabaseService {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                // Estraiamo il totale calcolato dalla query
-                double totale = rs.getDouble(totaleCalcolatoString);
-
-                // Creiamo l'oggetto Order passando il totale appena calcolato
+                double totale = rs.getDouble(COL_TOTALE_CALCOLATO);
                 Order order = new Order(
-                        rs.getInt("id"),
-                        rs.getTimestamp("data_ora").toLocalDateTime(),
-                        rs.getInt("tavolo"),
-                        rs.getString(usernameString),
-                        rs.getString("note"),
-                        rs.getString("status"),
+                        rs.getInt(COL_ID),
+                        rs.getTimestamp(COL_DATA_ORA).toLocalDateTime(),
+                        rs.getInt(COL_TAVOLO),
+                        rs.getString(COL_USERNAME),
+                        rs.getString(COL_NOTE),
+                        rs.getString(COL_STATUS),
                         totale
                 );
-
                 list.add(order);
             }
+
+
         } catch (SQLException e) {
             // Log professionale come discusso precedentemente
             logger.log(Level.SEVERE, "Errore durante il recupero degli ordini con totale: " + e.getMessage(), e);
@@ -341,16 +325,18 @@ public class DatabaseService {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                list.add(new com.example.rm.model.Order(
-                        rs.getInt("id"),
-                        rs.getTimestamp(dataOra).toLocalDateTime(),
-                        rs.getInt(table),
-                        rs.getString(username),
-                        rs.getString("note"),
-                        rs.getString(status),
-                        rs.getDouble(totaleCalcolatoString)
+                list.add(new Order(
+                        rs.getInt(COL_ID),
+                        rs.getTimestamp(COL_DATA_ORA).toLocalDateTime(),
+                        rs.getInt(COL_TAVOLO),
+                        rs.getString(COL_USERNAME),
+                        rs.getString(COL_NOTE),
+                        rs.getString(COL_STATUS),
+                        rs.getDouble(COL_TOTALE_CALCOLATO)
                 ));
             }
+
+
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero ordini con totale", e);
         }
@@ -373,12 +359,12 @@ public class DatabaseService {
             while (rs.next()) {
                 list.add(new Order(
                         rs.getInt("id"),
-                        rs.getTimestamp(dataOra).toLocalDateTime(),
-                        rs.getInt(table),
-                        rs.getString(username),
-                        rs.getString("note"),
-                        rs.getString(status),
-                        rs.getDouble(totaleCalcolatoString)
+                        rs.getTimestamp(COL_DATA_ORA).toLocalDateTime(),
+                        rs.getInt(COL_TAVOLO),
+                        rs.getString(COL_USERNAME),
+                        rs.getString(COL_NOTE),
+                        rs.getString(COL_STATUS),
+                        rs.getDouble(COL_TOTALE_CALCOLATO)
                 ));
             }
         } catch (SQLException e) {
@@ -412,8 +398,8 @@ public class DatabaseService {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                String u = rs.getString(usernameString);
-                String r = rs.getString("role");
+                String u = rs.getString(COL_USERNAME);
+                String r = rs.getString(COL_ROLE);
                 com.example.rm.model.User userObj = com.example.rm.app.UsersFactory.createUser(u, r);
                 if (userObj != null) list.add(userObj);
             }
@@ -455,14 +441,13 @@ public class DatabaseService {
     //metodi necessari per mostrare all'utente i dati di connessione usati l'ultima volta e permettervi la modifica
     public static String getDBHost() {
         if (url == null) return "";
-        String noPrefix = url.replace(postgressConnectionPrefix, "");
+        String noPrefix = url.replace(POSTGRES_PREFIX, "");
         return noPrefix.substring(0, noPrefix.indexOf(":"));
     }
 
     public static String getDBPort() {
         if (url == null) return "";
-        String noPrefix = url.replace(postgressConnectionPrefix+getDBHost(), "");
-        int start = noPrefix.indexOf(":") + 1;
+        String noPrefix = url.replace(POSTGRES_PREFIX + getDBHost(), "");int start = noPrefix.indexOf(":") + 1;
         int end = noPrefix.indexOf("/");
         return noPrefix.substring(start, end);
     }
@@ -550,12 +535,12 @@ public class DatabaseService {
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
                     return new MenuProduct(
-                            rs.getInt("id"),
-                            rs.getString("nome"),
-                            rs.getString(tipologiaString),
-                            rs.getDouble("prezzo_vendita"),
-                            rs.getDouble("costo_realizzazione"),
-                            rs.getString("allergeni")
+                            rs.getInt(COL_ID),
+                            rs.getString(COL_NOME),
+                            rs.getString(COL_TIPOLOGIA),
+                            rs.getDouble(COL_PREZZO_VENDITA),
+                            rs.getDouble(COL_COSTO_REALIZZAZIONE),
+                            rs.getString(COL_ALLERGENI)
                     );
                 }
             }

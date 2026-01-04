@@ -18,8 +18,8 @@ public class OrderDetailsFactory {
 
         VBox root = new VBox(10);
 
-        // CORRETTO: Encoding UTF-8
-        Label total = new Label("Total: " + order.getTotale() + "€");
+
+        Label total = new Label(String.format("Totale: €%.2f", order.getTotale()));
 
         TextField discountField = new TextField();
         discountField.setPromptText("Discount");
