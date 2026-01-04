@@ -177,75 +177,48 @@ public class DatabaseService {
         String sqlOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?,?, ?, ?)";
         String sqlItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, prezzo_vendita_snapshot, costo_realizzazione_snapshot) VALUES (?, ?, ?, ?, ?)";
 
-        Connection conn = null;
-        PreparedStatement pstmtOrder = null;
-        PreparedStatement pstmtItem = null;
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
+             PreparedStatement pstmtOrder = conn.prepareStatement(sqlOrder, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement pstmtItem = conn.prepareStatement(sqlItem)) {
 
-        try {
-            conn = DriverManager.getConnection(url, user, pass);
-            conn.setAutoCommit(false); // Transazione
+            conn.setAutoCommit(false);
 
-            // A. Testata Ordine
-            pstmtOrder = conn.prepareStatement(sqlOrder, Statement.RETURN_GENERATED_KEYS);
+            // Inserimento ordine
             pstmtOrder.setString(1, "Manager");
             if (tavolo != null) pstmtOrder.setInt(2, tavolo);
             else pstmtOrder.setNull(2, Types.INTEGER);
             pstmtOrder.setString(3, note);
             pstmtOrder.setString(4, "to-do");
 
-            if (pstmtOrder.executeUpdate() == 0) throw new SQLException("Creazione ordine fallita.");
+            pstmtOrder.executeUpdate();
 
-            int orderId = 0;
-            try (ResultSet generatedKeys = pstmtOrder.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    orderId = generatedKeys.getInt(1);
-                } else {
-                    throw new SQLException("Fallito recupero ID ordine.");
-                }
+            int orderId;
+            try (ResultSet keys = pstmtOrder.getGeneratedKeys()) {
+                if (!keys.next()) throw new SQLException("ID ordine non generato");
+                orderId = keys.getInt(1);
             }
 
-            // B. Righe Ordine
-            pstmtItem = conn.prepareStatement(sqlItem);
-
-            pstmtItem.setInt(1, orderId);
-
+            // Inserimento righe
             for (OrderItem item : items) {
+                pstmtItem.setInt(1, orderId);
                 pstmtItem.setInt(2, item.getProduct().getId());
                 pstmtItem.setInt(3, item.getQuantita());
                 pstmtItem.setDouble(4, item.getPrezzoSnapshot());
                 pstmtItem.setDouble(5, item.getCostoSnapshot());
                 pstmtItem.addBatch();
             }
-            pstmtItem.executeBatch();
 
+            pstmtItem.executeBatch();
             conn.commit();
-            logger.log(Level.INFO,"Ordine # {0} creato con successo.",orderId);
             return true;
 
         } catch (SQLException e) {
-            if (conn != null) {
-                try {
-                    logger.warning("Rollback in corso...");
-                    conn.rollback();
-                } catch (SQLException ex) {
-                    logger.log(Level.SEVERE, "Errore durante il Rollback", ex);
-                }
-            }
             logger.log(Level.SEVERE, "Errore creazione ordine", e);
             return false;
-        } finally {
-            closeQuietly(pstmtItem);
-            closeQuietly(pstmtOrder);
-            try {
-                if (conn != null) {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                logger.log(Level.WARNING, "Errore chiusura connessione", e);
-            }
         }
     }
+
+
 
     public static long getQuantitySold(String nomeProdotto) {
         String sql = "SELECT SUM(oi.quantita) FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE mi.nome = ?";
