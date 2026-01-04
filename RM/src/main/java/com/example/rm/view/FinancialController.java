@@ -23,6 +23,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import com.example.rm.view.screens.OrderDetailView;
 
 public class FinancialController {
 
@@ -124,13 +125,18 @@ public class FinancialController {
             );
             Parent root = loader.load();
             OrderRowController controller = loader.getController();
-            controller.setOrder(order, null);
+
+            // MODIFICA: Aggiungi callback per navigazione
+            controller.setOrder(order, this::navigateToOrderDetail);
+
             return root;
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Errore caricamento OrderRow.fxml", e);
             return new Label("Errore caricamento ordine");
         }
     }
+
+
 
     private void setupManageButton() {
         if (lblManage == null) return;
@@ -164,4 +170,15 @@ public class FinancialController {
             return new Label(text);
         }
     }
+
+
+private void navigateToOrderDetail(Order order) {
+    logger.log(Level.INFO, "Navigazione a dettaglio ordine #{0}", order.getId());
+
+    // Crea vista dedicata con ordine
+    OrderDetailView detailView = new OrderDetailView(order);
+
+    // Cambia scena
+    ordersContainer.getScene().setRoot(detailView.getRoot());
+}
 }
