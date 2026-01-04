@@ -27,7 +27,7 @@
     <top>
         <HBox alignment="CENTER_LEFT" spacing="15">
 
-            <StackPane fx:id="profileBtn" style="-fx-cursor: hand;" onMouseClicked="#handleLogout">
+            <StackPane fx:id="profileBtn" style="-fx-cursor: hand;" onMouseClicked="#handleProfileMenu">
                 <Circle fx:id="profileCircle" radius="25" fill="CORNFLOWERBLUE" stroke="TOMATO" strokeWidth="0" />
             </StackPane>
 

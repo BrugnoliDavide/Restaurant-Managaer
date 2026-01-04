@@ -9,16 +9,15 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Parent;
-import javafx.scene.control.Button;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
+import com.example.rm.view.component.ChangePasswordDialog;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
@@ -72,35 +71,60 @@ public class KitchenController {
 
     @FXML
     private void handleProfileMenu(MouseEvent event) {
+
         ContextMenu contextMenu = new ContextMenu();
 
+        // === OPZIONE 1: CAMBIA PASSWORD ===
+        MenuItem itemChangePassword = new MenuItem("Cambia Password");
+        itemChangePassword.setStyle(
+                "-fx-font-size: 14px; " +
+                        "-fx-padding: 5 10 5 10; " +
+                        "-fx-text-fill: #2196F3;"
+        );
+        itemChangePassword.setOnAction(e -> {
+            Stage stage = (Stage) profileBtn.getScene().getWindow();
+            ChangePasswordDialog.show(stage);
+        });
+
+        // === OPZIONE 2: LOGOUT ===
         MenuItem itemLogout = new MenuItem("Logout");
-        itemLogout.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
-
+        itemLogout.setStyle(
+                "-fx-font-size: 14px; " +
+                        "-fx-padding: 5 10 5 10; " +
+                        "-fx-text-fill: red; " +
+                        "-fx-font-weight: bold;"
+        );
         itemLogout.setOnAction(e -> {
-
-            //!!da togliere e inserire dentro il metodo sotto
             logger.log(Level.INFO, "Logout Cucina effettuato.");
-
-            //!!da mettere qua sotto
             UserSession.cleanUserSession();
 
             try {
-                Parent loginView = new FXMLLoader(getClass().getResource("/LoginView.fxml")).load();
-                // Otteniamo la scena attuale dal bottone profilo e cambiamo la root
+                Parent loginView = new FXMLLoader(
+                        getClass().getResource("/LoginView.fxml")
+                ).load();
+
                 if (profileBtn.getScene() != null) {
                     profileBtn.getScene().setRoot(loginView);
                 }
             } catch (IOException ex) {
-
-                logger.log(Level.SEVERE, "errore grave nell'apertura menu a tendina relativo al profilo", ex);
-                ex.printStackTrace();
+                logger.log(
+                        Level.SEVERE,
+                        "Errore apertura menu profilo",
+                        ex
+                );
             }
         });
 
-        contextMenu.getItems().add(itemLogout);
+        // === ASSEMBLA MENU ===
+        contextMenu.getItems().addAll(
+                itemChangePassword,
+                new SeparatorMenuItem(),
+                itemLogout
+        );
+
         contextMenu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
+
 
     // --- GESTIONE ORDINI ---
     @FXML

@@ -8,6 +8,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static com.example.rm.service.DBConstants.*;
 
 public final class SecurityService {
 
@@ -88,6 +89,66 @@ public final class SecurityService {
             );
 
 
+            return false;
+        }
+    }
+
+
+
+
+    public static boolean changePassword(
+            String username,
+            String currentPassword,
+            String newPassword
+    ) {
+        //VERIFICA PASSWORD CORRENTE
+        String currentRole = authenticate(username, currentPassword);
+
+        if (currentRole == null) {
+            logger.log(
+                    Level.WARNING,
+                    "Tentativo cambio password fallito per {0}: password corrente errata",
+                    username
+            );
+            return false;
+        }
+
+        // GENERA HASH DELLA NUOVA PASSWORD
+        String newHashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt(12));
+
+        // AGGIORNA DATABASE
+        final String sql = "UPDATE users SET password = ? WHERE username = ?";
+
+        try (Connection conn = DatabaseService.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, newHashedPassword);
+            pstmt.setString(2, username);
+
+            int rowsAffected = pstmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                logger.log(
+                        Level.INFO,
+                        "Password cambiata con successo per utente: {0}",
+                        username
+                );
+                return true;
+            } else {
+                logger.log(
+                        Level.WARNING,
+                        "Nessuna riga aggiornata per utente: {0}",
+                        username
+                );
+                return false;
+            }
+
+        } catch (SQLException e) {
+            logger.log(
+                    Level.SEVERE,
+                    "Errore durante cambio password per utente: " + username,
+                    e
+            );
             return false;
         }
     }

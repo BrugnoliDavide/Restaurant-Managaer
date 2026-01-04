@@ -16,6 +16,14 @@ import javafx.util.Duration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.example.rm.view.component.ChangePasswordDialog;
+import javafx.stage.Stage;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.geometry.Side;
+import javafx.scene.input.MouseEvent;
+
 public class WaiterController {
 
     private static final Logger logger = Logger.getLogger(WaiterController.class.getName());
@@ -57,27 +65,58 @@ public class WaiterController {
     }
 
     @FXML
-    private void handleLogout() {
-        logger.log(Level.INFO, "Eseguo Logout.");
+    private void handleProfileMenu(MouseEvent event) {
 
-        // 1. Pulisci la sessione
-        UserSession.cleanUserSession();
+        ContextMenu contextMenu = new ContextMenu();
 
-        // 2. Torna al Login usando il ViewFactory (metodo più pulito)
-        // Se ViewFactory non ha .login(), usa FXMLLoader come nel KitchenController
-        try {
-            if (profileBtn.getScene() != null) {
-                // Carichiamo la View di login tramite ViewFactory o manualmente
-                Parent loginView = new FXMLLoader(getClass().getResource("/LoginView.fxml")).load();
-                // Otteniamo la scena attuale dal bottone profilo e cambiamo la root
+        // === OPZIONE 1: CAMBIA PASSWORD ===
+        MenuItem itemChangePassword = new MenuItem("Cambia Password");
+        itemChangePassword.setStyle(
+                "-fx-font-size: 14px; " +
+                        "-fx-padding: 5 10 5 10; " +
+                        "-fx-text-fill: #2196F3;"
+        );
+        itemChangePassword.setOnAction(e -> {
+            Stage stage = (Stage) profileBtn.getScene().getWindow();
+            ChangePasswordDialog.show(stage);
+        });
+
+        // === OPZIONE 2: LOGOUT ===
+        MenuItem itemLogout = new MenuItem("Logout");
+        itemLogout.setStyle(
+                "-fx-font-size: 14px; " +
+                        "-fx-padding: 5 10 5 10; " +
+                        "-fx-text-fill: red; " +
+                        "-fx-font-weight: bold;"
+        );
+        itemLogout.setOnAction(e -> {
+            logger.log(Level.INFO, "Logout Cameriere effettuato.");
+            UserSession.cleanUserSession();
+
+            try {
+                Parent loginView = new FXMLLoader(
+                        getClass().getResource("/LoginView.fxml")
+                ).load();
+
                 if (profileBtn.getScene() != null) {
                     profileBtn.getScene().setRoot(loginView);
                 }
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Errore durante il logout", ex);
             }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Errore durante il logout", e);
-        }
+        });
+
+        // === ASSEMBLA MENU ===
+        contextMenu.getItems().addAll(
+                itemChangePassword,
+                new SeparatorMenuItem(),
+                itemLogout
+        );
+
+        contextMenu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
+
+
 
     @FXML
     private void handleNewOrder() {

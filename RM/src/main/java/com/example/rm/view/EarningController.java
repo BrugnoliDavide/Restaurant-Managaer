@@ -9,10 +9,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Side;
 import javafx.scene.Parent;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -21,6 +18,9 @@ import javafx.scene.shape.Circle;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.example.rm.view.component.ChangePasswordDialog;
+import javafx.stage.Stage;
 
 public class EarningController {
 
@@ -150,25 +150,38 @@ public class EarningController {
         loadOpenOrders();
     }
 
-    /* ======================
-       PROFILE MENU
-       ====================== */
-
     @FXML
     private void handleProfileMenu(MouseEvent event) {
 
         ContextMenu menu = new ContextMenu();
 
+        // === OPZIONE 1: CAMBIA PASSWORD ===
+        MenuItem itemChangePassword = new MenuItem("Cambia Password");
+        itemChangePassword.setStyle(
+                "-fx-font-size: 14px; " +
+                        "-fx-padding: 5 10 5 10; " +
+                        "-fx-text-fill: #2196F3;"
+        );
+        itemChangePassword.setOnAction(e -> {
+            Stage stage = (Stage) profileBtn.getScene().getWindow();
+            ChangePasswordDialog.show(stage);
+        });
+
+        // === OPZIONE 2: LOGOUT ===
         MenuItem logout = new MenuItem("Logout");
-        logout.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
-
+        logout.setStyle(
+                "-fx-font-size: 14px; " +
+                        "-fx-padding: 5 10 5 10; " +
+                        "-fx-text-fill: red; " +
+                        "-fx-font-weight: bold;"
+        );
         logout.setOnAction(e -> {
-
             UserSession.cleanUserSession();
 
             try {
-                Parent login =
-                        FXMLLoader.load(getClass().getResource("/LoginView.fxml"));
+                Parent login = FXMLLoader.load(
+                        getClass().getResource("/LoginView.fxml")
+                );
                 profileBtn.getScene().setRoot(login);
 
             } catch (IOException ex) {
@@ -176,14 +189,15 @@ public class EarningController {
             }
         });
 
-        menu.getItems().add(logout);
+        // === ASSEMBLA MENU ===
+        menu.getItems().addAll(
+                itemChangePassword,
+                new SeparatorMenuItem(),
+                logout
+        );
+
         menu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
-
-    /* ======================
-       LOAD DATA
-       ====================== */
-
     private void loadOpenOrders() {
 
         detailsPane.getChildren().clear();

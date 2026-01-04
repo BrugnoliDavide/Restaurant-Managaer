@@ -8,6 +8,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 import com.example.rm.app.UserSession;
+import com.example.rm.view.component.ChangePasswordDialog;
+import javafx.stage.Stage;
 
 public class ManagerController {
 
@@ -63,35 +65,50 @@ public class ManagerController {
 
         ContextMenu contextMenu = new ContextMenu();
 
-
+        // === OPZIONE 1: GESTIONE STAFF ===
         MenuItem itemStaff = new MenuItem("Gestione Staff");
         itemStaff.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10;");
         itemStaff.setOnAction(e -> {
-
             View usersView = ViewFactory.forRole("users");
             profileBtn.getScene().setRoot(usersView.getRoot());
-
-
         });
 
+        // === OPZIONE 2: CAMBIA PASSWORD (NUOVO) ===
+        MenuItem itemChangePassword = new MenuItem("Cambia Password");
+        itemChangePassword.setStyle(
+                "-fx-font-size: 14px; " +
+                        "-fx-padding: 5 10 5 10; " +
+                        "-fx-text-fill: #2196F3;"
+        );
+        itemChangePassword.setOnAction(e -> {
+            Stage stage = (Stage) profileBtn.getScene().getWindow();
+            ChangePasswordDialog.show(stage);
+        });
 
+        // === OPZIONE 3: LOGOUT ===
         MenuItem itemLogout = new MenuItem("Logout");
-        itemLogout.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10; -fx-text-fill: red;"); // Rosso per indicare uscita
+        itemLogout.setStyle(
+                "-fx-font-size: 14px; " +
+                        "-fx-padding: 5 10 5 10; " +
+                        "-fx-text-fill: red; " +
+                        "-fx-font-weight: bold;"
+        );
         itemLogout.setOnAction(e -> {
-
-
-
             UserSession.cleanUserSession();
             profileBtn.getScene().setRoot(LoginController.getFXMLView());
         });
 
-
-        contextMenu.getItems().addAll(itemStaff, new SeparatorMenuItem(), itemLogout);
-
+        // === ASSEMBLA MENU ===
+        contextMenu.getItems().addAll(
+                itemStaff,
+                new SeparatorMenuItem(),
+                itemChangePassword,
+                new SeparatorMenuItem(),
+                itemLogout
+        );
 
         contextMenu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
-
 
 
     @FXML
