@@ -487,13 +487,22 @@ public class DatabaseService {
 
     public static List<Order> getOrdersToPay() {
         // Recupera gli ordini che sono nello stato 'ready' (pronti ma non pagati)
-        return getOrdersByStatus("ready");
+        return getOrdersByStatus("delivered");
     }
 
     public static boolean markOrderAsPaid(int orderId) {
         // Cambia lo stato in 'pagato' per farlo sparire dalla cassa
         return setOrderStatus(orderId, "closed");
     }
+
+    public static List<Order> getReadyOrdersForWaiter() {
+        return getOrdersByStatus("ready");
+    }
+
+    public static boolean markOrderAsDelivered(int orderId) {
+        return setOrderStatus(orderId, "delivered");
+    }
+
 
 
     public static MenuProduct getProductById(int productId) {
