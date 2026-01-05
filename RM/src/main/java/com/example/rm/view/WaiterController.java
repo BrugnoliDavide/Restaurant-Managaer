@@ -32,7 +32,7 @@ import java.util.logging.Logger;
 
 public class WaiterController {
 
-    private static final Logger logger = Logger.getLogger(WaiterController.class.getName());
+    public static final Logger logger = Logger.getLogger(WaiterController.class.getName());
 
     @FXML private StackPane profileBtn;
     @FXML private Circle profileCircle;
@@ -41,8 +41,6 @@ public class WaiterController {
     @FXML private Label lblWelcomeTop;
     @FXML private Button btnNewOrder;
     @FXML private TextField txtTable;
-
-    // Riferimento al container aggiunto nell'FXML
     @FXML private VBox notificationsContainer;
 
     private Timeline pollingTimeline;
@@ -51,14 +49,14 @@ public class WaiterController {
     public void initialize() {
         setupUserSession();
         setupHoverEffects();
-        startPolling(); // Avvia il controllo periodico degli ordini pronti
+        startPolling();
     }
 
     private void startPolling() {
-        // Aggiorna subito all'avvio
+
         refreshNotifications();
 
-        // Configura un timer che scatta ogni 5 secondi
+        // Configura il refresh ogni 5 secondi
         pollingTimeline = new Timeline(new KeyFrame(Duration.seconds(5), event -> {
             refreshNotifications();
         }));
@@ -66,7 +64,7 @@ public class WaiterController {
         pollingTimeline.play();
     }
 
-    // Chiamato quando si esce dalla schermata per fermare il timer
+    //quando si esce dalla schermata per fermare il timer
     public void stopPolling() {
         if (pollingTimeline != null) {
             pollingTimeline.stop();
@@ -74,35 +72,35 @@ public class WaiterController {
     }
 
     private void refreshNotifications() {
-        // 1. Recupera ordini pronti dal DB
+
         List<Order> readyOrders = DatabaseService.getReadyOrdersForWaiter();
-
-        // 2. Pulisci la vista attuale
         notificationsContainer.getChildren().clear();
+        UserSession session = UserSession.getInstance();
 
-        // 3. Genera le card
         for (Order order : readyOrders) {
-            notificationsContainer.getChildren().add(createNotificationCard(order));
-        }
+
+            if (session.isTableManaged(order.getTavolo())) {
+                notificationsContainer.getChildren().add(createNotificationCard(order));
+        } }
     }
 
     private VBox createNotificationCard(Order order) {
-        // --- STILE CARD (Container Bianco) ---
+
         VBox card = new VBox(10);
         card.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 15; -fx-max-width: 300;");
 
-        // Ombra
+
         DropShadow shadow = new DropShadow();
         shadow.setColor(Color.color(0, 0, 0, 0.15));
         shadow.setRadius(10);
         shadow.setOffsetY(2);
         card.setEffect(shadow);
 
-        // --- HEADER: Pallino Verde + "To deliver" ---
+
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        // Pallino verde con effetto glow
+
         Circle dot = new Circle(6, Color.web("#00E676"));
         Circle glow = new Circle(10, Color.web("#00E676", 0.4));
         glow.setEffect(new GaussianBlur(3));
@@ -113,7 +111,7 @@ public class WaiterController {
 
         header.getChildren().addAll(indicator, title);
 
-        // --- CONTENUTO: Lista piatti ---
+
         VBox contentBox = new VBox(2);
         List<String> items = DatabaseService.getOrderItemsForDisplay(order.getId());
 
@@ -179,6 +177,11 @@ public class WaiterController {
     @FXML
     private void handleProfileMenu(MouseEvent event) {
         ContextMenu contextMenu = new ContextMenu();
+
+        MenuItem itemTableFilter = new MenuItem("Gestione Tavoli");
+        itemTableFilter.setOnAction(e -> showTableFilterDialog());
+
+
         MenuItem itemChangePassword = new MenuItem("Cambia Password");
         itemChangePassword.setOnAction(e -> ChangePasswordDialog.show((Stage) profileBtn.getScene().getWindow()));
 
@@ -193,7 +196,7 @@ public class WaiterController {
             } catch (Exception ex) { logger.log(Level.SEVERE, "Logout error", ex); }
         });
 
-        contextMenu.getItems().addAll(itemChangePassword, new SeparatorMenuItem(), itemLogout);
+        contextMenu.getItems().addAll(itemTableFilter, itemChangePassword, new SeparatorMenuItem(), itemLogout);
         contextMenu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
 
@@ -213,5 +216,31 @@ public class WaiterController {
         } catch (NumberFormatException ex) {
             txtTable.setStyle("-fx-border-color: red; -fx-border-width: 2;");
         }
+    }
+
+
+
+    private void showTableFilterDialog() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Filtro Tavoli");
+        dialog.setHeaderText("Quali tavoli vuoi gestire oggi?");
+        dialog.setContentText("Inserisci tavoli (es: 1-5; 10; 12):");
+
+        // Opzionale: precompila con il valore attuale se esiste
+        // dialog.getEditor().setText(...recupera stringa salvata...);
+
+        dialog.showAndWait().ifPresent(input -> {
+            // 1. Usa il parser creato al punto 1
+            // (Assicurati di importare la classe TableSelectionUtils)
+            java.util.Set<Integer> selectedTables = com.example.rm.util.TableSelectionUtils.parseTableString(input);
+
+            // 2. Salva nella sessione
+            UserSession.getInstance().setManagedTables(selectedTables);
+
+            // 3. Ricarica immediata della vista per applicare il filtro
+            refreshNotifications();
+
+            logger.info("Filtro tavoli aggiornato: " + input);
+        });
     }
 }
