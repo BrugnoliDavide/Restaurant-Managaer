@@ -58,7 +58,7 @@ public class FinancialController {
     private void filterAndRender(String query) {
         String lowerCaseQuery = query.toLowerCase().trim();
 
-        // CORRETTO: "è" invece di "Ã¨"
+
         if (lowerCaseQuery.isEmpty()) {
             renderOrders(allOrdersMaster);
             return;

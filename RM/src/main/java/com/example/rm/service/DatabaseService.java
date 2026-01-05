@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import static com.example.rm.service.DBConstants.*;
+import java.time.LocalDateTime;
 
 public class DatabaseService {
 
@@ -531,6 +532,73 @@ public class DatabaseService {
         }
 
         return null;
+    }
+
+
+    public static List<OrderItem> getOrderItemsDetailed(int orderId) {
+        List<OrderItem> items = new ArrayList<>();
+        // Uniamo order_items con menu_items per avere il nome del piatto
+        String sql = "SELECT mi.nome, oi.quantita, oi.prezzo_vendita_snapshot " +
+                "FROM order_items oi " +
+                "JOIN menu_items mi ON oi.menu_item_id = mi.id " +
+                "WHERE oi.order_id = ?";
+
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, orderId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                String nomePiatto = rs.getString("nome");
+                int qta = rs.getInt("quantita");
+                double prezzoSnap = rs.getDouble("prezzo_vendita_snapshot");
+
+                // Creiamo un oggetto MenuProduct temporaneo solo per trasportare il nome
+                MenuProduct dummyProduct = new MenuProduct();
+                dummyProduct.setNome(nomePiatto);
+
+                // Creiamo l'OrderItem
+                OrderItem item = new OrderItem();
+                item.setProduct(dummyProduct);
+                item.setQuantita(qta);
+                item.setPrezzoSnapshot(prezzoSnap);
+
+                items.add(item);
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore recupero dettagli articoli ordine " + orderId, e);
+        }
+        return items;
+    }
+
+
+
+    public static long getQuantitySoldInDateRange(int productId, LocalDateTime start, LocalDateTime end) {
+        // Query che somma le quantità degli order_items collegati a ordini nel range di date
+        String sql = "SELECT COALESCE(SUM(oi.quantita), 0) " +
+                "FROM order_items oi " +
+                "JOIN orders o ON oi.order_id = o.id " +
+                "WHERE oi.menu_item_id = ? " +
+                "AND o.data_ora >= ? AND o.data_ora <= ? " +
+                "AND o.status != 'canceled'"; // Escludiamo ordini cancellati se gestiti
+
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, productId);
+            pstmt.setTimestamp(2, Timestamp.valueOf(start));
+            pstmt.setTimestamp(3, Timestamp.valueOf(end));
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore conteggio vendite per data", e);
+        }
+        return 0;
     }
 
 

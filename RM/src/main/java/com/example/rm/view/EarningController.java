@@ -2,6 +2,7 @@ package com.example.rm.view;
 
 import com.example.rm.app.UserSession;
 import com.example.rm.model.Order;
+import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
 import com.example.rm.service.DatabaseService;
 import javafx.animation.KeyFrame;
@@ -314,6 +315,7 @@ public class EarningController {
         detailsPane.getChildren().add(content);
     }
 
+/* !! deprecato versione aggiornata sotto
     private VBox createOrderSection(Order order) {
         // ... (Implementazione identica alla tua versione precedente) ...
         // Per brevità qui riporto solo la struttura, il contenuto interno è lo stesso
@@ -344,6 +346,8 @@ public class EarningController {
         section.getChildren().addAll(orderHeader, itemsList);
         return section;
     }
+*/
+
 
     private void clearDetailsPane() {
         detailsPane.getChildren().clear();
@@ -398,4 +402,74 @@ public class EarningController {
         menu.getItems().add(logout);
         menu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
+
+
+    private VBox createOrderSection(Order order) {
+        VBox section = new VBox(8);
+        // Stile "card" leggera
+        section.setStyle("-fx-background-color: #FAFAFA; -fx-padding: 12; -fx-background-radius: 5; -fx-border-color: #E0E0E0;");
+
+        // === HEADER DELL'ORDINE (ID e Totale parziale) ===
+        HBox orderHeader = new HBox(10);
+        orderHeader.setAlignment(Pos.CENTER_LEFT);
+
+        Label lblOrderId = new Label("Ordine #" + order.getId());
+        lblOrderId.setStyle("-fx-font-weight: bold; -fx-text-fill: #2196F3;");
+
+        // Label Stato
+        Label lblStatus = new Label("Consegnato");
+        lblStatus.setStyle("-fx-font-size: 10px; -fx-text-fill: white; -fx-background-color: #9E9E9E; -fx-padding: 2 6; -fx-background-radius: 10;");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS); // Spinge il totale a destra
+
+        Label lblOrderTotal = new Label(String.format("€%.2f", order.getTotale()));
+        lblOrderTotal.setStyle("-fx-font-weight: bold; -fx-text-fill: #2ecc71; -fx-font-size: 14px;");
+
+        orderHeader.getChildren().addAll(lblOrderId, lblStatus, spacer, lblOrderTotal);
+
+        // === LISTA ARTICOLI CON PREZZI ===
+        VBox itemsList = new VBox(4);
+        itemsList.setPadding(new Insets(8, 0, 0, 10)); // Indentazione leggera
+
+        // USIAMO IL NUOVO METODO DEL SERVICE
+        List<OrderItem> items = DatabaseService.getOrderItemsDetailed(order.getId());
+
+        for (OrderItem item : items) {
+            // Calcolo totale riga (Quantità * Prezzo Snapshot)
+            double rowTotal = item.getQuantita() * item.getPrezzoSnapshot();
+
+            // Layout Riga: "2x Pizza Margherita ............ € 14.00"
+            HBox itemRow = new HBox(10);
+            itemRow.setAlignment(Pos.CENTER_LEFT);
+
+            // Nome e Quantità
+            String nomeProdotto = item.getProduct() != null ? item.getProduct().getNome() : "???";
+            Label lblName = new Label(item.getQuantita() + "x " + nomeProdotto);
+            lblName.setStyle("-fx-text-fill: #444; -fx-font-size: 13px;");
+
+            Region itemSpacer = new Region();
+            HBox.setHgrow(itemSpacer, Priority.ALWAYS); // Spinge il prezzo a destra
+
+            // Prezzo Riga
+            Label lblPrice = new Label(String.format("€%.2f", rowTotal));
+            lblPrice.setStyle("-fx-text-fill: #666; -fx-font-size: 13px;");
+
+            itemRow.getChildren().addAll(lblName, itemSpacer, lblPrice);
+            itemsList.getChildren().add(itemRow);
+        }
+
+        // Note (se presenti)
+        if (order.hasNote()) {
+            Label lblNote = new Label("Note: " + order.getNote());
+            lblNote.setWrapText(true);
+            lblNote.setStyle("-fx-text-fill: #D32F2F; -fx-font-style: italic; -fx-font-size: 11px; -fx-padding: 4 0 0 0;");
+            itemsList.getChildren().add(lblNote);
+        }
+
+        section.getChildren().addAll(orderHeader, new Separator(), itemsList);
+        return section;
+    }
+
+
 }

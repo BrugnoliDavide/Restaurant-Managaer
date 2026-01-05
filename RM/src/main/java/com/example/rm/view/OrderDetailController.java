@@ -17,10 +17,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Controller per la vista di dettaglio ordine
- * Mostra informazioni complete: articoli, totali, note, stato
- */
 public class OrderDetailController {
 
     @FXML private Label lblBack;
@@ -35,9 +31,7 @@ public class OrderDetailController {
     private static final DateTimeFormatter DATE_FORMATTER =
             DateTimeFormatter.ofPattern("EEEE d MMMM yyyy 'alle' HH:mm");
 
-    /**
-     * Imposta l'ordine da visualizzare
-     */
+
     public void setOrder(Order order) {
         if (order == null) {
             logger.log(Level.WARNING, "Tentativo di impostare ordine NULL");
@@ -53,9 +47,7 @@ public class OrderDetailController {
         setupBackHover();
     }
 
-    /**
-     * Renderizza i dettagli dell'ordine
-     */
+
     private void render() {
         if (order == null) {
             logger.log(Level.WARNING, "render() chiamato ma order è null");
@@ -92,9 +84,7 @@ public class OrderDetailController {
         );
     }
 
-    /**
-     * Crea sezione informazioni generali
-     */
+
     private VBox createInfoSection() {
         VBox section = new VBox(12);
         section.setPadding(new Insets(0, 0, 10, 0));
@@ -165,9 +155,7 @@ public class OrderDetailController {
         return section;
     }
 
-    /**
-     * Crea sezione articoli ordinati
-     */
+
     private VBox createItemsSection() {
         VBox section = new VBox(10);
         section.setPadding(new Insets(10, 0, 10, 0));
@@ -226,9 +214,7 @@ public class OrderDetailController {
         return section;
     }
 
-    /**
-     * Crea sezione totali
-     */
+
     private VBox createTotalsSection() {
         VBox section = new VBox(15);
         section.setPadding(new Insets(10, 0, 10, 0));
@@ -266,9 +252,7 @@ public class OrderDetailController {
         return section;
     }
 
-    /**
-     * Crea sezione stato ordine
-     */
+
     private VBox createStatusSection() {
         VBox section = new VBox(10);
         section.setPadding(new Insets(10, 0, 0, 0));
@@ -303,7 +287,7 @@ public class OrderDetailController {
                 statusText = "✓ Pronto";
                 badgeStyle =
                         "-fx-background-color: #E8F8F5; " +
-                                "-fx-border-color: #4CAF50; " +
+                                "-fx-border-color: #0eda07; " +
                                 "-fx-border-width: 2; " +
                                 "-fx-background-radius: 5; " +
                                 "-fx-border-radius: 5;";
@@ -313,6 +297,16 @@ public class OrderDetailController {
                 badgeStyle =
                         "-fx-background-color: #E3F2FD; " +
                                 "-fx-border-color: #2196F3; " +
+                                "-fx-border-width: 2; " +
+                                "-fx-background-radius: 5; " +
+                                "-fx-border-radius: 5;";
+                break;
+
+            case "delivered":
+                statusText = "da pagare";
+                badgeStyle =
+                        "-fx-background-color: #FFF3E0; " +
+                                "-fx-border-color: #a823bc; " +
                                 "-fx-border-width: 2; " +
                                 "-fx-background-radius: 5; " +
                                 "-fx-border-radius: 5;";
@@ -342,9 +336,7 @@ public class OrderDetailController {
         return section;
     }
 
-    /**
-     * Configura hover per link "Indietro"
-     */
+
     private void setupBackHover() {
         if (lblBack == null) return;
 
@@ -364,9 +356,7 @@ public class OrderDetailController {
         lblBack.setOnMouseExited(e -> lblBack.setStyle(normal));
     }
 
-    /**
-     * Torna alla vista Financial
-     */
+
     @FXML
     private void goBack() {
         logger.log(Level.INFO, "Ritorno a Financial View");
