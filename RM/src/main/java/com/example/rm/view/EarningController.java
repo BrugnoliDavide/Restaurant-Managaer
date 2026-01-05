@@ -25,9 +25,16 @@ import javafx.scene.control.SeparatorMenuItem;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class EarningController {
+
+    private static final Logger logger = Logger.getLogger(EarningController.class.getName());
 
     @FXML private VBox ordersContainer;
     @FXML private VBox detailsPane;
@@ -51,9 +58,7 @@ public class EarningController {
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("HH:mm");
 
-    /* ======================
-       INIT
-       ====================== */
+
 
     @FXML
     public void initialize() {
@@ -407,7 +412,7 @@ public class EarningController {
                 Parent loginView = FXMLLoader.load(getClass().getResource("/LoginView.fxml"));
                 profileBtn.getScene().setRoot(loginView);
             } catch (IOException ex) {
-                ex.printStackTrace();
+                logger.log(Level.SEVERE, "impossibile tornare indietro", ex);
             }
         });
 

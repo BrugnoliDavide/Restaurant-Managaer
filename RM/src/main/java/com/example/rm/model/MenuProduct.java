@@ -1,21 +1,25 @@
 package com.example.rm.model;
 
 import javafx.beans.property.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class MenuProduct implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    // Properties JavaFX
-    private final IntegerProperty id;
-    private final StringProperty nome;
-    private final StringProperty tipologia;
-    private final DoubleProperty prezzoVendita;
-    private final DoubleProperty costoRealizzazione;
-    private final StringProperty allergeni;
+    // MODIFICA 1: Aggiunto 'transient' e rimosso 'final'
+    // 'transient' dice a Java di non provare a serializzare questi oggetti complessi automaticamente.
+    private transient IntegerProperty id;
+    private transient StringProperty nome;
+    private transient StringProperty tipologia;
+    private transient DoubleProperty prezzoVendita;
+    private transient DoubleProperty costoRealizzazione;
+    private transient StringProperty allergeni;
 
-    // COSTRUTTORE 1: Vuoto (JavaBean requirement)
+    // COSTRUTTORE 1: Vuoto
     public MenuProduct() {
         this.id = new SimpleIntegerProperty(0);
         this.nome = new SimpleStringProperty("");
@@ -25,7 +29,7 @@ public class MenuProduct implements Serializable {
         this.allergeni = new SimpleStringProperty("");
     }
 
-    // COSTRUTTORE 2: Completo (da DB - MANTIENI FIRMA IDENTICA)
+    // COSTRUTTORE 2: Completo
     public MenuProduct(int id, String nome, String tipologia,
                        double prezzo, double costo, String allergeni) {
         this.id = new SimpleIntegerProperty(id);
@@ -36,18 +40,43 @@ public class MenuProduct implements Serializable {
         this.allergeni = new SimpleStringProperty(allergeni != null ? allergeni : "");
     }
 
-    // COSTRUTTORE 3: Senza ID (per nuovi prodotti)
+    // COSTRUTTORE 3: Senza ID
     public MenuProduct(String nome, String tipologia,
                        double prezzo, double costo, String allergeni) {
         this(0, nome, tipologia, prezzo, costo, allergeni);
     }
 
-    // COSTRUTTORE 4: Semplificato legacy
+    // COSTRUTTORE 4: Legacy
     public MenuProduct(String nome, String tipologia, double prezzo, double costo) {
         this(0, nome, tipologia, prezzo, costo, "");
     }
 
-    // === GETTER E SETTER (MANTIENI FIRME IDENTICHE) ===
+    // === MODIFICA 2: Metodi per gestire la Serializzazione Manuale ===
+    // Questi metodi vengono chiamati automaticamente da Java quando l'oggetto viene salvato/caricato
+
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        // Scriviamo i valori "puri" (int, String, double) invece delle Property
+        s.writeInt(getId());
+        s.writeUTF(getNome() != null ? getNome() : "");
+        s.writeUTF(getTipologia() != null ? getTipologia() : "");
+        s.writeDouble(getPrezzoVendita());
+        s.writeDouble(getCostoRealizzazione());
+        s.writeUTF(getAllergeni() != null ? getAllergeni() : "");
+    }
+
+    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        // Ricostruiamo le Property JavaFX usando i valori letti
+        this.id = new SimpleIntegerProperty(s.readInt());
+        this.nome = new SimpleStringProperty(s.readUTF());
+        this.tipologia = new SimpleStringProperty(s.readUTF());
+        this.prezzoVendita = new SimpleDoubleProperty(s.readDouble());
+        this.costoRealizzazione = new SimpleDoubleProperty(s.readDouble());
+        this.allergeni = new SimpleStringProperty(s.readUTF());
+    }
+
+    // === GETTER E SETTER (INVARIATI) ===
 
     public int getId() { return id.get(); }
     public void setId(int id) { this.id.set(id); }
@@ -75,7 +104,7 @@ public class MenuProduct implements Serializable {
     }
     public StringProperty allergeniProperty() { return allergeni; }
 
-    // === METODI CALCOLATI (NUOVI) ===
+    // METODI CALCOLATI
 
     public double getMargine() {
         return getPrezzoVendita() - getCostoRealizzazione();

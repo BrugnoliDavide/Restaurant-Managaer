@@ -147,9 +147,6 @@ public class ProductDetailController {
         contentBox.getChildren().add(row);
     }
 
-    /**
-     * Calcola e crea l'icona SVG moderna
-     */
     private Node calculateTrendIconSVG(long current, long previous) {
         if (previous == 0 && current == 0) return null;
 
@@ -196,8 +193,11 @@ public class ProductDetailController {
         return String.format("%.2f€", price);
     }
 
-    // --- METODI EVENTI (Invariati) ---
-    @FXML private void initialize() { setupBackHover(); }
+
+    @FXML private void initialize() { setupBackHover();
+        lblBack.setOnMouseClicked(event -> goBack());
+    }
+
     @FXML private void goBack() {
         View menuView = ViewFactory.forRole("menu");
         lblBack.getScene().setRoot(menuView.getRoot());
@@ -217,4 +217,7 @@ public class ProductDetailController {
         lblBack.setOnMouseEntered(e -> lblBack.setStyle("-fx-text-fill: #333; -fx-underline: true; -fx-cursor: hand; -fx-font-size: 14px;"));
         lblBack.setOnMouseExited(e -> lblBack.setStyle("-fx-text-fill: #888; -fx-cursor: hand; -fx-font-size: 14px;"));
     }
+
+
+
 }

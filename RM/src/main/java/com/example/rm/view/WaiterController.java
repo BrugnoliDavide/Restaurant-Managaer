@@ -240,7 +240,7 @@ public class WaiterController {
             // 3. Ricarica immediata della vista per applicare il filtro
             refreshNotifications();
 
-            logger.info("Filtro tavoli aggiornato: " + input);
+            logger.log(Level.INFO,"Filtro tavoli aggiornato: ", input);
         });
     }
 }

@@ -31,7 +31,6 @@ public class MenuController {
         reload();
     }
 
-    // ---------------- NAVIGAZIONE ----------------
 
     @FXML
     private void goBack() {
@@ -46,7 +45,7 @@ public class MenuController {
         reload();
     }
 
-    // ---------------- LOGICA MENU ----------------
+
 
     private void loadMenu() {
 

@@ -1,18 +1,22 @@
 package com.example.rm.model;
 
 import javafx.beans.property.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class OrderItem implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final IntegerProperty id;
-    private final IntegerProperty orderId;
-    private final ObjectProperty<MenuProduct> product;
-    private final IntegerProperty quantita;
-    private final DoubleProperty prezzoSnapshot;
-    private final DoubleProperty costoSnapshot;
+    // MODIFICA 1: Aggiunto 'transient' e rimosso 'final'
+    private transient IntegerProperty id;
+    private transient IntegerProperty orderId;
+    private transient ObjectProperty<MenuProduct> product;
+    private transient IntegerProperty quantita;
+    private transient DoubleProperty prezzoSnapshot;
+    private transient DoubleProperty costoSnapshot;
 
     // COSTRUTTORE VUOTO
     public OrderItem() {
@@ -24,7 +28,7 @@ public class OrderItem implements Serializable {
         this.costoSnapshot = new SimpleDoubleProperty(0.0);
     }
 
-    // COSTRUTTORE SEMPLIFICATO (MANTIENI FIRMA IDENTICA)
+    // COSTRUTTORE SEMPLIFICATO
     public OrderItem(MenuProduct product, int quantita) {
         this();
         this.product.set(product);
@@ -35,7 +39,7 @@ public class OrderItem implements Serializable {
         }
     }
 
-    // COSTRUTTORE COMPLETO (per future query dal DB)
+    // COSTRUTTORE COMPLETO
     public OrderItem(int id, int orderId, MenuProduct product,
                      int quantita, double prezzoSnap, double costoSnap) {
         this.id = new SimpleIntegerProperty(id);
@@ -46,7 +50,32 @@ public class OrderItem implements Serializable {
         this.costoSnapshot = new SimpleDoubleProperty(costoSnap);
     }
 
-    // === GETTER/SETTER (MANTIENI FIRME IDENTICHE) ===
+    // === MODIFICA 2: Metodi per la Serializzazione Manuale ===
+
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        // Salviamo i valori
+        s.writeInt(getId());
+        s.writeInt(getOrderId());
+        // MenuProduct è ora serializzabile (grazie alla modifica precedente), quindi possiamo salvarlo direttamente
+        s.writeObject(getProduct());
+        s.writeInt(getQuantita());
+        s.writeDouble(getPrezzoSnapshot());
+        s.writeDouble(getCostoSnapshot());
+    }
+
+    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        // Ricostruiamo le Property
+        this.id = new SimpleIntegerProperty(s.readInt());
+        this.orderId = new SimpleIntegerProperty(s.readInt());
+        this.product = new SimpleObjectProperty<>((MenuProduct) s.readObject());
+        this.quantita = new SimpleIntegerProperty(s.readInt());
+        this.prezzoSnapshot = new SimpleDoubleProperty(s.readDouble());
+        this.costoSnapshot = new SimpleDoubleProperty(s.readDouble());
+    }
+
+    // === GETTER/SETTER (INVARIATI) ===
 
     public int getId() { return id.get(); }
     public void setId(int id) { this.id.set(id); }
@@ -72,7 +101,7 @@ public class OrderItem implements Serializable {
     public void setCostoSnapshot(double costo) { this.costoSnapshot.set(costo); }
     public DoubleProperty costoSnapshotProperty() { return costoSnapshot; }
 
-    // === METODI CALCOLATI (NUOVI) ===
+
 
     public double getTotaleRiga() {
         return getQuantita() * getPrezzoSnapshot();

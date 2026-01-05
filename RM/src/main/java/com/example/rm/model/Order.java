@@ -1,23 +1,28 @@
 package com.example.rm.model;
 
 import javafx.beans.property.*;
-import java.io.Serializable;
+
+import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Order implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
+
     private static final DateTimeFormatter FORMATTER =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    private final IntegerProperty id;
-    private final ObjectProperty<LocalDateTime> dataOra;
-    private final IntegerProperty tavolo;
-    private final StringProperty username;
-    private final StringProperty note;
-    private final StringProperty status;
-    private final DoubleProperty totale;
+    // MODIFICA 1: Aggiunto 'transient' e rimosso 'final'
+    private transient IntegerProperty id;
+    private transient ObjectProperty<LocalDateTime> dataOra;
+    private transient IntegerProperty tavolo;
+    private transient StringProperty username;
+    private transient StringProperty note;
+    private transient StringProperty status;
+    private transient DoubleProperty totale;
 
     // COSTRUTTORE VUOTO
     public Order() {
@@ -30,7 +35,7 @@ public class Order implements Serializable {
         this.totale = new SimpleDoubleProperty(0.0);
     }
 
-    // COSTRUTTORE COMPLETO (MANTIENI FIRMA IDENTICA)
+    // COSTRUTTORE COMPLETO
     public Order(int id, LocalDateTime dataOra, int tavolo,
                  String username, String note, String status, double totale) {
         this.id = new SimpleIntegerProperty(id);
@@ -42,7 +47,34 @@ public class Order implements Serializable {
         this.totale = new SimpleDoubleProperty(totale);
     }
 
-    // === GETTER/SETTER (MANTIENI FIRME IDENTICHE) ===
+    // Metodi per la Serializzazione Manuale ===
+    @Serial
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        // Salviamo i valori primitivi o serializzabili contenuti nelle Property
+        s.writeInt(getId());
+        s.writeObject(getDataOra()); // LocalDateTime è serializzabile nativamente
+        s.writeInt(getTavolo());
+        s.writeUTF(getUsername() != null ? getUsername() : "");
+        s.writeUTF(getNote() != null ? getNote() : "");
+        s.writeUTF(getStatus() != null ? getStatus() : "");
+        s.writeDouble(getTotale());
+    }
+
+    @Serial
+    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        // Ricostruiamo le Property
+        this.id = new SimpleIntegerProperty(s.readInt());
+        this.dataOra = new SimpleObjectProperty<>((LocalDateTime) s.readObject());
+        this.tavolo = new SimpleIntegerProperty(s.readInt());
+        this.username = new SimpleStringProperty(s.readUTF());
+        this.note = new SimpleStringProperty(s.readUTF());
+        this.status = new SimpleStringProperty(s.readUTF());
+        this.totale = new SimpleDoubleProperty(s.readDouble());
+    }
+
+    // === GETTER/SETTER (INVARIATI) ===
 
     public int getId() { return id.get(); }
     public void setId(int id) { this.id.set(id); }
@@ -72,7 +104,7 @@ public class Order implements Serializable {
     public void setTotale(double totale) { this.totale.set(totale); }
     public DoubleProperty totaleProperty() { return totale; }
 
-    // === METODI UTILITY (NUOVI) ===
+    // === METODI UTILITY (INVARIATI) ===
 
     public String getDataOraFormatted() {
         return dataOra.get() != null ? dataOra.get().format(FORMATTER) : "";
