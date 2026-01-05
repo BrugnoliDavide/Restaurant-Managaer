@@ -20,6 +20,7 @@ import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 import com.example.rm.view.component.ChangePasswordDialog;
 import javafx.stage.Stage;
+import javafx.scene.control.SeparatorMenuItem;
 
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
@@ -36,10 +37,6 @@ public class EarningController {
     @FXML private Circle profileCircle;
     @FXML private Label lblHeaderName;
     @FXML private Label lblHeaderRole;
-
-    /* ======================
-       STATE
-       ====================== */
 
     private List<Order> allOrders = new ArrayList<>();
     private Map<Integer, List<Order>> ordersByTable;
@@ -389,18 +386,36 @@ public class EarningController {
 
     @FXML
     private void handleProfileMenu(MouseEvent event) {
-        // ... (Codice menu profilo identico) ...
-        ContextMenu menu = new ContextMenu();
-        MenuItem logout = new MenuItem("Logout");
-        logout.setOnAction(e -> {
-            stopPolling(); // Importante fermare il timer
+        ContextMenu contextMenu = new ContextMenu();
+
+        // 1. Voce Cambia Password (Nuova)
+        MenuItem itemChangePassword = new MenuItem("Cambia Password");
+        itemChangePassword.setOnAction(e -> {
+            // Recupera lo Stage attuale e mostra il dialog
+            Stage currentStage = (Stage) profileBtn.getScene().getWindow();
+            ChangePasswordDialog.show(currentStage);
+        });
+
+        // 2. Voce Logout (Migliorata con stile rosso)
+        MenuItem itemLogout = new MenuItem("Logout");
+        itemLogout.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+        itemLogout.setOnAction(e -> {
+            stopPolling(); // Importante: ferma il timer
             UserSession.cleanUserSession();
             try {
-                profileBtn.getScene().setRoot(FXMLLoader.load(getClass().getResource("/LoginView.fxml")));
-            } catch (IOException ex) { ex.printStackTrace(); }
+                // Torna al Login
+                Parent loginView = FXMLLoader.load(getClass().getResource("/LoginView.fxml"));
+                profileBtn.getScene().setRoot(loginView);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         });
-        menu.getItems().add(logout);
-        menu.show(profileBtn, Side.BOTTOM, 0, 0);
+
+        // Aggiungi tutto al menu con un separatore estetico
+        contextMenu.getItems().addAll(itemChangePassword, new SeparatorMenuItem(), itemLogout);
+
+        // Mostra il menu sotto il bottone profilo
+        contextMenu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
 
 
