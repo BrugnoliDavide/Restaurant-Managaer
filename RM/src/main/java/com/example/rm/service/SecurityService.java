@@ -146,8 +146,7 @@ public final class SecurityService {
         } catch (SQLException e) {
             logger.log(
                     Level.SEVERE,
-                    "Errore durante cambio password per utente: " + username,
-                    e
+                    "Errore durante cambio password per utente: {0}", username
             );
             return false;
         }

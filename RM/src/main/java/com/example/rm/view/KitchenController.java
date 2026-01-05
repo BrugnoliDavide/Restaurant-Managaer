@@ -24,7 +24,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.logging.Level;
 
-import static com.example.rm.view.LoginController.logger;
+import static com.example.rm.view.LoginController.logger;import java.io.UncheckedIOException;
+
 
 public class KitchenController {
 
@@ -224,7 +225,7 @@ public class KitchenController {
         try {
             return new FXMLLoader(KitchenController.class.getResource("/KitchenView.fxml")).load();
         } catch (IOException e) {
-            throw new RuntimeException("Impossibile caricare KitchenView.fxml. Controlla che il file esista in resources.", e);
+            throw new UncheckedIOException("Impossibile caricare KitchenView.fxml. Controlla che il file esista in resources.", e);
         }
     }
 }

@@ -29,6 +29,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import javafx.animation.Animation;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,6 +56,8 @@ public class EarningController {
     // Timer per auto-aggiornamento
     private Timeline pollingTimeline;
 
+    private String valueFormat = "€%.2f";
+    
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("HH:mm");
 
@@ -85,10 +88,10 @@ public class EarningController {
 
     private void startPolling() {
         pollingTimeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> {
-            // Aggiorna i dati mantenendo (se possibile) la selezione
+
             refreshDataPreservingSelection();
         }));
-        pollingTimeline.setCycleCount(Timeline.INDEFINITE);
+        pollingTimeline.setCycleCount(Animation.INDEFINITE);
         pollingTimeline.play();
     }
 
@@ -238,7 +241,7 @@ public class EarningController {
 
         // === DESTRA: Totale ===
         double totalAmount = orders.stream().mapToDouble(Order::getTotale).sum();
-        Label lblTotal = new Label(String.format("€%.2f", totalAmount));
+        Label lblTotal = new Label(String.format("valueFormat", totalAmount));
         lblTotal.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2ecc71;");
 
         card.getChildren().addAll(leftInfo, lblTotal);
@@ -300,7 +303,7 @@ public class EarningController {
         Label lblTotalLabel = new Label("TOTALE:");
         lblTotalLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
-        Label lblTotalValue = new Label(String.format("€%.2f", totalAmount));
+        Label lblTotalValue = new Label(String.format("valueFormat", totalAmount));
         lblTotalValue.setStyle("-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #2ecc71; -fx-padding: 0 0 0 15;");
 
         totalBox.getChildren().addAll(lblTotalLabel, lblTotalValue);
@@ -334,7 +337,7 @@ public class EarningController {
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        Label lblOrderTotal = new Label(String.format("€%.2f", order.getTotale()));
+        Label lblOrderTotal = new Label(String.format("valueFormat", order.getTotale()));
         lblOrderTotal.setStyle("-fx-font-weight: bold; -fx-text-fill: #2ecc71;");
 
         orderHeader.getChildren().addAll(lblOrderId, lblStatus, spacer, lblOrderTotal);
@@ -443,7 +446,7 @@ public class EarningController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS); // Spinge il totale a destra
 
-        Label lblOrderTotal = new Label(String.format("€%.2f", order.getTotale()));
+        Label lblOrderTotal = new Label(String.format("valueFormat", order.getTotale()));
         lblOrderTotal.setStyle("-fx-font-weight: bold; -fx-text-fill: #2ecc71; -fx-font-size: 14px;");
 
         orderHeader.getChildren().addAll(lblOrderId, lblStatus, spacer, lblOrderTotal);
@@ -472,7 +475,7 @@ public class EarningController {
             HBox.setHgrow(itemSpacer, Priority.ALWAYS); // Spinge il prezzo a destra
 
             // Prezzo Riga
-            Label lblPrice = new Label(String.format("€%.2f", rowTotal));
+            Label lblPrice = new Label(String.format("valueFormat", rowTotal));
             lblPrice.setStyle("-fx-text-fill: #666; -fx-font-size: 13px;");
 
             itemRow.getChildren().addAll(lblName, itemSpacer, lblPrice);

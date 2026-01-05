@@ -9,13 +9,19 @@ import static com.example.rm.view.WaiterController.logger;
 
 public class TableSelectionUtils {
 
+    private TableSelectionUtils() {
+        // Lancia un'eccezione se qualcuno prova a istanziarla via Reflection
+        throw new IllegalStateException("Utility class");
+    }
+
+
     /**
      * Converte una stringa complessa (es: "1-5; 10; 12-14") in un Set di interi.
      * Se la stringa è vuota o nulla, restituisce null (che interpreteremo come "tutti i tavoli").
      */
     public static Set<Integer> parseTableString(String input) {
         if (input == null || input.trim().isEmpty()) {
-            return null; // Null significa "nessun filtro" -> vedi tutto
+            return new HashSet<>();
         }
 
         Set<Integer> tables = new HashSet<>();
@@ -39,12 +45,12 @@ public class TableSelectionUtils {
                         }
                     }
                 } else {
-                    // Numero singolo (es. "10")
+                    // Numero singolo
                     tables.add(Integer.parseInt(part));
                 }
             } catch (NumberFormatException e) {
 
-                logger.log(Level.WARNING, "errore paring tavoli:  ", part);
+                logger.log(Level.WARNING, "errore paring tavoli:  {0}", part);
             }
         }
         return tables;

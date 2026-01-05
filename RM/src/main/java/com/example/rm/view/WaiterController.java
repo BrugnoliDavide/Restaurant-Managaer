@@ -4,6 +4,7 @@ import com.example.rm.app.UserSession;
 import com.example.rm.model.Order;
 import com.example.rm.service.DatabaseService;
 import com.example.rm.view.screens.TakeOrderView;
+import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
@@ -60,7 +61,7 @@ public class WaiterController {
         pollingTimeline = new Timeline(new KeyFrame(Duration.seconds(5), event -> {
             refreshNotifications();
         }));
-        pollingTimeline.setCycleCount(Timeline.INDEFINITE);
+        pollingTimeline.setCycleCount(Animation.INDEFINITE);
         pollingTimeline.play();
     }
 
@@ -226,21 +227,18 @@ public class WaiterController {
         dialog.setHeaderText("Quali tavoli vuoi gestire oggi?");
         dialog.setContentText("Inserisci tavoli (es: 1-5; 10; 12):");
 
-        // Opzionale: precompila con il valore attuale se esiste
-        // dialog.getEditor().setText(...recupera stringa salvata...);
 
         dialog.showAndWait().ifPresent(input -> {
-            // 1. Usa il parser creato al punto 1
-            // (Assicurati di importare la classe TableSelectionUtils)
+
             java.util.Set<Integer> selectedTables = com.example.rm.util.TableSelectionUtils.parseTableString(input);
 
-            // 2. Salva nella sessione
+            //alva nella sessione
             UserSession.getInstance().setManagedTables(selectedTables);
 
-            // 3. Ricarica immediata della vista per applicare il filtro
+            //Ricarica immediata della vista per applicare il filtro
             refreshNotifications();
 
-            logger.log(Level.INFO,"Filtro tavoli aggiornato: ", input);
+            logger.log(Level.INFO,"Filtro tavoli aggiornato seguendo: {0}", input);
         });
     }
 }

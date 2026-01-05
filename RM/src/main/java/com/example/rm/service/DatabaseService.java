@@ -528,7 +528,7 @@ public class DatabaseService {
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore durante il recupero del prodotto con ID: " + productId, e);
+            logger.log(Level.SEVERE, "Errore durante il recupero del prodotto con ID: {0} ", productId);
         }
 
         return null;
@@ -567,7 +567,7 @@ public class DatabaseService {
                 items.add(item);
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore recupero dettagli articoli ordine " + orderId, e);
+            logger.log(Level.SEVERE, "Errore recupero dettagli articoli ordine {0} ", orderId);
         }
         return items;
     }
