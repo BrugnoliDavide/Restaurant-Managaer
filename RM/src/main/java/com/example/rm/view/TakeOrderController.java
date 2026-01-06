@@ -3,11 +3,15 @@ package com.example.rm.view;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.model.OrderItem;
 import com.example.rm.service.DatabaseService;
+import com.example.rm.view.component.OrderReviewDialog;
 import com.example.rm.view.component.ProductRowFactory;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -115,18 +119,38 @@ public class TakeOrderController {
             return;
         }
 
-        // Conversione della mappa in lista per il database
-        List<OrderItem> items = carrello.values().stream().toList();
+        // Converti il carrello in lista per il database
+        List<OrderItem> items = new ArrayList<>(carrello.values());
 
-        // DatabaseService.createOrder(List<OrderItem> items, Integer tavolo, String note)
-        boolean success = DatabaseService.createOrder(items, numeroTavolo, "");
+        // ✅ MOSTRA IL DIALOG DI REVIEW
+        Stage stage = (Stage) btnSend.getScene().getWindow();
 
-        if (success) {
-            View waiterView = ViewFactory.forRole("cameriere");
-            btnSend.getScene().setRoot(waiterView.getRoot());
-        } else {
-            showAlert("Errore", "Impossibile inviare l'ordine al database.");
-        }
+        OrderReviewDialog.show(stage, numeroTavolo, items, "", result -> {
+            if (result.confirmed) {
+                // L'utente ha confermato e le note sono in result.note
+                boolean success = DatabaseService.createOrder(
+                        items,
+                        numeroTavolo,
+                        result.note  // ✅ USA LE NOTE DAL DIALOG
+                );
+
+                if (success) {
+                    showAlert("Successo", "Ordine inviato con successo!");
+
+                    // Pulisci il carrello
+                    carrello.clear();
+                    loadProducts();
+                    updateSendButton();
+
+                    // Torna alla vista Waiter
+                    View waiterView = ViewFactory.forRole("cameriere");
+                    btnSend.getScene().setRoot(waiterView.getRoot());
+                } else {
+                    showAlert("Errore", "Impossibile inviare l'ordine al database.");
+                }
+            }
+            // Se non confermato, il dialog si chiude e l'utente può rivedere il carrello
+        });
     }
 
     private void showAlert(String title, String content) {

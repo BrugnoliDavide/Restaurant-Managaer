@@ -35,7 +35,9 @@
 
         <!-- Checkbox "Altro"
         <CheckBox fx:id="chkIncludeOther" style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Altro (include categorie non presenti al momento della configurazione)" />
-    </VBox> -->
+        -->
+
+    </VBox>
 
     <!-- PULSANTI -->
     <HBox spacing="10" style="-fx-padding: 10 0 0 0;">

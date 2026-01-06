@@ -86,6 +86,7 @@ public class KitchenPreferencesDialog {
             dialog.showAndWait();
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Errore caricamento KitchenPreferencesDialog.fxml", e);
+            e.printStackTrace();
         }
     }
 

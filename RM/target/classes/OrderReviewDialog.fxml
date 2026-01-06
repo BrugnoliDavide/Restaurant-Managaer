@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.rm.view.component.OrderReviewDialog"
+      spacing="15"
+      style="-fx-background-color: white; -fx-padding: 20;">
+
+    <!-- TITOLO -->
+    <Label text="Revisione Ordine"
+           style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+
+    <!-- SEZIONE: TAVOLO E DETTAGLI -->
+    <VBox spacing="10"
+          style="-fx-border-color: #DDD; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: #F9F9F9;">
+
+        <Label text="Dettagli Ordine"
+               style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+
+        <HBox spacing="20">
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label text="Tavolo:" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblTavolo" text="Tavolo N°" style="-fx-font-size: 14px;"/>
+            </VBox>
+
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label text="Totale:" style="-fx-font-weight: bold;"/>
+                <Label fx:id="lblTotale" text="€ 0.00" style="-fx-font-size: 14px; -fx-text-fill: #4CAF50; -fx-font-weight: bold;"/>
+            </VBox>
+        </HBox>
+    </VBox>
+
+    <!-- SEZIONE: ELENCO PRODOTTI -->
+    <VBox spacing="10"
+          style="-fx-border-color: #DDD; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: #F9F9F9;">
+
+        <Label text="Prodotti Ordinati"
+               style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+
+        <ScrollPane style="-fx-control-inner-background: white; -fx-padding: 10;"
+                    fitToWidth="true"
+                    prefHeight="200">
+            <VBox fx:id="vboxProducts" spacing="8" style="-fx-padding: 0;"/>
+        </ScrollPane>
+    </VBox>
+
+    <!-- SEZIONE: NOTE -->
+    <VBox spacing="10"
+          style="-fx-border-color: #DDD; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: #F9F9F9;">
+
+        <Label text="Note Aggiuntive"
+               style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;"/>
+
+        <TextArea fx:id="txtNote"
+                  wrapText="true"
+                  prefRowCount="4"
+                  style="-fx-control-inner-background: white; -fx-padding: 10; -fx-font-size: 12px;"/>
+
+        <Label text="(es: senza aglio, cottura al dente, ecc.)"
+               style="-fx-font-size: 11px; -fx-text-fill: #999; -fx-font-style: italic;"/>
+    </VBox>
+
+    <!-- PULSANTI -->
+    <HBox spacing="10" style="-fx-padding: 10 0 0 0;">
+        <Button fx:id="btnConfirm"
+                text="✓ Conferma Ordine"
+                style="-fx-padding: 12 40; -fx-font-size: 14px; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
+
+        <Button fx:id="btnCancel"
+                text="✗ Annulla"
+                style="-fx-padding: 12 40; -fx-font-size: 14px; -fx-background-color: #F44336; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
+    </HBox>
+</VBox>
