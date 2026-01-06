@@ -1,5 +1,6 @@
 package com.example.rm.view;
 
+import com.example.rm.app.UserSession;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.model.OrderItem;
 import com.example.rm.service.DatabaseService;
@@ -131,7 +132,8 @@ public class TakeOrderController {
                 boolean success = DatabaseService.createOrder(
                         items,
                         numeroTavolo,
-                        result.note  // ✅ USA LE NOTE DAL DIALOG
+                        result.note,
+                        UserSession.getInstance().getUser()
                 );
 
                 if (success) {

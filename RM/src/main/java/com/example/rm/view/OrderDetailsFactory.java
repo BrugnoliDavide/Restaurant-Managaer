@@ -8,7 +8,6 @@ import javafx.scene.layout.VBox;
 
 public class OrderDetailsFactory {
 
-    // CORRETTO: Costruttore privato per utility class
     private OrderDetailsFactory() {
         throw new IllegalStateException("Utility class");
     }

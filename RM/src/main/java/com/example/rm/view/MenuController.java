@@ -16,19 +16,28 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import java.util.logging.Logger;
+import javafx.scene.control.TextField;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
+
 
 public class MenuController {
 
     @FXML private VBox menuContainer;
     @FXML private Label lblManage;
+    @FXML private TextField txtSearch;
 
     private static final Logger logger =
             Logger.getLogger(MenuController.class.getName());
 
+    private List<MenuProduct> allProductsMaster = new ArrayList<>();
+
+
     @FXML
     public void initialize() {
         setupManageHover();
-        reload();
+        loadDataFromDB();
+        setupSearchListener();
     }
 
 
@@ -42,32 +51,33 @@ public class MenuController {
     @FXML
     public void onAddProduct() {
         AddProductDialog.display();
-        reload();
+        loadDataFromDB();
     }
 
 
 
-    private void loadMenu() {
-
+    private void renderMenu(List<MenuProduct> products) {
         menuContainer.getChildren().clear();
 
         Map<String, List<MenuProduct>> datiMenu =
-                DatabaseService.getMenuByCategories();
+                products.stream().collect(Collectors.groupingBy(MenuProduct::getTipologia));
 
-        for (String categoria : datiMenu.keySet()) {
-
+        datiMenu.keySet().stream().sorted().forEach(categoria -> {
             Label sectionTitle = new Label(categoria);
             sectionTitle.getStyleClass().add("menu-section-title");
-
-
             menuContainer.getChildren().add(sectionTitle);
 
             for (MenuProduct prodotto : datiMenu.get(categoria)) {
                 menuContainer.getChildren().add(loadProductRow(prodotto));
             }
+        });
+
+        if (products.isEmpty()) {
+            Label empty = new Label("Nessun prodotto trovato.");
+            empty.setStyle("-fx-padding: 20; -fx-text-fill: #888; -fx-font-style: italic;");
+            menuContainer.getChildren().add(empty);
         }
     }
-
 
     private void openProductDetail(MenuProduct product) {
 
@@ -91,11 +101,21 @@ public class MenuController {
         }
     }
 
+    private void loadDataFromDB() {
+        allProductsMaster = DatabaseService.getAllProducts();
+        renderMenu(allProductsMaster);
+    }
 
+    private void setupSearchListener() {
+        if (txtSearch == null) {
+            logger.log(Level.WARNING, "txtSearch non iniettato correttamente da FXML");
+            return;
+        }
 
-
-
-
+        txtSearch.textProperty().addListener((obs, oldVal, newVal) -> {
+            filterAndRender(newVal);
+        });
+    }
 
     private Parent loadProductRow(MenuProduct prodotto) {
         try {
@@ -121,10 +141,8 @@ public class MenuController {
     }
 
     private void reload() {
-        loadMenu();
+        loadDataFromDB();
     }
-
-    // ---------------- UI ----------------
 
     private void setupManageHover() {
         if (lblManage == null) return;
@@ -136,4 +154,24 @@ public class MenuController {
         lblManage.setOnMouseEntered(e -> lblManage.setStyle(hover));
         lblManage.setOnMouseExited(e -> lblManage.setStyle(normal));
     }
+
+    private void filterAndRender(String query) {
+        String q = query == null ? "" : query.toLowerCase().trim();
+
+        if (q.isEmpty()) {
+            renderMenu(allProductsMaster);
+            return;
+        }
+
+        List<MenuProduct> filtered = allProductsMaster.stream()
+                .filter(p ->
+                        (p.getNome() != null && p.getNome().toLowerCase().contains(q)) ||
+                                (p.getTipologia() != null && p.getTipologia().toLowerCase().contains(q))
+                )
+                .collect(Collectors.toList());
+
+        renderMenu(filtered);
+    }
+
+
 }

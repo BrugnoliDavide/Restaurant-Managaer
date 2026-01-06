@@ -3,6 +3,7 @@ package com.example.rm.service;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
+import com.example.rm.model.User;
 import com.example.rm.preference.KitchenPreferences;
 
 import java.sql.*;
@@ -82,8 +83,9 @@ public class DatabaseService {
     }
 
     public static boolean addProduct(MenuProduct p) {
-        String sql = "INSERT INTO menuitems (nome, tipologia, prezzovendita, costorealizzazione, allergeni) " +
+        String sql = "INSERT INTO menu_items (nome, tipologia, prezzo_vendita, costo_realizzazione, allergeni) " +
                 "VALUES (?, ?, ?, ?, ?)";
+
         try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -94,11 +96,13 @@ public class DatabaseService {
             pstmt.setString(5, p.getAllergeni());
 
             return pstmt.executeUpdate() > 0;
+
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "ERRORE INSERIMENTO PRODOTTO", e);
             return false;
         }
     }
+
 
     public static boolean updateProduct(MenuProduct p) {
         String sql = "UPDATE menu_items SET nome = ?, tipologia = ?, prezzo_vendita = ?, costo_realizzazione = ?, allergeni = ? WHERE id = ?";
@@ -170,7 +174,10 @@ public class DatabaseService {
         return categories;
     }
 
-    public static boolean createOrder(List<OrderItem> items, Integer tavolo, String note) {
+    public static boolean createOrder(List<OrderItem> items, Integer tavolo, String note, User Utente ) {
+
+        String usernameUtente = Utente.getUsername();
+
         if (items.isEmpty()) return false;
 
         String sqlOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?,?, ?, ?)";
@@ -183,7 +190,7 @@ public class DatabaseService {
             conn.setAutoCommit(false);
 
             // Inserimento ordine
-            pstmtOrder.setString(1, "Manager");
+            pstmtOrder.setString(1, usernameUtente);
             if (tavolo != null) pstmtOrder.setInt(2, tavolo);
             else pstmtOrder.setNull(2, Types.INTEGER);
             pstmtOrder.setString(3, note);
@@ -216,8 +223,6 @@ public class DatabaseService {
             return false;
         }
     }
-
-
 
     public static long getQuantitySold(String nomeProdotto) {
         String sql = "SELECT SUM(oi.quantita) FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE mi.nome = ?";
@@ -742,9 +747,6 @@ public class DatabaseService {
         return filteredOrders;
     }
 
-    /**
-     * Estrae le categorie da una lista di OrderItem.
-     */
     private static Set<String> extractCategoriesFromItems(List<OrderItem> items) {
         Set<String> categories = new HashSet<>();
         if (items != null) {
@@ -757,9 +759,6 @@ public class DatabaseService {
         return categories;
     }
 
-    /**
-     * Scompone un ordine multi-categoria in più ordini mono-categoria.
-     */
     public static boolean decomposeOrderIfNeeded(int orderId) {
         try {
             List<OrderItem> allItems = getOrderItemsDetailed(orderId);
@@ -791,12 +790,12 @@ public class DatabaseService {
                     itemsByCategory.computeIfAbsent(categoria, k -> new ArrayList<>()).add(item);
                 }
 
-                // Se c'è solo 1 categoria, non scomporre
+                // Se c'è solo 1 categoria non si scomporre
                 if (itemsByCategory.size() <= 1) {
                     return true;
                 }
 
-                // ✅ SCOMPONI DIRETTAMENTE NEL DB (senza usare createOrder())
+                // SCOMPONI DIRETTAMENTE NEL DB (senza usare createOrder())
                 String sqlNewOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
                 String sqlNewItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, prezzo_vendita_snapshot, costo_realizzazione_snapshot) VALUES (?, ?, ?, ?, ?)";
 
@@ -813,8 +812,9 @@ public class DatabaseService {
                         // Crea nuovo ordine
                         pstmtNewOrder.setString(1, username);  // ✅ USA LO USERNAME CORRETTO
                         pstmtNewOrder.setInt(2, tavolo);
-                        String noteExtended = note != null ? note + " [Cat: " + categoria + "]" : "[Cat: " + categoria + "]";
-                        pstmtNewOrder.setString(3, noteExtended);
+                        //String noteExtended = note != null ? note + " [Cat: " + categoria + "]" : "[Cat: " + categoria + "]";
+                        //pstmtNewOrder.setString(3, noteExtended);
+                        //pstmtNewOrder.setString(3, noteExtended);
                         pstmtNewOrder.setString(4, "to-do");
 
                         pstmtNewOrder.executeUpdate();
@@ -854,7 +854,54 @@ public class DatabaseService {
         }
     }
 
+    public static boolean hasPendingOrders(int tavolo) {
+        String sql = """
+        SELECT EXISTS (
+            SELECT 1 FROM orders 
+            WHERE tavolo = ? AND status != 'delivered'
+        )
+        """;
 
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, tavolo);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                return rs.next() && rs.getBoolean(1);
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore controllo ordini pendenti tavolo " + tavolo, e);
+            return false;
+        }
+    }
+
+
+    public static List<Integer> getPendingOrderIds(int tavolo) {
+        String sql = """
+        SELECT DISTINCT o.id 
+        FROM orders o 
+        JOIN order_items oi ON o.id = oi.order_id 
+        WHERE o.tavolo = ? AND o.status != 'delivered' AND  o.status != 'canceled'
+        """;
+
+        List<Integer> pendingIds = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(url, user, pass);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, tavolo);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    pendingIds.add(rs.getInt(1));
+                }
+            }
+            logger.info(" Trovati " + pendingIds.size() + " ordini pendenti per tavolo " + tavolo + ": " + pendingIds);
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, " ERRORE SQL getPendingOrderIds tavolo " + tavolo + ": " + e.getMessage() + "\nQUERY: " + sql, e);
+        }
+        return pendingIds;
+    }
 
 
 }

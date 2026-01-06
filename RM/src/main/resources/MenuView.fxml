@@ -1,23 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.MenuController">
+<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.MenuController">
 
-    <!-- HEADER -->
+
     <top>
         <VBox spacing="10">
             <padding>
                 <Insets bottom="10" left="20" right="20" top="20" />
             </padding>
 
-            <!-- Back -->
+
             <Label fx:id="lblManage" onMouseClicked="#goBack" styleClass="link-label" text="← Manage" />
 
-            <!-- Title row -->
+
             <HBox alignment="CENTER_LEFT" spacing="20">
 
                 <Label styleClass="text-header" text="Menu" />
@@ -25,10 +31,13 @@
                 <Region HBox.hgrow="ALWAYS" />
 
                 <!-- Search icon (solo estetica) -->
-                <Label text="🔍">
-               <font>
-                  <Font size="30.0" />
-               </font></Label>
+                <HBox alignment="CENTER_LEFT" spacing="20">
+
+                    <Region HBox.hgrow="ALWAYS" />
+
+                    <!-- TextField ricerca -->
+                    <TextField fx:id="txtSearch" prefWidth="250" promptText="Cerca per nome o categoria" style="-fx-font-size: 13px;" />
+                </HBox>
 
                 <!-- Add icon -->
                 <Label onMouseClicked="#onAddProduct" styleClass="add-icon" text="+">

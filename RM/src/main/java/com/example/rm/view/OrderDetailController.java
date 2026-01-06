@@ -311,6 +311,17 @@ public class OrderDetailController {
                                 "-fx-background-radius: 5; " +
                                 "-fx-border-radius: 5;";
                 break;
+
+            case "calceled":
+                statusText = "cancellato";
+                badgeStyle =
+                        "-fx-background-color: #FFF3E0; " +
+                                "-fx-border-color: #aa1010; " +
+                                "-fx-border-width: 2; " +
+                                "-fx-background-radius: 5; " +
+                                "-fx-border-radius: 5;";
+                break;
+
             default:
                 statusText = "❓ Sconosciuto";
                 badgeStyle =

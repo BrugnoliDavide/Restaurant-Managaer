@@ -22,6 +22,7 @@ import com.example.rm.view.component.ChangePasswordDialog;
 import javafx.stage.Stage;
 import javafx.scene.control.SeparatorMenuItem;
 
+import com.example.rm.model.OrderItem;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -100,10 +101,6 @@ public class EarningController {
         if (pollingTimeline != null) pollingTimeline.stop();
     }
 
-    /* ======================
-       LOAD DATA
-       ====================== */
-
     private void loadOpenOrders() {
         // Ora chiama la versione aggiornata che cerca 'delivered'
         allOrders = DatabaseService.getOrdersToPay();
@@ -151,10 +148,6 @@ public class EarningController {
                 ));
     }
 
-    /* ======================
-       SEARCH
-       ====================== */
-
     @FXML
     private void onSearch() {
         String query = searchField.getText().trim();
@@ -175,10 +168,6 @@ public class EarningController {
 
         renderTableCards(filtered);
     }
-
-    /* ======================
-       RENDER TABLE CARDS
-       ====================== */
 
     private void renderTableCards(Map<Integer, List<Order>> tables) {
         ordersContainer.getChildren().clear();
@@ -246,6 +235,13 @@ public class EarningController {
 
         card.getChildren().addAll(leftInfo, lblTotal);
 
+        if (DatabaseService.hasPendingOrders(tableNumber)) {
+            Label warning = new Label("⚠ Ordine non completo");
+            warning.setStyle("-fx-text-fill: #FF9800; -fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 2 0;");
+            leftInfo.getChildren().add(warning);
+        }
+
+
         // === EVENTI ===
         card.setOnMouseEntered(e -> {
             if (selectedCard != card) card.setStyle(hoverStyle);
@@ -268,10 +264,6 @@ public class EarningController {
 
         return card;
     }
-
-    /* ======================
-       DETAILS PANE
-       ====================== */
 
     private void showTableDetails(int tableNumber, List<Order> orders, double totalAmount) {
         detailsPane.getChildren().clear();
@@ -364,33 +356,81 @@ public class EarningController {
         detailsPane.getChildren().add(centerBox);
     }
 
-    private void markTableAsPaid(List<Order> orders) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Conferma Pagamento");
-        confirm.setHeaderText("Incassare tavolo?");
-        confirm.setContentText("Chiudere " + orders.size() + " ordini per €" + String.format("%.2f", orders.stream().mapToDouble(Order::getTotale).sum()) + "?");
+    private void markTableAsPaid(List<Order> deliveredOrdersShown) {
+        int tavolo = deliveredOrdersShown.get(0).getTavolo();
 
-        Optional<ButtonType> result = confirm.showAndWait();
+        // 1) Controlla ordini PENDENTI (non delivered)
+        List<Integer> pendingOrderIds = DatabaseService.getPendingOrderIds(tavolo);
 
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            boolean allSuccess = true;
-            for (Order order : orders) {
-                if (!DatabaseService.markOrderAsPaid(order.getId())) allSuccess = false;
+        if (!pendingOrderIds.isEmpty()) {
+            String articoli = "";
+            int maxItems = Math.min(3, pendingOrderIds.size());
+            for (int i = 0; i < maxItems; i++) {
+                int id = pendingOrderIds.get(i);
+                List<OrderItem> items = DatabaseService.getOrderItemsDetailed(id);
+                articoli += items.stream()
+                        .map(it -> it.getQuantita() + "x " + it.getProduct().getNome())
+                        .collect(Collectors.joining(", "));
+                if (i < maxItems - 1) {
+                    articoli += "\n";
+                }
             }
 
-            if (allSuccess) {
-                // Non mostriamo popup di successo invasivi, ricarichiamo e basta per velocità operativa
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("⚠️ " + pendingOrderIds.size() + " ordini pendenti");
+            alert.setHeaderText("Tavolo " + tavolo + " ha ordini non consegnati:");
+            alert.getDialogPane().setContentText(articoli);
+
+            ButtonType annullaPaga = new ButtonType("Paga e cencella i pendenti");
+            ButtonType deliveredPaga = new ButtonType("Contrassegna come consegnato e Paga");
+            ButtonType nonPagare = new ButtonType("annulla");
+            alert.getButtonTypes().setAll(annullaPaga, deliveredPaga, nonPagare);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isEmpty() || result.get() == nonPagare) {
+                // Utente ha chiuso o scelto “Non pagare” → esci e NON mostrare popup pagamento
+                return;
+            }
+
+            if (result.get() == annullaPaga) {
+                // Opzione 1: annulla tutti i pendenti
+                pendingOrderIds.forEach(id -> DatabaseService.setOrderStatus(id, "canceled"));
+                logger.info("Annullati pendenti tavolo " + tavolo);
+                // Pagherai solo gli ordini già delivered (lista originale)
+            } else if (result.get() == deliveredPaga) {
+                // Opzione 2: segna i pendenti come delivered
+                pendingOrderIds.forEach(id -> DatabaseService.setOrderStatus(id, "delivered"));
+                logger.info("Segnati come delivered pendenti tavolo " + tavolo);
+                // Dopo averli marcati delivered, ricarica gli ordini da pagare per questo tavolo
+                List<Order> allDeliveredForTable = DatabaseService.getOrdersToPay().stream()
+                        .filter(o -> o.getTavolo() == tavolo)
+                        .collect(Collectors.toList());
+                deliveredOrdersShown = allDeliveredForTable;
+            }
+        }
+
+        // 2) SOLO ORA mostra il popup di pagamento, usando la lista (eventualmente aggiornata)
+        double totale = deliveredOrdersShown.stream()
+                .mapToDouble(Order::getTotale)
+                .sum();
+
+        Alert conferma = new Alert(Alert.AlertType.CONFIRMATION);
+        conferma.setTitle("Conferma Pagamento");
+        conferma.setContentText("Incassare €" + String.format("%.2f", totale) + "?");
+
+        if (conferma.showAndWait().filter(ButtonType.OK::equals).isPresent()) {
+            boolean success = deliveredOrdersShown.stream()
+                    .allMatch(o -> DatabaseService.markOrderAsPaid(o.getId()));
+
+            if (success) {
                 selectedTable = null;
                 selectedCard = null;
                 refreshDataPreservingSelection();
                 clearDetailsPane();
-            } else {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setContentText("Errore nel salvataggio del pagamento.");
-                alert.showAndWait();
             }
         }
     }
+
 
     @FXML
     private void handleProfileMenu(MouseEvent event) {

@@ -18,10 +18,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.function.Consumer;
 
-/**
- * Dialog per la revisione dell'ordine prima dell'invio.
- * Permette al cameriere di controllare i dettagli e aggiungere note.
- */
 public class OrderReviewDialog {
 
     private static final Logger logger = Logger.getLogger(OrderReviewDialog.class.getName());
@@ -50,9 +46,7 @@ public class OrderReviewDialog {
     private String initialNote;
     private Consumer<OrderReviewResult> onComplete;
 
-    /**
-     * Risultato della revisione ordine
-     */
+
     public static class OrderReviewResult {
         public boolean confirmed;
         public String note;
@@ -63,9 +57,6 @@ public class OrderReviewDialog {
         }
     }
 
-    /**
-     * Mostra il dialog di revisione ordine
-     */
     public static void show(Stage owner, Integer tavolo, List<OrderItem> items,
                             String initialNote, Consumer<OrderReviewResult> onComplete) {
         try {
@@ -119,9 +110,7 @@ public class OrderReviewDialog {
         btnCancel.setOnAction(e -> handleCancel());
     }
 
-    /**
-     * Popola la lista di prodotti
-     */
+
     private void populateProducts() {
         vboxProducts.getChildren().clear();
         double totale = 0;
