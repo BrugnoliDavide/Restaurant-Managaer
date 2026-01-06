@@ -2,7 +2,9 @@ package com.example.rm.view;
 
 import com.example.rm.app.UserSession;
 import com.example.rm.model.Order;
+import com.example.rm.preference.KitchenPreferences;
 import com.example.rm.service.DatabaseService;
+import com.example.rm.view.component.KitchenPreferencesDialog;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -31,13 +33,13 @@ public class KitchenController {
 
 
     @FXML private VBox ordersContainer;
-
-
     @FXML private StackPane profileBtn;
     @FXML private Circle profileCircle;
     @FXML private Label lblHeaderName;
     @FXML private Label lblHeaderRole;
     @FXML private Label lblWelcomeMsg;
+    @FXML private Label lblActiveFilters;
+
 
     @FXML
     public void initialize() {
@@ -75,19 +77,33 @@ public class KitchenController {
 
         ContextMenu contextMenu = new ContextMenu();
 
-        // === OPZIONE 1: CAMBIA PASSWORD ===
+
         MenuItem itemChangePassword = new MenuItem("Cambia Password");
         itemChangePassword.setStyle(
                 "-fx-font-size: 14px; " +
-                        "-fx-padding: 5 10 5 10; " +
-                        "-fx-text-fill: #2196F3;"
+                    "-fx-padding: 5 10 5 10; " +
+                    "-fx-text-fill: #2196F3;"
         );
         itemChangePassword.setOnAction(e -> {
             Stage stage = (Stage) profileBtn.getScene().getWindow();
             ChangePasswordDialog.show(stage);
         });
 
-        // === OPZIONE 2: LOGOUT ===
+
+        MenuItem itemPreference = new MenuItem("Preference");
+        itemPreference.setStyle(
+                "-fx-font-size: 14px; " +
+                        "-fx-padding: 5 10 5 10; " +
+                        "-fx-text-fill: #2196F3;"
+        );
+        itemPreference.setOnAction(e -> {
+
+            showPreferencesDialog();
+        });
+
+
+
+
         MenuItem itemLogout = new MenuItem("Logout");
         itemLogout.setStyle(
                 "-fx-font-size: 14px; " +
@@ -116,9 +132,12 @@ public class KitchenController {
             }
         });
 
-        // === ASSEMBLA MENU ===
+
+
         contextMenu.getItems().addAll(
                 itemChangePassword,
+                new SeparatorMenuItem(),
+                itemPreference,  // ← AGGIUNGI QUESTA RIGA
                 new SeparatorMenuItem(),
                 itemLogout
         );
@@ -127,16 +146,48 @@ public class KitchenController {
     }
 
 
-    // --- GESTIONE ORDINI ---
+
     @FXML
     public void refreshData() {
-        // Pulisce la lista visiva
         ordersContainer.getChildren().clear();
 
-        // Recupera gli ordini dal Database
-        List<Order> activeOrders = DatabaseService.getKitchenActiveOrders();
+        UserSession session = UserSession.getInstance();
+        String username = (session != null && session.getUser() != null)
+                ? session.getUser().getUsername()
+                : "guest";
 
-        // Se non ci sono ordini, mostra un messaggio
+        System.out.println("===== REFRESH DATA =====");
+        System.out.println("Username: " + username);
+
+        KitchenPreferences prefs = DatabaseService.getKitchenPreferences(username);
+
+        System.out.println("Preferenze caricate:");
+        System.out.println("  - splitOrders: " + prefs.isSplitMixedCategoryOrders());
+        System.out.println("  - selectedCategories: " + prefs.getSelectedCategories());
+        System.out.println("  - includeOther: " + prefs.isIncludeOtherCategories());
+
+        if (prefs.isSplitMixedCategoryOrders()) {
+            List<Order> allOrders = DatabaseService.getKitchenActiveOrders();
+            System.out.println("Ordini da scomporre: " + allOrders.size());
+            for (Order order : allOrders) {
+                DatabaseService.decomposeOrderIfNeeded(order.getId());
+            }
+        }
+
+        if (prefs.isIncludeOtherCategories()) {
+            lblActiveFilters.setText("Filtri attivi: TUTTE le categorie (incluso 'Altro')");
+        } else if (prefs.getSelectedCategories().isEmpty()) {
+            lblActiveFilters.setText("Filtri attivi: Nessuna categoria selezionata");
+        } else {
+            String categoriesText = String.join(", ", prefs.getSelectedCategories());
+            lblActiveFilters.setText("Filtri attivi: " + categoriesText);
+        }
+
+        // ✅ AGGIUNGI QUESTO LOG
+        System.out.println("Recuperando ordini filtrati per: " + username);
+        List<Order> activeOrders = DatabaseService.getKitchenActiveOrdersFiltered(username);
+        System.out.println("Ordini filtrati recuperati: " + activeOrders.size());
+
         if (activeOrders.isEmpty()) {
             Label empty = new Label("Nessun ordine in attesa.");
             empty.setStyle("-fx-font-size: 18px; -fx-text-fill: #999; -fx-padding: 20;");
@@ -144,12 +195,13 @@ public class KitchenController {
             return;
         }
 
-        // Per ogni ordine trovato, crea la card grafica
         for (Order order : activeOrders) {
             HBox card = createOrderCard(order);
             ordersContainer.getChildren().add(card);
         }
     }
+
+
 
     private HBox createOrderCard(Order order) {
 
@@ -220,12 +272,79 @@ public class KitchenController {
         return card;
     }
 
-
-    public static Parent getFXMLView() {
+    /* !! deprecato
+     public static Parent getFXMLView() {
         try {
             return new FXMLLoader(KitchenController.class.getResource("/KitchenView.fxml")).load();
         } catch (IOException e) {
             throw new UncheckedIOException("Impossibile caricare KitchenView.fxml. Controlla che il file esista in resources.", e);
         }
+    }*/
+
+    private void showPreferencesDialog() {
+        UserSession session = UserSession.getInstance();
+        if (session != null && session.getUser() != null) {
+            String username = session.getUser().getUsername();
+            Stage stage = (Stage) profileBtn.getScene().getWindow();
+
+            KitchenPreferencesDialog.show(stage, username, success -> {
+                if (success) {
+                    logger.log(Level.INFO, "Preferenze cucina aggiornate per " + username);
+                    // ✅ RICARICA GLI ORDINI SUBITO
+                    refreshData();
+                }
+            });
+        }
     }
+
+
+/*
+    @FXML
+    public void refreshData() {
+        ordersContainer.getChildren().clear();
+
+        UserSession session = UserSession.getInstance();
+        String username = (session != null && session.getUser() != null)
+                ? session.getUser().getUsername()
+                : "guest";
+
+        // Carica preferenze
+        KitchenPreferences prefs = DatabaseService.getKitchenPreferences(username);
+
+        // ✅ SE splitOrders è true, scomponi gli ordini PRIMA di recuperarli
+        if (prefs.isSplitMixedCategoryOrders()) {
+            List<Order> allOrders = DatabaseService.getKitchenActiveOrders();
+            for (Order order : allOrders) {
+                DatabaseService.decomposeOrderIfNeeded(order.getId());
+            }
+        }
+
+        // Mostra filtri attivi
+        if (prefs.isIncludeOtherCategories()) {
+            lblActiveFilters.setText("Filtri attivi: TUTTE le categorie (incluso 'Altro')");
+        } else if (prefs.getSelectedCategories().isEmpty()) {
+            lblActiveFilters.setText("Filtri attivi: Nessuna categoria selezionata");
+        } else {
+            String categoriesText = String.join(", ", prefs.getSelectedCategories());
+            lblActiveFilters.setText("Filtri attivi: " + categoriesText);
+        }
+
+        // Recupera ordini FILTRATI
+        List<Order> activeOrders = DatabaseService.getKitchenActiveOrdersFiltered(username);
+
+        if (activeOrders.isEmpty()) {
+            Label empty = new Label("Nessun ordine in attesa.");
+            empty.setStyle("-fx-font-size: 18px; -fx-text-fill: #999; -fx-padding: 20;");
+            ordersContainer.getChildren().add(empty);
+            return;
+        }
+
+        for (Order order : activeOrders) {
+            HBox card = createOrderCard(order);
+            ordersContainer.getChildren().add(card);
+        }
+    }
+
+*/
+
 }

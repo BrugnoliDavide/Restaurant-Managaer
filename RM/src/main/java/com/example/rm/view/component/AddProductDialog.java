@@ -42,9 +42,7 @@ public class AddProductDialog {
         new DialogBuilder(productToEdit, onComplete).show();
     }
 
-    /**
-     * Classe interna per gestire la creazione e la logica del dialog
-     */
+
     private static class DialogBuilder {
         private final MenuProduct productToEdit;
         private final boolean isEditMode;

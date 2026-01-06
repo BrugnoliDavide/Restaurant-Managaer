@@ -1,0 +1,111 @@
+package com.example.rm.preference;
+
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * Serializza e deserializza le preferenze cucina in/da stringa.
+ * Formato: "splitOrders:true,categories:Primi,Secondi,Bibite,includeOther:false"
+ */
+public final class PreferencesSerializer {
+
+    private PreferencesSerializer() {
+        // Non istanziabile
+    }
+
+    private static final String SPLIT_SEPARATOR = ",";
+    private static final String KEY_VALUE_SEPARATOR = ":";
+    private static final String CATEGORIES_SEPARATOR = ";";
+
+    /**
+     * Serializza un oggetto KitchenPreferences in stringa.
+     * @param prefs Preferenze da serializzare
+     * @return Stringa serializzata (o null se prefs è null)
+     */
+    public static String serialize(KitchenPreferences prefs) {
+        if (prefs == null) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+
+        // splitOrders
+        sb.append("splitOrders").append(KEY_VALUE_SEPARATOR)
+                .append(prefs.isSplitMixedCategoryOrders()).append(SPLIT_SEPARATOR);
+
+        // categories (join con ; per evitare conflitti con ,)
+        Set<String> categories = prefs.getSelectedCategories();
+        String categoriesStr = String.join(CATEGORIES_SEPARATOR, categories);
+        sb.append("categories").append(KEY_VALUE_SEPARATOR)
+                .append(categoriesStr).append(SPLIT_SEPARATOR);
+
+        // includeOther
+        sb.append("includeOther").append(KEY_VALUE_SEPARATOR)
+                .append(prefs.isIncludeOtherCategories());
+
+        return sb.toString();
+    }
+
+    /**
+     * Deserializza una stringa in oggetto KitchenPreferences.
+     * @param serialized Stringa serializzata
+     * @param username Username per il quale creare le preferenze
+     * @return KitchenPreferences deserializzate (o preferenze default se stringa invalida)
+     */
+    public static KitchenPreferences deserialize(String serialized, String username) {
+        KitchenPreferences prefs = new KitchenPreferences(username,
+                PreferencesConstants.DEFAULT_SPLIT_ORDERS,
+                new HashSet<>(),
+                PreferencesConstants.DEFAULT_INCLUDE_OTHER);
+
+        if (serialized == null || serialized.isBlank()) {
+            return prefs;
+        }
+
+        try {
+            String[] pairs = serialized.split(SPLIT_SEPARATOR);
+
+            for (String pair : pairs) {
+                if (!pair.contains(KEY_VALUE_SEPARATOR)) {
+                    continue;
+                }
+
+                String[] keyValue = pair.split(KEY_VALUE_SEPARATOR, 2);
+                String key = keyValue[0].trim();
+                String value = keyValue[1].trim();
+
+                switch (key) {
+                    case "splitOrders":
+                        prefs.setSplitMixedCategoryOrders(Boolean.parseBoolean(value));
+                        break;
+
+                    case "categories":
+                        Set<String> categories = new HashSet<>();
+                        if (!value.isEmpty()) {
+                            String[] cats = value.split(CATEGORIES_SEPARATOR);
+                            for (String cat : cats) {
+                                String trimmed = cat.trim();
+                                if (!trimmed.isEmpty()) {
+                                    categories.add(trimmed);
+                                }
+                            }
+                        }
+                        prefs.setSelectedCategories(categories);
+                        break;
+
+                    case "includeOther":
+                        prefs.setIncludeOtherCategories(Boolean.parseBoolean(value));
+                        break;
+                }
+            }
+        } catch (Exception e) {
+            // Se parsing fallisce, ritorna preferenze default
+            return new KitchenPreferences(username,
+                    PreferencesConstants.DEFAULT_SPLIT_ORDERS,
+                    new HashSet<>(),
+                    PreferencesConstants.DEFAULT_INCLUDE_OTHER);
+        }
+
+        return prefs;
+    }
+}

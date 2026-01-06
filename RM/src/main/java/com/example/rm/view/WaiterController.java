@@ -156,8 +156,6 @@ public class WaiterController {
         return card;
     }
 
-    // ... Resto dei metodi esistenti (setupUserSession, handleProfileMenu, handleNewOrder) ...
-    // ... Assicurati di copiare i metodi esistenti qui sotto ...
 
     private void setupUserSession() {
         UserSession session = UserSession.getInstance();
@@ -235,7 +233,6 @@ public class WaiterController {
             //alva nella sessione
             UserSession.getInstance().setManagedTables(selectedTables);
 
-            //Ricarica immediata della vista per applicare il filtro
             refreshNotifications();
 
             logger.log(Level.INFO,"Filtro tavoli aggiornato seguendo: {0}", input);

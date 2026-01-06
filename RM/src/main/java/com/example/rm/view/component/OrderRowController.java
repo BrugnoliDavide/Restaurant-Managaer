@@ -41,9 +41,7 @@ public class OrderRowController {
         updateUI();
     }
 
-    /**
-     * Aggiorna l'interfaccia con i dati dell'ordine
-     */
+
     private void updateUI() {
         // TITLE: "Ordine #123 - Tavolo 5 - €45.50"
         if (lblTitle != null) {
@@ -56,7 +54,7 @@ public class OrderRowController {
             logger.warning("lblTitle è null - verificare fx:id in OrderRow.fxml");
         }
 
-        // SUBTITLE: "18:30 - 2x Pizza, 1x Pasta"
+
         if (lblSubtitle != null) {
             StringBuilder subtitle = new StringBuilder();
 
@@ -79,9 +77,6 @@ public class OrderRowController {
         }
     }
 
-    // ========================================
-    // GESTORI EVENTI (chiamati dall'FXML)
-    // ========================================
 
     @FXML
     private void onHover() {

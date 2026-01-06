@@ -25,14 +25,14 @@ public class TableSelectionUtils {
         }
 
         Set<Integer> tables = new HashSet<>();
-        // Rimuoviamo spazi bianchi e dividiamo per il punto e virgola
+        // si rimuovono gli spazi bianchi e dividiamo per il punto e virgola
         String[] parts = input.split(";");
 
         for (String part : parts) {
             part = part.trim();
             try {
                 if (part.contains("-")) {
-                    // Gestione range (es. "1-5")
+                    // Gestione range
                     String[] range = part.split("-");
                     if (range.length == 2) {
                         int start = Integer.parseInt(range[0].trim());
@@ -45,7 +45,7 @@ public class TableSelectionUtils {
                         }
                     }
                 } else {
-                    // Numero singolo
+
                     tables.add(Integer.parseInt(part));
                 }
             } catch (NumberFormatException e) {

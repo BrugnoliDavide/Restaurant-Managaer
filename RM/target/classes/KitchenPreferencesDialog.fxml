@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.component.KitchenPreferencesDialog">
+
+
+    <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;" styleClass="text-title" text="Preferenze Cucina" />
+
+    <VBox spacing="10" style="-fx-border-color: #DDD; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: #F9F9F9;">
+
+        <Label style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Scomposizione Ordini" />
+
+        <CheckBox fx:id="chkSplitOrders" style="-fx-font-size: 13px;" styleClass="login-label-fixed" stylesheets="@style.css" text="Separa ordini di categorie diverse in ordini semplici" />
+
+        <Label style="-fx-font-size: 11px; -fx-text-fill: #888; -fx-padding: 5 0 0 25;" text="Se attivato: un ordine con Primi + Secondi diventerà 2 ordini separati" />
+    </VBox>
+
+    <!-- SEZIONE 2: FILTRO CATEGORIE -->
+    <VBox spacing="10" style="-fx-border-color: #DDD; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: #F9F9F9;">
+
+        <Label style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Filtra per Categorie" />
+
+        <!-- ScrollPane con CheckBox dinamiche -->
+        <ScrollPane fx:id="scrollCategories" fitToWidth="true" prefHeight="200" style="-fx-control-inner-background: white; -fx-padding: 10;">
+            <VBox fx:id="vboxCategories" spacing="8" style="-fx-padding: 0;" />
+        </ScrollPane>
+
+        <!-- Checkbox "Altro"
+        <CheckBox fx:id="chkIncludeOther" style="-fx-font-size: 12px; -fx-text-fill: #666;" text="Altro (include categorie non presenti al momento della configurazione)" />
+    </VBox> -->
+
+    <!-- PULSANTI -->
+    <HBox spacing="10" style="-fx-padding: 10 0 0 0;">
+        <Button fx:id="btnSave" style="-fx-padding: 10 30; -fx-font-size: 13px; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" styleClass="btn-save" text="Salva Preferenze" />
+
+        <Button fx:id="btnCancel" style="-fx-padding: 10 30; -fx-font-size: 13px; -fx-background-color: #CCC; -fx-text-fill: #333; -fx-cursor: hand;" styleClass="btn-secondary" text="Annulla">
+         <font>
+            <Font size="9.0" />
+         </font></Button>
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <Button fx:id="btnReset" style="-fx-padding: 10 20; -fx-font-size: 12px; -fx-background-color: #FF9800; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" text="Ripristina Preferenze di Default" />
+    </HBox>
+</VBox>
