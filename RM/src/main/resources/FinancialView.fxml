@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.FinancialController">
-
+<BorderPane styleClass="view-background" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.FinancialController">
 
     <top>
         <VBox spacing="10">
@@ -13,7 +16,7 @@
                 <Insets bottom="10" left="20" right="20" top="20" />
             </padding>
 
-             <Label fx:id="lblManage" onMouseClicked="#goBack" prefHeight="15.0" prefWidth="87.0" styleClass="link-label" text="← Manage" />
+            <Label fx:id="lblManage" onMouseClicked="#goBack" styleClass="link-label" text="← Manage" />
 
             <HBox alignment="CENTER_LEFT" spacing="20">
                 <Label styleClass="text-header" text="Financial Overview" />
@@ -23,20 +26,14 @@
         </VBox>
     </top>
 
-    <!-- CONTENT -->
     <center>
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
-
             <VBox fx:id="ordersContainer" spacing="0" styleClass="orders-container">
-
                 <padding>
                     <Insets bottom="10" left="10" right="10" top="10" />
                 </padding>
-
             </VBox>
-
         </ScrollPane>
-
     </center>
 
 </BorderPane>

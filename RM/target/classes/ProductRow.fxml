@@ -16,7 +16,6 @@
       onMouseExited="#onExit"
       onMouseClicked="#onClick">
 
-    <!-- INFO PRODOTTO -->
     <VBox spacing="4">
         <Label fx:id="lblName"
                styleClass="row-title"/>
@@ -27,7 +26,7 @@
 
     <Region HBox.hgrow="ALWAYS"/>
 
-    <!-- MENU AZIONI -->
+
     <Label fx:id="dots"
            text="..."
            styleClass="row-dots"

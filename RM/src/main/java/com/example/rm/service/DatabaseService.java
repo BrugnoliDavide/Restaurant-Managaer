@@ -126,7 +126,7 @@ public class DatabaseService {
     }
 
     public static boolean deleteProduct(int id) {
-        logger.log(Level.INFO,"Tentativo eliminazione prodotto ID: {0}", id);
+        logger.log(Level.INFO, "Tentativo eliminazione prodotto ID: {0}", id);
 
         if (id <= 0) {
             logger.log(Level.WARNING, "ID non valido per eliminazione: {0}", id);
@@ -145,14 +145,12 @@ public class DatabaseService {
                 logger.info("SUCCESSO: Prodotto eliminato.");
                 return true;
             } else {
-
-                logger.log(Level.WARNING,"FALLIMENTO: Nessuna riga trovata con ID: {0}", id);
-
+                logger.log(Level.WARNING, "FALLIMENTO: Nessuna riga trovata con ID: {0}", id);
                 return false;
             }
 
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "ERRORE SQL GRAVE durante eliminazione", e);
+            logger.log(Level.SEVERE, "ERRORE SQL durante eliminazione: " + e.getMessage(), e);
             return false;
         }
     }
@@ -174,14 +172,34 @@ public class DatabaseService {
         return categories;
     }
 
-    public static boolean createOrder(List<OrderItem> items, Integer tavolo, String note, User Utente ) {
+    /**
+     * Crea un nuovo ordine con i suoi articoli.
+     * Salva uno snapshot completo dei dati del prodotto al momento dell'ordine.
+     *
+     * @param items Lista di articoli da ordinare
+     * @param tavolo Numero tavolo (può essere null)
+     * @param note Note aggiuntive (può essere null)
+     * @param utente Utente che crea l'ordine
+     * @return true se l'ordine è stato creato con successo
+     */
+    public static boolean createOrder(List<OrderItem> items, Integer tavolo, String note, User utente) {
 
-        String usernameUtente = Utente.getUsername();
+        if (utente == null) {
+            logger.log(Level.WARNING, "Tentativo di creare ordine senza utente");
+            return false;
+        }
 
-        if (items.isEmpty()) return false;
+        String usernameUtente = utente.getUsername();
 
-        String sqlOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?,?, ?, ?)";
-        String sqlItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, prezzo_vendita_snapshot, costo_realizzazione_snapshot) VALUES (?, ?, ?, ?, ?)";
+        if (items == null || items.isEmpty()) {
+            logger.log(Level.WARNING, "Tentativo di creare ordine senza articoli");
+            return false;
+        }
+
+        String sqlOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
+        String sqlItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, " +
+                "prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmtOrder = conn.prepareStatement(sqlOrder, Statement.RETURN_GENERATED_KEYS);
@@ -189,34 +207,63 @@ public class DatabaseService {
 
             conn.setAutoCommit(false);
 
-            // Inserimento ordine
-            pstmtOrder.setString(1, usernameUtente);
-            if (tavolo != null) pstmtOrder.setInt(2, tavolo);
-            else pstmtOrder.setNull(2, Types.INTEGER);
-            pstmtOrder.setString(3, note);
-            pstmtOrder.setString(4, "to-do");
+            try {
+                // Inserimento ordine
+                pstmtOrder.setString(1, usernameUtente);
 
-            pstmtOrder.executeUpdate();
+                if (tavolo != null) {
+                    pstmtOrder.setInt(2, tavolo);
+                } else {
+                    pstmtOrder.setNull(2, Types.INTEGER);
+                }
 
-            int orderId;
-            try (ResultSet keys = pstmtOrder.getGeneratedKeys()) {
-                if (!keys.next()) throw new SQLException("ID ordine non generato");
-                orderId = keys.getInt(1);
+                pstmtOrder.setString(3, note);
+                pstmtOrder.setString(4, "to-do");
+
+                pstmtOrder.executeUpdate();
+
+                // Recupera ID ordine generato
+                int orderId;
+                try (ResultSet keys = pstmtOrder.getGeneratedKeys()) {
+                    if (!keys.next()) {
+                        throw new SQLException("ID ordine non generato");
+                    }
+                    orderId = keys.getInt(1);
+                }
+
+                // Inserimento articoli con snapshot completo
+                for (OrderItem item : items) {
+                    if (item.getProduct() == null) {
+                        logger.log(Level.WARNING, "Articolo con prodotto null saltato");
+                        continue;
+                    }
+
+                    pstmtItem.setInt(1, orderId);
+                    pstmtItem.setInt(2, item.getProduct().getId());
+                    pstmtItem.setInt(3, item.getQuantita());
+                    pstmtItem.setDouble(4, item.getPrezzoSnapshot());
+                    pstmtItem.setDouble(5, item.getCostoSnapshot());
+
+                    // ✅ NUOVO: Salva il nome del prodotto
+                    String nomeProdotto = item.getProduct().getNome();
+                    pstmtItem.setString(6, nomeProdotto);
+
+                    pstmtItem.addBatch();
+                }
+
+                pstmtItem.executeBatch();
+                conn.commit();
+
+                logger.log(Level.INFO, "Ordine #{0} creato con successo con {1} articoli",
+                        new Object[]{orderId, items.size()});
+
+                return true;
+
+            } catch (SQLException e) {
+                conn.rollback();
+                logger.log(Level.SEVERE, "Errore durante la creazione dell'ordine, rollback eseguito", e);
+                return false;
             }
-
-            // Inserimento righe
-            for (OrderItem item : items) {
-                pstmtItem.setInt(1, orderId);
-                pstmtItem.setInt(2, item.getProduct().getId());
-                pstmtItem.setInt(3, item.getQuantita());
-                pstmtItem.setDouble(4, item.getPrezzoSnapshot());
-                pstmtItem.setDouble(5, item.getCostoSnapshot());
-                pstmtItem.addBatch();
-            }
-
-            pstmtItem.executeBatch();
-            conn.commit();
-            return true;
 
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore creazione ordine", e);
@@ -351,19 +398,45 @@ public class DatabaseService {
         return list;
     }
 
+    /**
+     * Recupera gli articoli di un ordine in formato semplice per la visualizzazione.
+     * Usa lo snapshot del nome per gestire prodotti eliminati.
+     *
+     * @param orderId ID dell'ordine
+     * @return Lista di stringhe nel formato "Qta x Nome Prodotto"
+     */
+    /**
+     * Recupera gli articoli di un ordine in formato semplice per la visualizzazione.
+     * Usa lo snapshot del nome per gestire prodotti eliminati.
+     *
+     * @param orderId ID dell'ordine
+     * @return Lista di stringhe nel formato "Qta x Nome Prodotto"
+     */
     public static List<String> getOrderItemsForDisplay(int orderId) {
         List<String> details = new ArrayList<>();
-        String sql = "SELECT mi.nome, oi.quantita FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE oi.order_id = ?";
+
+        String sql = "SELECT oi.quantita, " +
+                "COALESCE(oi.nome_prodotto_snapshot, mi.nome, 'Prodotto eliminato') AS nome " +
+                "FROM order_items oi " +
+                "LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id " +
+                "WHERE oi.order_id = ?";
+
         try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
             pstmt.setInt(1, orderId);
             ResultSet rs = pstmt.executeQuery();
+
             while (rs.next()) {
-                details.add(rs.getInt("quantita") + "x " + rs.getString("nome"));
+                int quantita = rs.getInt("quantita");
+                String nome = rs.getString("nome");
+                details.add(quantita + "x " + nome);
             }
+
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore dettagli ordine", e);
+            logger.log(Level.SEVERE, "Errore dettagli ordine " + orderId, e);
         }
+
         return details;
     }
 
@@ -470,8 +543,6 @@ public class DatabaseService {
         }
     }
 
-
-
     public static void loadFromPreferences() {
         String host = DBConfigStore.getHost();
         String port = DBConfigStore.getPort();
@@ -483,7 +554,6 @@ public class DatabaseService {
             setConnectionConfig(host, port, db, user, pass);
         }
     }
-
 
     public static Connection getConnection() throws SQLException {
 
@@ -545,13 +615,26 @@ public class DatabaseService {
     }
 
     // TODO: prima di consegnare revisionare assolutamente
+    /**
+     * Recupera gli articoli dettagliati di un ordine.
+     * Gestisce correttamente i prodotti eliminati usando gli snapshot.
+     *
+     * @param orderId ID dell'ordine
+     * @return Lista di OrderItem con dati completi
+     */
     public static List<OrderItem> getOrderItemsDetailed(int orderId) {
         List<OrderItem> items = new ArrayList<>();
 
-        // ✅ AGGIUNGI mi.id
-        String sql = "SELECT mi.id, mi.nome, mi.tipologia, oi.quantita, oi.prezzo_vendita_snapshot, oi.costo_realizzazione_snapshot " +
+        String sql = "SELECT oi.menu_item_id, " +
+                "       oi.quantita, " +
+                "       oi.prezzo_vendita_snapshot, " +
+                "       oi.costo_realizzazione_snapshot, " +
+                "       oi.nome_prodotto_snapshot, " +
+                "       mi.id AS product_id, " +
+                "       mi.nome AS product_nome, " +
+                "       mi.tipologia AS product_tipologia " +
                 "FROM order_items oi " +
-                "JOIN menu_items mi ON oi.menu_item_id = mi.id " +
+                "LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id " +
                 "WHERE oi.order_id = ?";
 
         try (Connection conn = DriverManager.getConnection(url, user, pass);
@@ -561,32 +644,48 @@ public class DatabaseService {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                int productId = rs.getInt("id");           // ✅ AGGIUNGI QUESTA RIGA
-                String nomePiatto = rs.getString("nome");
-                String tipologia = rs.getString("tipologia");
-                int qta = rs.getInt("quantita");
+                int menuItemId = rs.getInt("menu_item_id");
+                int quantita = rs.getInt("quantita");
                 double prezzoSnap = rs.getDouble("prezzo_vendita_snapshot");
-                double costoSnap = rs.getDouble("costo_realizzazione_snapshot");  // ✅ AGGIUNGI ANCHE QUESTO
+                double costoSnap = rs.getDouble("costo_realizzazione_snapshot");
+                String nomeSnap = rs.getString("nome_prodotto_snapshot");
 
-                MenuProduct dummyProduct = new MenuProduct();
-                dummyProduct.setId(productId);              // ✅ SETTA L'ID
-                dummyProduct.setNome(nomePiatto);
-                dummyProduct.setTipologia(tipologia);
+                // Crea oggetto prodotto (può essere null se eliminato)
+                MenuProduct product;
+
+                // Controlla se il prodotto esiste ancora nel menu
+                Integer productId = rs.getObject("product_id", Integer.class);
+
+                if (productId != null) {
+                    // Prodotto ancora esistente
+                    product = new MenuProduct();
+                    product.setId(productId);
+                    product.setNome(rs.getString("product_nome"));
+                    product.setTipologia(rs.getString("product_tipologia"));
+                } else {
+                    // Prodotto eliminato - crea oggetto dummy con dati snapshot
+                    product = new MenuProduct();
+                    product.setId(menuItemId);
+                    product.setNome(nomeSnap != null ? nomeSnap : "Prodotto eliminato");
+                    product.setTipologia("Non disponibile");
+                }
 
                 OrderItem item = new OrderItem();
-                item.setProduct(dummyProduct);
-                item.setQuantita(qta);
+                item.setProduct(product);
+                item.setQuantita(quantita);
                 item.setPrezzoSnapshot(prezzoSnap);
-                item.setCostoSnapshot(costoSnap);           // ✅ SETTA IL COSTO
+                item.setCostoSnapshot(costoSnap);
+                item.setNomeSnapshot(nomeSnap);
 
                 items.add(item);
             }
+
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero dettagli articoli ordine " + orderId, e);
         }
+
         return items;
     }
-
 
 
     public static long getQuantitySoldInDateRange(int productId, LocalDateTime start, LocalDateTime end) {
@@ -759,6 +858,13 @@ public class DatabaseService {
         return categories;
     }
 
+    /**
+     * Scompone un ordine in più ordini per categoria se necessario.
+     * Mantiene tutti gli snapshot dei dati originali.
+     *
+     * @param orderId ID dell'ordine da scomporre
+     * @return true se l'operazione è riuscita
+     */
     public static boolean decomposeOrderIfNeeded(int orderId) {
         try {
             List<OrderItem> allItems = getOrderItemsDetailed(orderId);
@@ -790,17 +896,18 @@ public class DatabaseService {
                     itemsByCategory.computeIfAbsent(categoria, k -> new ArrayList<>()).add(item);
                 }
 
-                // Se c'è solo 1 categoria non si scomporre
+                // Se c'è solo 1 categoria non scomporre
                 if (itemsByCategory.size() <= 1) {
                     return true;
                 }
 
-                // SCOMPONI DIRETTAMENTE NEL DB (senza usare createOrder())
+                // SQL per creare nuovi ordini con snapshot
                 String sqlNewOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
-                String sqlNewItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, prezzo_vendita_snapshot, costo_realizzazione_snapshot) VALUES (?, ?, ?, ?, ?)";
+                String sqlNewItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, " +
+                        "prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)";
 
                 for (Map.Entry<String, List<OrderItem>> entry : itemsByCategory.entrySet()) {
-                    String categoria = entry.getKey();
                     List<OrderItem> categoryItems = entry.getValue();
 
                     try (Connection connNew = DriverManager.getConnection(url, user, pass);
@@ -810,11 +917,9 @@ public class DatabaseService {
                         connNew.setAutoCommit(false);
 
                         // Crea nuovo ordine
-                        pstmtNewOrder.setString(1, username);  // ✅ USA LO USERNAME CORRETTO
+                        pstmtNewOrder.setString(1, username);
                         pstmtNewOrder.setInt(2, tavolo);
-                        //String noteExtended = note != null ? note + " [Cat: " + categoria + "]" : "[Cat: " + categoria + "]";
-                        //pstmtNewOrder.setString(3, noteExtended);
-                        //pstmtNewOrder.setString(3, noteExtended);
+                        pstmtNewOrder.setString(3, note);
                         pstmtNewOrder.setString(4, "to-do");
 
                         pstmtNewOrder.executeUpdate();
@@ -825,13 +930,14 @@ public class DatabaseService {
                             newOrderId = keys.getInt(1);
                         }
 
-                        // Inserisci items per questa categoria
+                        // Inserisci items con snapshot
                         for (OrderItem item : categoryItems) {
                             pstmtNewItem.setInt(1, newOrderId);
                             pstmtNewItem.setInt(2, item.getProduct().getId());
                             pstmtNewItem.setInt(3, item.getQuantita());
                             pstmtNewItem.setDouble(4, item.getPrezzoSnapshot());
                             pstmtNewItem.setDouble(5, item.getCostoSnapshot());
+                            pstmtNewItem.setString(6, item.getNomeSnapshot()); // ✅ Mantieni snapshot nome
                             pstmtNewItem.addBatch();
                         }
 
@@ -848,7 +954,6 @@ public class DatabaseService {
                 return true;
             }
         } catch (SQLException e) {
-            // !! da cambiare dopo aver finito il debug
             logger.log(Level.SEVERE, "Errore scomposizione ordine " + orderId + ": " + e.getMessage(), e);
             return false;
         }
@@ -875,7 +980,6 @@ public class DatabaseService {
         }
     }
 
-
     public static List<Integer> getPendingOrderIds(int tavolo) {
         String sql = """
         SELECT DISTINCT o.id 
@@ -901,6 +1005,42 @@ public class DatabaseService {
             logger.log(Level.SEVERE, " ERRORE SQL getPendingOrderIds tavolo " + tavolo + ": " + e.getMessage() + "\nQUERY: " + sql, e);
         }
         return pendingIds;
+    }
+
+
+
+    public static double getRealizedIncome(
+            int productId,
+            LocalDateTime start,
+            LocalDateTime end
+    ) {
+
+        String sql = """
+        SELECT COALESCE(
+            SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0
+        )
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE oi.menu_item_id = ?
+          AND o.data_ora BETWEEN ? AND ?
+          AND o.status != 'canceled'
+        """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, productId);
+            ps.setTimestamp(2, Timestamp.valueOf(start));
+            ps.setTimestamp(3, Timestamp.valueOf(end));
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getDouble(1);
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore realized income", e);
+        }
+
+        return 0;
     }
 
 

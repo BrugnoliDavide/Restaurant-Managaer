@@ -1,8 +1,6 @@
 package com.example.rm.preference;
 
-/**
- * Costanti per la gestione delle preferenze cucina
- */
+
 public final class PreferencesConstants {
 
     private PreferencesConstants() {

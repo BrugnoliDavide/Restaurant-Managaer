@@ -3,12 +3,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.rm.view.component.DateHeaderController">
+<VBox stylesheets="@style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.component.DateHeaderController">
 
-    <Label fx:id="lblDate"
-           style="-fx-font-size: 12px;
-                  -fx-text-fill: #999;
-                  -fx-font-weight: bold;
-                  -fx-padding: 15 0 5 0;" />
+    <Label fx:id="lblDate" style="-fx-font-size: 12px;                   -fx-text-fill: #999;                   -fx-font-weight: bold;                   -fx-padding: 15 0 5 0;" styleClass="date-header" stylesheets="@style.css" />
 </VBox>

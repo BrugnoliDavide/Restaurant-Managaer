@@ -6,9 +6,6 @@ public final class ViewFactory {
 
     private ViewFactory() {}
 
-    /**
-     * Crea una view basata sul ruolo (view senza parametri)
-     */
     public static View forRole(String role) {
 
         if (role == null) {

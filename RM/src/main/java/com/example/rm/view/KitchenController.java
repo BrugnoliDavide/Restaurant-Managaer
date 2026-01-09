@@ -219,13 +219,13 @@ public class KitchenController {
         if (order.getTavolo() > 0) titleText += " (Tavolo " + order.getTavolo() + ")";
 
         Label lblTitle = new Label(titleText);
-        lblTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        // !! da rimuovere: lblTitle.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;");
 
-        // Orario
+
         Label lblTime = new Label("Arrivato alle: " + order.getDataOra().format(DateTimeFormatter.ofPattern("HH:mm")));
-        lblTime.setStyle("-fx-text-fill: #888; -fx-font-size: 12px;");
+        // !!  datogliere: lblTime.setStyle("-fx-text-fill: #888; -fx-font-size: 12px;");
 
-        // Lista Piatti (Recuperati dal DB)
+
         VBox itemsBox = new VBox(2);
         itemsBox.setPadding(new Insets(10, 0, 0, 0));
 

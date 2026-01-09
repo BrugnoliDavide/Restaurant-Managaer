@@ -15,7 +15,7 @@
 
 
     <top>
-        <VBox spacing="10">
+        <VBox spacing="10" stylesheets="@style.css">
             <padding>
                 <Insets bottom="10" left="20" right="20" top="20" />
             </padding>
@@ -36,7 +36,7 @@
                     <Region HBox.hgrow="ALWAYS" />
 
                     <!-- TextField ricerca -->
-                    <TextField fx:id="txtSearch" prefWidth="250" promptText="Cerca per nome o categoria" style="-fx-font-size: 13px;" />
+                    <TextField fx:id="txtSearch" prefWidth="250" promptText="Cerca per nome o categoria" style="-fx-font-size: 13px;" styleClass="input-standard" stylesheets="@style.css" />
                 </HBox>
 
                 <!-- Add icon -->
@@ -50,9 +50,9 @@
         </VBox>
     </top>
 
-    <!-- CONTENT -->
+
     <center>
-        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" stylesheets="@style.css" vbarPolicy="AS_NEEDED">
 
             <content>
                 <VBox fx:id="menuContainer" spacing="0" styleClass="orders-container">

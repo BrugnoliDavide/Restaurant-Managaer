@@ -1,8 +1,8 @@
 package com.example.rm.view.component;
 
 import com.example.rm.app.MainApp;
+import com.example.rm.controller.MenuUseCase;
 import com.example.rm.model.MenuProduct;
-import com.example.rm.service.DatabaseService;
 import com.example.rm.view.MenuController;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -54,14 +54,15 @@ public class AddProductDialog {
         private TextField txtPrice;
         private TextField txtCost;
         private TextField txtAllergens;
+        private final MenuUseCase menuService;
 
         public DialogBuilder(MenuProduct productToEdit, Consumer<Boolean> onComplete) {
             this.productToEdit = productToEdit;
-            this.isEditMode = (productToEdit != null);
+            this.isEditMode = productToEdit != null;
             this.onComplete = onComplete;
+            this.menuService = new MenuController();
             this.window = createWindow();
         }
-
         public void show() {
             VBox layout = buildLayout();
             window.setScene(new Scene(layout));
@@ -138,15 +139,10 @@ public class AddProductDialog {
 
         private ComboBox<String> createCategoryComboBox() {
             ComboBox<String> comboBox = new ComboBox<>();
-            comboBox.getItems().addAll(DatabaseService.getAllCategories());
+            comboBox.getItems().addAll(menuService.loadCategories());
             comboBox.setEditable(true);
-
-            if (isEditMode) {
-                comboBox.setValue(productToEdit.getTipologia());
-            } else if (!comboBox.getItems().isEmpty()) {
-                comboBox.getSelectionModel().selectFirst();
-            }
-
+            if (isEditMode) comboBox.setValue(productToEdit.getTipologia());
+            else if (!comboBox.getItems().isEmpty()) comboBox.getSelectionModel().selectFirst();
             return comboBox;
         }
 
@@ -231,8 +227,8 @@ public class AddProductDialog {
 
         private boolean saveProduct(MenuProduct product) {
             return isEditMode
-                    ? DatabaseService.updateProduct(product)
-                    : DatabaseService.addProduct(product);
+                    ? menuService.updateProduct(product)
+                    : menuService.addProduct(product);
         }
 
         private void notifyCompletion(boolean success) {

@@ -1,0 +1,63 @@
+package com.example.rm.controller;
+
+import com.example.rm.service.DBConfigStore;
+import com.example.rm.service.DatabaseService;
+
+public class DBConfigController implements DBConfigUseCase {
+
+    @Override
+    public DBConfig loadConfig() {
+        // Usa API esistenti di DatabaseService
+        String host = DatabaseService.getDBHost();
+        String port = DatabaseService.getDBPort();
+        String dbName = DatabaseService.getDBName();
+        String user = DatabaseService.getDBUser();
+        boolean hasPassword = DatabaseService.hasPassword(); // esiste nel tuo codice
+
+        return new DBConfig(host, port, dbName, user, hasPassword);
+    }
+
+    @Override
+    public boolean saveConfig(String host, String port, String dbName, String username, String password) {
+        // Validazioni base
+        if (isBlank(host) || isBlank(port) || isBlank(dbName) || isBlank(username)) {
+            return false;
+        }
+
+        // Se password vuota, recupera quella esistente dal DBConfigStore
+        String finalPassword;
+        if (password == null || password.isBlank()) {
+            finalPassword = DBConfigStore.getPassword();   // esiste e ritorna "" se non c'è
+            if (finalPassword == null || finalPassword.isBlank()) {
+                // Non c'è password salvata e l'utente non ne ha inserita una
+                return false;
+            }
+        } else {
+            finalPassword = password.trim();
+        }
+
+        // Salva nelle preferenze cifrate
+        DBConfigStore.save(
+                host.trim(),
+                port.trim(),
+                dbName.trim(),
+                username.trim(),
+                finalPassword
+        );
+
+        // Aggiorna la configurazione runtime di DatabaseService
+        DatabaseService.setConnectionConfig(
+                host.trim(),
+                port.trim(),
+                dbName.trim(),
+                username.trim(),
+                finalPassword
+        );
+
+        return true;
+    }
+
+    private boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+}

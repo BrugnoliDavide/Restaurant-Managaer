@@ -43,7 +43,6 @@ public class OrderRowController {
 
 
     private void updateUI() {
-        // TITLE: "Ordine #123 - Tavolo 5 - €45.50"
         if (lblTitle != null) {
             String title = String.format("Ordine #%d - Tavolo %d - €%.2f",
                     order.getId(),

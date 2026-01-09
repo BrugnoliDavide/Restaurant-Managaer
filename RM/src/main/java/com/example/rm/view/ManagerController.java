@@ -129,10 +129,4 @@ public class ManagerController {
                 .setRoot(financialView.getRoot());
     }
 
-    @FXML
-    private void handleNotifications() {
-        // !! Cooming Soon
-    }
-
-
 }

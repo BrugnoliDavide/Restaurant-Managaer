@@ -312,40 +312,6 @@ public class EarningController {
         detailsPane.getChildren().add(content);
     }
 
-/* !! deprecato versione aggiornata sotto
-    private VBox createOrderSection(Order order) {
-        // ... (Implementazione identica alla tua versione precedente) ...
-        // Per brevità qui riporto solo la struttura, il contenuto interno è lo stesso
-        VBox section = new VBox(8);
-        section.setStyle("-fx-background-color: #FAFAFA; -fx-padding: 12; -fx-background-radius: 5; -fx-border-color: #E0E0E0;");
-
-        HBox orderHeader = new HBox(10);
-        Label lblOrderId = new Label("Ordine #" + order.getId());
-        lblOrderId.setStyle("-fx-font-weight: bold; -fx-text-fill: #2196F3;");
-
-        // Label Stato "Consegnato" per chiarezza
-        Label lblStatus = new Label("Consegnato");
-        lblStatus.setStyle("-fx-font-size: 10px; -fx-text-fill: white; -fx-background-color: #9E9E9E; -fx-padding: 2 6; -fx-background-radius: 10;");
-
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-        Label lblOrderTotal = new Label(String.format(valueFormat, order.getTotale()));
-        lblOrderTotal.setStyle("-fx-font-weight: bold; -fx-text-fill: #2ecc71;");
-
-        orderHeader.getChildren().addAll(lblOrderId, lblStatus, spacer, lblOrderTotal);
-
-        VBox itemsList = new VBox(5);
-        List<String> items = DatabaseService.getOrderItemsForDisplay(order.getId());
-        for (String item : items) {
-            itemsList.getChildren().add(new Label("• " + item));
-        }
-
-        section.getChildren().addAll(orderHeader, itemsList);
-        return section;
-    }
-*/
-
-
     private void clearDetailsPane() {
         detailsPane.getChildren().clear();
         Label placeholder = new Label("Seleziona un tavolo");
@@ -431,7 +397,6 @@ public class EarningController {
         }
     }
 
-
     @FXML
     private void handleProfileMenu(MouseEvent event) {
         ContextMenu contextMenu = new ContextMenu();
@@ -465,7 +430,6 @@ public class EarningController {
         // Mostra il menu sotto il bottone profilo
         contextMenu.show(profileBtn, Side.BOTTOM, 0, 0);
     }
-
 
     private VBox createOrderSection(Order order) {
         VBox section = new VBox(8);
