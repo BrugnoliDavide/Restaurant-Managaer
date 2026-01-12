@@ -27,6 +27,9 @@ import java.util.List;
 import java.util.logging.Level;
 
 import static com.example.rm.view.LoginController.logger;import java.io.UncheckedIOException;
+import com.example.rm.controller.KitchenService;
+import com.example.rm.controller.KitchenUseCase;
+
 
 
 public class KitchenController {
@@ -39,6 +42,8 @@ public class KitchenController {
     @FXML private Label lblHeaderRole;
     @FXML private Label lblWelcomeMsg;
     @FXML private Label lblActiveFilters;
+
+    private static KitchenUseCase kitchenUseCase = new KitchenService();
 
 
     @FXML
@@ -156,23 +161,23 @@ public class KitchenController {
                 ? session.getUser().getUsername()
                 : "guest";
 
+        /*
         System.out.println("===== REFRESH DATA =====");
         System.out.println("Username: " + username);
-
-        KitchenPreferences prefs = DatabaseService.getKitchenPreferences(username);
-
+*/
+        KitchenPreferences prefs = kitchenUseCase.loadPreferences(username);
+/*
         System.out.println("Preferenze caricate:");
         System.out.println("  - splitOrders: " + prefs.isSplitMixedCategoryOrders());
         System.out.println("  - selectedCategories: " + prefs.getSelectedCategories());
         System.out.println("  - includeOther: " + prefs.isIncludeOtherCategories());
+*/
+
 
         if (prefs.isSplitMixedCategoryOrders()) {
-            List<Order> allOrders = DatabaseService.getKitchenActiveOrders();
-            System.out.println("Ordini da scomporre: " + allOrders.size());
-            for (Order order : allOrders) {
-                DatabaseService.decomposeOrderIfNeeded(order.getId());
-            }
+            kitchenUseCase.splitMixedOrdersIfNeeded();
         }
+
 
         if (prefs.isIncludeOtherCategories()) {
             lblActiveFilters.setText("Filtri attivi: TUTTE le categorie (incluso 'Altro')");
@@ -183,10 +188,9 @@ public class KitchenController {
             lblActiveFilters.setText("Filtri attivi: " + categoriesText);
         }
 
-        // ✅ AGGIUNGI QUESTO LOG
+
         System.out.println("Recuperando ordini filtrati per: " + username);
-        List<Order> activeOrders = DatabaseService.getKitchenActiveOrdersFiltered(username);
-        System.out.println("Ordini filtrati recuperati: " + activeOrders.size());
+        List<Order> activeOrders = kitchenUseCase.loadFilteredOrders(username);System.out.println("Ordini filtrati recuperati: " + activeOrders.size());
 
         if (activeOrders.isEmpty()) {
             Label empty = new Label("Nessun ordine in attesa.");
@@ -229,7 +233,7 @@ public class KitchenController {
         VBox itemsBox = new VBox(2);
         itemsBox.setPadding(new Insets(10, 0, 0, 0));
 
-        List<String> items = DatabaseService.getOrderItemsForDisplay(order.getId());
+        List<String> items = kitchenUseCase.getOrderItemsDisplay(order.getId());
         for (String itemStr : items) {
             Label itemLbl = new Label("• " + itemStr);
             itemLbl.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #444;");
