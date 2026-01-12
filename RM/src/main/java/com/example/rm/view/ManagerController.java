@@ -1,5 +1,7 @@
 package com.example.rm.view;
 
+import com.example.rm.controller.ManagerService;
+import com.example.rm.controller.ManagerUseCase;
 import javafx.fxml.FXML;
 import javafx.geometry.Side;
 import javafx.scene.control.*;
@@ -10,43 +12,56 @@ import javafx.util.Duration;
 import com.example.rm.app.UserSession;
 import com.example.rm.view.component.ChangePasswordDialog;
 import javafx.stage.Stage;
+import com.example.rm.app.SceneManager;
+
 
 public class ManagerController {
 
-    @FXML private Label lblHeaderName;
-    @FXML private Label lblHeaderRole;
-    @FXML private Label lblWelcomeTop;
-    @FXML private Label lblWelcomeName;
-    @FXML private StackPane profileBtn;
-    @FXML private Circle profileCircle;
+    @FXML
+    private Label lblHeaderName;
+    @FXML
+    private Label lblHeaderRole;
+    @FXML
+    private Label lblWelcomeTop;
+    @FXML
+    private Label lblWelcomeName;
+    @FXML
+    private StackPane profileBtn;
+    @FXML
+    private Circle profileCircle;
 
+    private static ManagerUseCase managerUseCase = new ManagerService();
+
+    public static void setManagerUseCase(ManagerUseCase useCase) {
+        managerUseCase = useCase;
+    }
 
 
     @FXML
     public void initialize() {
 
-            UserSession session = UserSession.getInstance();
+        UserSession session = UserSession.getInstance();
 
 
-            String displayName = "Utente";
-            String displayRole = "Ruolo";
-            String welcomeMsg = "Welcome";
+        String displayName = "Utente";
+        String displayRole = "Ruolo";
+        String welcomeMsg = "Welcome";
 
-            if (session != null && session.getUser() != null) {
-                // Recuperiamo l'oggetto Utente Polimorfico
-                com.example.rm.model.User u = session.getUser();
+        if (session != null && session.getUser() != null) {
+            // Recuperiamo l'oggetto Utente Polimorfico
+            com.example.rm.model.User u = session.getUser();
 
-                displayName = u.getUsername();
-                displayRole = u.getRole();
+            displayName = u.getUsername();
+            displayRole = u.getRole();
 
-                welcomeMsg = u.getWelcomeMessage();
-            }
+            welcomeMsg = u.getWelcomeMessage();
+        }
 
-            lblHeaderName.setText(displayName);
-            lblHeaderRole.setText(displayRole);
+        lblHeaderName.setText(displayName);
+        lblHeaderRole.setText(displayRole);
 
-            // Impostiamo il messaggio personalizzato
-            lblWelcomeTop.setText(welcomeMsg);
+        // Impostiamo il messaggio personalizzato
+        lblWelcomeTop.setText(welcomeMsg);
 
         Tooltip tooltip = new Tooltip("Opzioni");
         tooltip.setShowDelay(Duration.millis(50));
@@ -65,37 +80,38 @@ public class ManagerController {
 
         ContextMenu contextMenu = new ContextMenu();
 
-        // === OPZIONE 1: GESTIONE STAFF ===
         MenuItem itemStaff = new MenuItem("Gestione Staff");
-        itemStaff.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10;");
+        itemStaff.getStyleClass().add("context-menu-item");
+        //itemStaff.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10;");
         itemStaff.setOnAction(e -> {
-            View usersView = ViewFactory.forRole("users");
-            profileBtn.getScene().setRoot(usersView.getRoot());
+            SceneManager.showUsers();
         });
 
         // === OPZIONE 2: CAMBIA PASSWORD (NUOVO) ===
         MenuItem itemChangePassword = new MenuItem("Cambia Password");
-        itemChangePassword.setStyle(
+        itemChangePassword.getStyleClass().add("context-menu-item-info");
+        /*itemChangePassword.setStyle(
                 "-fx-font-size: 14px; " +
                         "-fx-padding: 5 10 5 10; " +
                         "-fx-text-fill: #2196F3;"
-        );
+        );*/
         itemChangePassword.setOnAction(e -> {
             Stage stage = (Stage) profileBtn.getScene().getWindow();
             ChangePasswordDialog.show(stage);
         });
 
-        // === OPZIONE 3: LOGOUT ===
+        //  LOGOUT
         MenuItem itemLogout = new MenuItem("Logout");
-        itemLogout.setStyle(
+        itemLogout.getStyleClass().add("context-menu-item-danger");
+        /*itemLogout.setStyle(
                 "-fx-font-size: 14px; " +
                         "-fx-padding: 5 10 5 10; " +
                         "-fx-text-fill: red; " +
                         "-fx-font-weight: bold;"
-        );
+        );*/
         itemLogout.setOnAction(e -> {
             UserSession.cleanUserSession();
-            profileBtn.getScene().setRoot(LoginController.getFXMLView());
+            SceneManager.showLogin();
         });
 
         // === ASSEMBLA MENU ===
@@ -113,20 +129,11 @@ public class ManagerController {
 
     @FXML
     private void goToMenu() {
-        View menuView = ViewFactory.forRole("menu");
-        profileBtn
-                .getScene()
-                .setRoot(menuView.getRoot());
+        SceneManager.showMenu();
     }
 
     @FXML
     private void goToFinancial() {
-
-        View financialView = ViewFactory.forRole("financial");
-
-        profileBtn
-                .getScene()
-                .setRoot(financialView.getRoot());
+        SceneManager.showFinancial();
     }
-
 }

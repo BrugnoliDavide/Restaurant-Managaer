@@ -25,6 +25,16 @@ public class SceneManager {
         primaryStage.setScene(new Scene(ViewFactory.forRole("waiter").getRoot()));
     }
 
+
+    public static void showFinancial() {
+        primaryStage.setScene(new Scene(ViewFactory.forRole("financial").getRoot()));
+    }
+
+    public static void showUsers() {
+        primaryStage.setScene(new Scene(ViewFactory.forRole("users").getRoot()));
+    }
+
+
     // metodo generico per qualsiasi ruolo
     public static void showView(String role) {
         primaryStage.setScene(new Scene(ViewFactory.forRole(role).getRoot()));

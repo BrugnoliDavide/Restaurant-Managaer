@@ -34,17 +34,11 @@ public class FinancialController {
 
     private static final Logger logger = LoggerService.getLogger(FinancialController.class);
 
-    /* =======================
-       COSTANTI
-       ======================= */
 
     private static final String EMPTY_MESSAGE = "Nessun ordine trovato.";
     private static final String ERROR_LOAD_ORDER_MESSAGE = "Errore caricamento ordine";
     private static final String DATE_PATTERN = "EEEE d MMMM yyyy";
 
-    /* =======================
-       FXML BINDINGS
-       ======================= */
 
     @FXML private VBox ordersContainer;
     @FXML private Label lblManage;

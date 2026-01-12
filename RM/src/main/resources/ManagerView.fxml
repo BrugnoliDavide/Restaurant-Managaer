@@ -17,15 +17,15 @@
     </padding>
 
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="15">
+        <HBox alignment="CENTER_LEFT" spacing="15" stylesheets="@style.css">
 
-            <StackPane fx:id="profileBtn" onMouseClicked="#handleProfileMenu" style="-fx-cursor: hand;">
-                <Circle fx:id="profileCircle" fill="LIGHTBLUE" radius="25" stroke="BLUE" strokeWidth="0" />
-            </StackPane>
+            <!--<StackPane fx:id="profileBtn" styleClass="profile-stack" />-->
+         <Circle fx:id="profileCircle" fill="LIGHTBLUE" onMouseClicked="#handleProfileMenu" radius="25" stroke="TOMATO" strokeWidth="0" styleClass="profile-circle" />
+
 
             <VBox spacing="2">
-                <Label fx:id="lblHeaderName" style="-fx-font-size: 16px;" styleClass="text-title" text="..." />
-                <Label fx:id="lblHeaderRole" style="-fx-font-size: 14px;" styleClass="text-body" text="Manager" />
+                <Label fx:id="lblHeaderName" styleClass="text-title header-name" />
+                <Label fx:id="lblHeaderRole" styleClass="text-body header-role" />
             </VBox>
 
             <Region HBox.hgrow="ALWAYS" />

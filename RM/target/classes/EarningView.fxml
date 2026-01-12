@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
@@ -12,19 +13,18 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<?import javafx.scene.control.Separator?>
 <BorderPane stylesheets="@style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.EarningController">
 
     <top>
         <VBox spacing="10">
             <padding>
-                <Insets top="20" right="20" bottom="10" left="20"/>
+                <Insets bottom="10" left="20" right="20" top="20" />
             </padding>
 
             <HBox alignment="CENTER_LEFT" spacing="15">
 
-                <StackPane fx:id="profileBtn" style="-fx-cursor: hand;" onMouseClicked="#handleProfileMenu">
-                    <Circle fx:id="profileCircle" radius="25" fill="CORNFLOWERBLUE" stroke="BLUE" strokeWidth="0" />
+                <StackPane fx:id="profileBtn" onMouseClicked="#handleProfileMenu" style="-fx-cursor: hand;">
+                    <Circle fx:id="profileCircle" fill="CORNFLOWERBLUE" radius="25" stroke="BLUE" strokeWidth="0" styleClass="profile-circle" />
                 </StackPane>
 
                 <VBox spacing="2">
@@ -36,8 +36,7 @@
 
                 <VBox alignment="CENTER_RIGHT" spacing="5">
                     <Label style="-fx-font-size: 22px; -fx-font-weight: bold;" styleClass="text-header" text="Cash Desk" />
-                    <TextField fx:id="searchField" onKeyReleased="#onSearch" promptText="Cerca tavolo..."
-                               styleClass="input-standard" prefWidth="200"/>
+                    <TextField fx:id="searchField" onKeyReleased="#onSearch" prefWidth="200" promptText="Cerca tavolo..." styleClass="input-standard" />
                 </VBox>
             </HBox>
 

@@ -38,7 +38,6 @@ public final class ViewFactory {
         return new TakeOrderView(numeroTavolo);
     }
 
-
     public static View create(String viewType, Object... params) {
 
         if (viewType == null) {
@@ -67,7 +66,5 @@ public final class ViewFactory {
     public static View getLoginView() {
         return new LoginView();
     }
-
-
 
 }
