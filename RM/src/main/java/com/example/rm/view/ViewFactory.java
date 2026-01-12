@@ -63,4 +63,11 @@ public final class ViewFactory {
             );
         };
     }
+
+    public static View getLoginView() {
+        return new LoginView();
+    }
+
+
+
 }

@@ -28,10 +28,17 @@ public class MenuController {
 
     private static final Logger logger = Logger.getLogger(MenuController.class.getName());
 
-    private final MenuUseCase menuUseCase = new MenuService();
 
     private static final String EMPTY_MESSAGE = "Nessun prodotto trovato.";
     private static final String ERROR_LOAD_MESSAGE = "Errore caricamento prodotto";
+
+
+
+    private static MenuUseCase menuUseCase = new MenuService();
+
+    public static void setMenuUseCase(MenuUseCase useCase) {
+        menuUseCase = useCase;
+    }
 
     @FXML private VBox menuContainer;
     @FXML private Label lblManage;

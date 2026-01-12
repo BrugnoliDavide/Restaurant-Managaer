@@ -1,6 +1,7 @@
 package com.example.rm.view;
 
 import com.example.rm.app.AppStatus;
+import com.example.rm.app.SceneManager;
 import com.example.rm.app.UsersFactory;
 import com.example.rm.app.UserSession;
 import com.example.rm.service.DatabaseService;
@@ -115,13 +116,9 @@ public class LoginController {
     }
 
     private void navigateToRole(String role) {
-
-        View view = ViewFactory.forRole(role);
-
-        userField
-                .getScene()
-                .setRoot(view.getRoot());
+        SceneManager.showView(role);
     }
+
 
     private void openDBConfigPopup() {
         try {

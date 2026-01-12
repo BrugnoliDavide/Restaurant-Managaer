@@ -2,6 +2,7 @@ package com.example.rm.app;
 
 import com.example.rm.service.DatabaseService;
 import com.example.rm.view.LoginController;
+import com.example.rm.view.screens.MenuView;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -29,16 +30,13 @@ public class MainApp extends Application {
         primaryStage.setScene(new Scene(root));
 
 
+        SceneManager.init(primaryStage);
+        SceneManager.showLogin();
         primaryStage.setTitle("Restaurant Manager");
-
         primaryStage.setMinWidth(400);
         primaryStage.setMinHeight(500);
         primaryStage.setResizable(true);
-
         setLogo(primaryStage);
-
-        primaryStage.show();
-
         primaryStage.show();
 
     }
