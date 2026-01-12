@@ -5,9 +5,15 @@ import com.example.rm.dao.CategoryDAO;
 import com.example.rm.preference.KitchenPreferences;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
+import javafx.scene.control.CheckBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -21,76 +27,108 @@ class KitchenPreferencesDialogTest {
 
     @BeforeAll
     static void initAll() {
-        // --- BLOCCO CRUCIALE PER GITHUB ACTIONS ---
-        // Dice a JavaFX di non cercare un monitor fisico
-        System.setProperty("java.awt.headless", "true");
-        System.setProperty("testfx.robot", "glass");
-        System.setProperty("testfx.headless", "true");
-        System.setProperty("glass.platform", "Monocle");
-        System.setProperty("monocle.platform", "Headless");
-        System.setProperty("prism.order", "sw");
-        // ------------------------------------------
-
-        try {
-            new JFXPanel(); // Inizializza JavaFX
-        } catch (Exception e) {
-            // Ignora se il toolkit è già stato avviato da un altro test
+        // Configurazione intelligente OS-agnostic
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("linux") || os.contains("nix") || os.contains("nux")) {
+            System.setProperty("testfx.robot", "glass");
+            System.setProperty("testfx.headless", "true");
+            System.setProperty("glass.platform", "Monocle");
+            System.setProperty("monocle.platform", "Headless");
+            System.setProperty("prism.order", "sw");
         }
+        System.setProperty("java.awt.headless", "true");
+        try { new JFXPanel(); } catch (Exception e) {}
     }
 
-    @Test
-    void testLoadPreferences() throws InterruptedException {
-        // Crea mock NEL thread JavaFX
-        CountDownLatch latch = new CountDownLatch(1);
-        Platform.runLater(() -> {
+    private KitchenPreferencesDialog controller;
+    private KitchenPreferencesUseCase mockService;
+    private CategoryDAO mockDao;
+    private Stage mockStage;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        mockService = mock(KitchenPreferencesUseCase.class);
+        mockDao = mock(CategoryDAO.class);
+        mockStage = mock(Stage.class);
+
+        // Usiamo il costruttore di default e poi iniettiamo i campi
+        controller = new KitchenPreferencesDialog();
+
+        runOnFxThread(() -> {
             try {
-                KitchenPreferencesUseCase mockService = mock(KitchenPreferencesUseCase.class);
-                CategoryDAO mockDao = mock(CategoryDAO.class);
-
-                KitchenPreferences fakePrefs = new KitchenPreferences("testuser", true, Set.of("Antipasti"), true);
-                when(mockService.load("testuser")).thenReturn(fakePrefs);
-                when(mockDao.getAllCategories()).thenReturn(List.of("Antipasti", "Primi"));
-
-                // Inietta NEL thread JavaFX
+                // Setup dipendenze statiche (metodi forniti dalla tua classe)
                 KitchenPreferencesDialog.setPrefsService(mockService);
                 KitchenPreferencesDialog.setCategoryDAO(mockDao);
 
-                // Verifica IMMEDIATAMENTE che load sia configurato
-                verify(mockService, never()).load("testuser"); // Non ancora chiamato
+                // Setup campi istanza privati tramite Reflection
+                setField(controller, "stage", mockStage);
+                setField(controller, "username", "testuser");
+                setField(controller, "onComplete", null); // Opzionale
 
-                // Il test passa se i mock sono settati senza crash
-                latch.countDown();
+                // Setup UI Components (Necessari altrimenti handleSave lancia NullPointerException)
+                CheckBox chkSplit = new CheckBox();
+                chkSplit.setSelected(true);
+                setField(controller, "chkSplitOrders", chkSplit);
+
+                VBox vbox = new VBox();
+                // Aggiungiamo una checkbox simulata nella UI
+                CheckBox catChk = new CheckBox("Antipasti");
+                catChk.setSelected(true);
+                vbox.getChildren().add(catChk);
+                setField(controller, "vboxCategories", vbox);
+
+                // Setup Preferences iniziali
+                KitchenPreferences initialPrefs = new KitchenPreferences("testuser", false, Set.of(), true);
+                setField(controller, "currentPreferences", initialPrefs);
+
             } catch (Exception e) {
-                e.printStackTrace();
-                fail("Errore setup mock: " + e.getMessage());
+                throw new RuntimeException(e);
             }
         });
-
-        assertTrue(latch.await(3, TimeUnit.SECONDS));
     }
 
     @Test
-    void testSavePreferences() throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        Platform.runLater(() -> {
+    void testHandleSave_AttemptsToSave() throws Exception {
+        // SETUP: Configura il mock per ritornare FALSE.
+        // Se ritornasse TRUE -> showSuccessAlert() -> showAndWait() -> BLOCCO INFINITO/POPUP
+        when(mockService.save(any(KitchenPreferences.class))).thenReturn(false);
+
+        runOnFxThread(() -> {
             try {
-                KitchenPreferencesUseCase mockService = mock(KitchenPreferencesUseCase.class);
-                CategoryDAO mockDao = mock(CategoryDAO.class);
-
-                KitchenPreferences fakePrefs = new KitchenPreferences("testuser", true, Set.of("Antipasti"), true);
-                when(mockService.load("testuser")).thenReturn(fakePrefs);
-                when(mockService.save(any(KitchenPreferences.class))).thenReturn(true);
-                when(mockDao.getAllCategories()).thenReturn(List.of("Antipasti"));
-
-                KitchenPreferencesDialog.setPrefsService(mockService);
-                KitchenPreferencesDialog.setCategoryDAO(mockDao);
-
-                latch.countDown();
+                // Invoca handleSave via Reflection (perché è private/FXML)
+                invokeMethod(controller, "handleSave");
             } catch (Exception e) {
-                fail("Errore setup mock save: " + e.getMessage());
+                throw new RuntimeException(e);
             }
         });
 
-        assertTrue(latch.await(3, TimeUnit.SECONDS));
+        // VERIFICA: Controlliamo che abbia provato a salvare
+        verify(mockService, times(1)).save(any(KitchenPreferences.class));
+
+        // Verifica che NON abbia chiuso lo stage (perché abbiamo simulato errore)
+        verify(mockStage, never()).close();
+    }
+
+    // --- Helpers ---
+
+    private void runOnFxThread(Runnable action) throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        Platform.runLater(() -> {
+            try { action.run(); } catch (Exception e) { e.printStackTrace(); }
+            finally { latch.countDown(); }
+        });
+        if (!latch.await(5, TimeUnit.SECONDS)) throw new RuntimeException("Timeout FX");
+    }
+
+    private void setField(Object target, String name, Object value) throws Exception {
+        Field f = target.getClass().getDeclaredField(name);
+        f.setAccessible(true);
+        f.set(target, value);
+    }
+
+    private void invokeMethod(Object target, String name) throws Exception {
+        Method m = target.getClass().getDeclaredMethod(name);
+        m.setAccessible(true);
+        m.invoke(target);
     }
 }

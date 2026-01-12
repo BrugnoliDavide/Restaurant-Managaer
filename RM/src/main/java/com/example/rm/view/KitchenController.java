@@ -45,6 +45,10 @@ public class KitchenController {
 
     private static KitchenUseCase kitchenUseCase = new KitchenService();
 
+    public static void setKitchenUseCase(KitchenUseCase useCase) {
+        kitchenUseCase = useCase;
+    }
+
 
     @FXML
     public void initialize() {
