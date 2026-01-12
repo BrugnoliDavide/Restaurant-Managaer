@@ -49,37 +49,49 @@ class DBConfigControllerTest {
     @Test
     void saveConfig_ReturnsFalse_WhenHostEmpty() {
         boolean result = controller.saveConfig("", "5432", "db", "user", "pass");
-        assertFalse(result);
 
+        assertFalse(result);
         mockedConfigStore.verifyNoInteractions();
-        mockedDbService.verify(() -> DatabaseService.setConnectionConfig(any(), any(), any(), any(), any()), never());
+        mockedDbService.verify(
+                () -> DatabaseService.setConnectionConfig(any(), any(), any(), any(), any()),
+                never()
+        );
     }
 
     @Test
     void saveConfig_SavesSuccessfully_WithValidInput() {
-        mockedConfigStore.when(() ->
-                DBConfigStore.save("localhost", "5432", "testdb", "user", "pass123")
-        ).thenReturn(true);
-
+        // save(...) è void → non si stubba con thenReturn
+        // qui non serve stubbare: verifichiamo solo che venga chiamato con i parametri giusti
         boolean result = controller.saveConfig("localhost", "5432", "testdb", "user", "pass123");
 
         assertTrue(result);
+
         mockedConfigStore.verify(() ->
-                DBConfigStore.save("localhost", "5432", "testdb", "user", "pass123"), times(1));
+                        DBConfigStore.save("localhost", "5432", "testdb", "user", "pass123"),
+                times(1)
+        );
         mockedDbService.verify(() ->
-                DatabaseService.setConnectionConfig("localhost", "5432", "testdb", "user", "pass123"), times(1));
+                        DatabaseService.setConnectionConfig("localhost", "5432", "testdb", "user", "pass123"),
+                times(1)
+        );
     }
 
     @Test
     void saveConfig_UsesExistingPassword_WhenNewPasswordEmpty() {
         mockedConfigStore.when(DBConfigStore::getPassword).thenReturn("oldpass");
-        mockedConfigStore.when(() ->
-                DBConfigStore.save("localhost", "5432", "db", "user", "oldpass")
-        ).thenReturn(true);
 
         boolean result = controller.saveConfig("localhost", "5432", "db", "user", "");
 
         assertTrue(result);
+
         mockedConfigStore.verify(DBConfigStore::getPassword, times(1));
+        mockedConfigStore.verify(() ->
+                        DBConfigStore.save("localhost", "5432", "db", "user", "oldpass"),
+                times(1)
+        );
+        mockedDbService.verify(() ->
+                        DatabaseService.setConnectionConfig("localhost", "5432", "db", "user", "oldpass"),
+                times(1)
+        );
     }
 }

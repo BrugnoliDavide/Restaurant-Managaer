@@ -39,8 +39,17 @@ public class KitchenPreferencesDialog {
     private String username;
     private KitchenPreferences currentPreferences;
     private Consumer<Boolean> onComplete;
-    private final KitchenPreferencesUseCase prefsService = new KitchenPreferencesController();
-    private final CategoryDAO categoryDAO = new DatabaseCategoryDAO();
+    private static KitchenPreferencesUseCase prefsService = new KitchenPreferencesController();
+    private static CategoryDAO categoryDAO = new DatabaseCategoryDAO();
+
+    public static void setPrefsService(KitchenPreferencesUseCase useCase) {
+        prefsService = useCase;
+    }
+
+    // metodo utile per i test
+    public static void setCategoryDAO(CategoryDAO dao) {
+        categoryDAO = dao;
+    }
 
     public static void show(Stage owner, String username, Consumer<Boolean> onComplete) {
         try {

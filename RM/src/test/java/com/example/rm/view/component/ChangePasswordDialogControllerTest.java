@@ -13,6 +13,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import javafx.application.Platform;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -31,42 +35,51 @@ class ChangePasswordDialogControllerTest {
     private UserAccountUseCase accountServiceMock;
     private MockedStatic<UserSession> userSessionMockedStatic;
 
+
+
     @BeforeEach
     void setUp() throws Exception {
         controller = new ChangePasswordDialogController();
-
-        // Mock UserSession.getInstance().getUser().getUsername()
-        UserSession sessionMock = mock(UserSession.class);
-        User userMock = mock(User.class);
-        when(userMock.getUsername()).thenReturn("testUser");
-        when(sessionMock.getUser()).thenReturn(userMock);
-
-        userSessionMockedStatic = mockStatic(UserSession.class);
-        userSessionMockedStatic.when(UserSession::getInstance).thenReturn(sessionMock);
-
-        // Inject FXML fields (private) via reflection
-        setField(controller, "lblTitle", new Label());
-        setField(controller, "lblSubtitle", new Label());
-        setField(controller, "lblUsernameLabel", new Label());
-        setField(controller, "lblUsername", new Label());
-        setField(controller, "lblRequirements", new Label());
-        setField(controller, "lblFeedback", new Label());
-
-        setField(controller, "txtCurrentPassword", new PasswordField());
-        setField(controller, "txtNewPassword", new PasswordField());
-        setField(controller, "txtConfirmPassword", new PasswordField());
-
-        setField(controller, "btnCancel", new Button());
-        setField(controller, "btnSave", new Button());
-        setField(controller, "stage", new Stage());
-
-        // Inject accountService (private final) via reflection
         accountServiceMock = mock(UserAccountUseCase.class);
-        setField(controller, "accountService", accountServiceMock);
 
-        // Simulate FXML initialize()
-        invokeNoArgs(controller, "initialize");
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Platform.runLater(() -> {
+            try {
+                // Inject FXML fields (creati su FX thread)
+                setField(controller, "lblTitle", new Label());
+                setField(controller, "lblSubtitle", new Label());
+                setField(controller, "lblUsernameLabel", new Label());
+                setField(controller, "lblUsername", new Label());
+                setField(controller, "lblRequirements", new Label());
+                setField(controller, "lblFeedback", new Label());
+                setField(controller, "txtCurrentPassword", new PasswordField());
+                setField(controller, "txtNewPassword", new PasswordField());
+                setField(controller, "txtConfirmPassword", new PasswordField());
+                setField(controller, "btnCancel", new Button());
+                setField(controller, "btnSave", new Button());
+
+                // Stage: DEVE essere creato sul JavaFX Application Thread
+                setField(controller, "stage", new Stage());
+
+                // Inject service mock
+                setField(controller, "accountService", accountServiceMock);
+
+                // Evita mockStatic(UserSession) e initialize(): setta direttamente lo username usato da handleSave()
+                setField(controller, "username", "testUser");
+                ((Label) getField(controller, "lblUsername", Label.class)).setText("testUser");
+                ((Label) getField(controller, "lblFeedback", Label.class)).setVisible(false);
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS), "Timeout inizializzazione JavaFX");
     }
+
 
     @AfterEach
     void tearDown() {

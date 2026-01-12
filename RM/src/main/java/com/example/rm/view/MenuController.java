@@ -1,8 +1,8 @@
 package com.example.rm.view;
 
+import com.example.rm.controller.MenuService;
 import com.example.rm.controller.MenuUseCase;
 import com.example.rm.model.MenuProduct;
-import com.example.rm.service.DatabaseService;
 import com.example.rm.view.component.AddProductDialog;
 import com.example.rm.view.component.ProductRowController;
 import javafx.fxml.FXML;
@@ -24,34 +24,20 @@ import java.util.stream.Collectors;
  * Controller per la vista del menu.
  * Gestisce la visualizzazione, ricerca e navigazione dei prodotti.
  */
-public class MenuController implements MenuUseCase {
+public class MenuController {
 
     private static final Logger logger = Logger.getLogger(MenuController.class.getName());
 
-    /* =======================
-       COSTANTI
-       ======================= */
+    private final MenuUseCase menuUseCase = new MenuService();
 
     private static final String EMPTY_MESSAGE = "Nessun prodotto trovato.";
     private static final String ERROR_LOAD_MESSAGE = "Errore caricamento prodotto";
-
-    /* =======================
-       FXML BINDINGS
-       ======================= */
 
     @FXML private VBox menuContainer;
     @FXML private Label lblManage;
     @FXML private TextField txtSearch;
 
-    /* =======================
-       STATE
-       ======================= */
-
     private List<MenuProduct> allProductsMaster = new ArrayList<>();
-
-    /* =======================
-       INITIALIZATION
-       ======================= */
 
     @FXML
     public void initialize() {
@@ -60,9 +46,6 @@ public class MenuController implements MenuUseCase {
         loadDataFromDB();
     }
 
-    /**
-     * Valida che tutti i componenti FXML siano stati iniettati correttamente.
-     */
     private void validateFXMLInjections() {
         if (menuContainer == null) {
             logger.log(Level.SEVERE, "menuContainer non iniettato da FXML");
@@ -75,20 +58,10 @@ public class MenuController implements MenuUseCase {
         }
     }
 
-    /**
-     * Configura tutti gli event handlers dell'interfaccia.
-     */
     private void setupEventHandlers() {
         setupSearchListener();
     }
 
-    /* =======================
-       EVENT HANDLERS
-       ======================= */
-
-    /**
-     * Gestisce il ritorno alla vista manager.
-     */
     @FXML
     private void goBack() {
         try {
@@ -103,9 +76,6 @@ public class MenuController implements MenuUseCase {
         }
     }
 
-    /**
-     * Gestisce l'apertura del dialog di aggiunta prodotto.
-     */
     @FXML
     public void onAddProduct() {
         try {
@@ -116,15 +86,11 @@ public class MenuController implements MenuUseCase {
         }
     }
 
-    /**
-     * Configura il listener per la ricerca in tempo reale.
-     */
     private void setupSearchListener() {
         if (txtSearch == null) {
             logger.log(Level.WARNING, "txtSearch non disponibile per il listener");
             return;
         }
-
         txtSearch.textProperty().addListener((obs, oldVal, newVal) -> {
             try {
                 filterAndRender(newVal);
@@ -134,16 +100,9 @@ public class MenuController implements MenuUseCase {
         });
     }
 
-    /* =======================
-       DATA MANAGEMENT
-       ======================= */
-
-    /**
-     * Carica i dati dal database e aggiorna la vista.
-     */
     private void loadDataFromDB() {
         try {
-            allProductsMaster = DatabaseService.getAllProducts();
+            allProductsMaster = menuUseCase.loadAllProducts();
             renderMenu(allProductsMaster);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore durante il caricamento dei prodotti dal database", e);
@@ -152,21 +111,10 @@ public class MenuController implements MenuUseCase {
         }
     }
 
-    /**
-     * Ricarica i dati dal database (chiamato dopo modifiche).
-     */
     private void reload() {
         loadDataFromDB();
     }
 
-    /* =======================
-       RENDERING
-       ======================= */
-
-    /**
-     * Renderizza la lista di prodotti raggruppati per categoria.
-     * @param products Lista di prodotti da visualizzare
-     */
     private void renderMenu(List<MenuProduct> products) {
         if (menuContainer == null) {
             logger.log(Level.SEVERE, "Impossibile renderizzare: menuContainer è null");
@@ -184,20 +132,11 @@ public class MenuController implements MenuUseCase {
         renderCategoriesWithProducts(productsByCategory);
     }
 
-    /**
-     * Raggruppa i prodotti per categoria.
-     * @param products Lista di prodotti
-     * @return Map con categoria come chiave e lista di prodotti come valore
-     */
     private Map<String, List<MenuProduct>> groupProductsByCategory(List<MenuProduct> products) {
         return products.stream()
                 .collect(Collectors.groupingBy(MenuProduct::getTipologia));
     }
 
-    /**
-     * Renderizza le categorie con i rispettivi prodotti.
-     * @param productsByCategory Map categoria -> prodotti
-     */
     private void renderCategoriesWithProducts(Map<String, List<MenuProduct>> productsByCategory) {
         productsByCategory.keySet().stream()
                 .sorted()
@@ -207,20 +146,12 @@ public class MenuController implements MenuUseCase {
                 });
     }
 
-    /**
-     * Renderizza l'header di una categoria.
-     * @param categoryName Nome della categoria
-     */
     private void renderCategoryHeader(String categoryName) {
         Label sectionTitle = new Label(categoryName);
         sectionTitle.getStyleClass().add("menu-section-title");
         menuContainer.getChildren().add(sectionTitle);
     }
 
-    /**
-     * Renderizza tutti i prodotti di una categoria.
-     * @param products Lista di prodotti della categoria
-     */
     private void renderProductsForCategory(List<MenuProduct> products) {
         products.forEach(product -> {
             Parent productRow = loadProductRow(product);
@@ -230,32 +161,21 @@ public class MenuController implements MenuUseCase {
         });
     }
 
-    /**
-     * Renderizza lo stato vuoto quando non ci sono prodotti.
-     */
     private void renderEmptyState() {
         Label emptyLabel = new Label(EMPTY_MESSAGE);
         emptyLabel.getStyleClass().add("empty-state-label");
         menuContainer.getChildren().add(emptyLabel);
     }
 
-    /**
-     * Carica una riga prodotto da FXML.
-     * @param product Il prodotto da visualizzare
-     * @return Il Parent contenente la riga prodotto
-     */
     private Parent loadProductRow(MenuProduct product) {
         try {
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/ProductRow.fxml")
             );
             Parent root = loader.load();
-
             ProductRowController controller = loader.getController();
             controller.setProduct(product, this::reload, this::openProductDetail);
-
             return root;
-
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Errore caricamento ProductRow.fxml per prodotto: " +
                     (product != null ? product.getNome() : "null"), e);
@@ -263,24 +183,12 @@ public class MenuController implements MenuUseCase {
         }
     }
 
-    /**
-     * Crea una label di errore per prodotti non caricabili.
-     * @return Label con messaggio di errore
-     */
     private Label createErrorLabel() {
         Label errorLabel = new Label(ERROR_LOAD_MESSAGE);
         errorLabel.getStyleClass().add("error-label");
         return errorLabel;
     }
 
-    /* =======================
-       NAVIGATION
-       ======================= */
-
-    /**
-     * Apre la vista di dettaglio di un prodotto.
-     * @param product Il prodotto da visualizzare
-     */
     private void openProductDetail(MenuProduct product) {
         if (product == null) {
             logger.log(Level.WARNING, "Tentativo di aprire dettaglio con prodotto null");
@@ -292,111 +200,50 @@ public class MenuController implements MenuUseCase {
                     getClass().getResource("/ProductDetail.fxml")
             );
             Parent root = loader.load();
-
             ProductDetailController controller = loader.getController();
             controller.setProduct(product);
-
             if (menuContainer != null && menuContainer.getScene() != null) {
                 menuContainer.getScene().setRoot(root);
             } else {
                 logger.log(Level.WARNING, "Scene non disponibile per la navigazione");
             }
-
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Errore apertura ProductDetail per prodotto: " +
                     product.getNome(), e);
         }
     }
 
-    /* =======================
-       SEARCH & FILTER
-       ======================= */
-
-    /**
-     * Filtra i prodotti in base alla query di ricerca.
-     * @param query Stringa di ricerca
-     */
     private void filterAndRender(String query) {
         String normalizedQuery = normalizeSearchQuery(query);
-
         if (normalizedQuery.isEmpty()) {
             renderMenu(allProductsMaster);
             return;
         }
-
         List<MenuProduct> filtered = filterProducts(normalizedQuery);
         renderMenu(filtered);
     }
 
-    /**
-     * Normalizza la query di ricerca.
-     * @param query Query originale
-     * @return Query normalizzata (lowercase, trimmed)
-     */
     private String normalizeSearchQuery(String query) {
         return query == null ? "" : query.toLowerCase().trim();
     }
 
-    /**
-     * Filtra i prodotti in base alla query.
-     * @param query Query normalizzata
-     * @return Lista di prodotti filtrati
-     */
     private List<MenuProduct> filterProducts(String query) {
         return allProductsMaster.stream()
                 .filter(product -> matchesSearchQuery(product, query))
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Verifica se un prodotto corrisponde alla query di ricerca.
-     * @param product Prodotto da verificare
-     * @param query Query di ricerca
-     * @return true se il prodotto corrisponde
-     */
     private boolean matchesSearchQuery(MenuProduct product, String query) {
         return matchesName(product, query) || matchesCategory(product, query);
     }
 
-    /**
-     * Verifica se il nome del prodotto corrisponde alla query.
-     * @param product Prodotto
-     * @param query Query
-     * @return true se corrisponde
-     */
     private boolean matchesName(MenuProduct product, String query) {
         return product.getNome() != null &&
                 product.getNome().toLowerCase().contains(query);
     }
 
-    /**
-     * Verifica se la categoria del prodotto corrisponde alla query.
-     * @param product Prodotto
-     * @param query Query
-     * @return true se corrisponde
-     */
     private boolean matchesCategory(MenuProduct product, String query) {
         return product.getTipologia() != null &&
                 product.getTipologia().toLowerCase().contains(query);
-    }
-
-    @Override
-    public List<String> loadCategories() {
-        return List.of();
-    }
-
-    @Override
-    public boolean addProduct(MenuProduct product) {
-        return false;
-    }
-
-    @Override
-    public boolean updateProduct(MenuProduct product) {
-        return false;
-    }
-
-    @Override
-    public MenuProduct getProductById(int id) {
-        return null;
     }
 }

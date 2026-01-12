@@ -1,6 +1,7 @@
 package com.example.rm.view.component;
 
 import com.example.rm.app.MainApp;
+import com.example.rm.controller.MenuService;
 import com.example.rm.controller.MenuUseCase;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.view.MenuController;
@@ -17,6 +18,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AddProductDialog {
+
+    private static MenuUseCase menuUseCase = new MenuService();
+
+    public static void setMenuUseCase(MenuUseCase useCase) {
+        menuUseCase = useCase;
+    }
+
+
 
     private AddProductDialog() {
         throw new IllegalStateException("Classe di utilità: non può essere istanziata");
@@ -60,7 +69,7 @@ public class AddProductDialog {
             this.productToEdit = productToEdit;
             this.isEditMode = productToEdit != null;
             this.onComplete = onComplete;
-            this.menuService = new MenuController();
+            this.menuService = AddProductDialog.menuUseCase;
             this.window = createWindow();
         }
         public void show() {
