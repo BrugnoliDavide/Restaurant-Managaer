@@ -5,21 +5,37 @@ import com.example.rm.dao.CategoryDAO;
 import com.example.rm.preference.KitchenPreferences;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class KitchenPreferencesDialogTest {
 
     @BeforeAll
     static void initAll() {
-        new JFXPanel(); // Inizializza JavaFX
+        // --- BLOCCO CRUCIALE PER GITHUB ACTIONS ---
+        // Dice a JavaFX di non cercare un monitor fisico
+        System.setProperty("java.awt.headless", "true");
+        System.setProperty("testfx.robot", "glass");
+        System.setProperty("testfx.headless", "true");
+        System.setProperty("glass.platform", "Monocle");
+        System.setProperty("monocle.platform", "Headless");
+        System.setProperty("prism.order", "sw");
+        // ------------------------------------------
+
+        try {
+            new JFXPanel(); // Inizializza JavaFX
+        } catch (Exception e) {
+            // Ignora se il toolkit è già stato avviato da un altro test
+        }
     }
 
     @Test

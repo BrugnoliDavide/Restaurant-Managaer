@@ -23,11 +23,21 @@ class ChangePasswordDialogControllerTest {
 
     @BeforeAll
     static void initToolkit() {
-        // Setup per evitare errori grafici
+        // --- BLOCCO CRUCIALE PER GITHUB ACTIONS ---
+        // Queste proprietà sono obbligatorie per evitare che JavaFX cerchi il display (GTK) e si blocchi
         System.setProperty("java.awt.headless", "true");
+        System.setProperty("testfx.robot", "glass");
+        System.setProperty("testfx.headless", "true");
+        System.setProperty("glass.platform", "Monocle");
+        System.setProperty("monocle.platform", "Headless");
+        System.setProperty("prism.order", "sw");
+        // ------------------------------------------
+
         try {
-            new JFXPanel();
-        } catch (Exception e) {}
+            new JFXPanel(); // Inizializza il toolkit JavaFX
+        } catch (Exception e) {
+            // Ignora se già inizializzato
+        }
     }
 
     private ChangePasswordDialogController controller;
@@ -47,7 +57,7 @@ class ChangePasswordDialogControllerTest {
                 setField(controller, "stage", mockStage);
                 setField(controller, "username", "testUser");
 
-                // Inietta i componenti UI
+                // Inietta i componenti UI reali
                 setField(controller, "lblFeedback", new Label());
                 setField(controller, "txtCurrentPassword", new PasswordField());
                 setField(controller, "txtNewPassword", new PasswordField());
@@ -63,9 +73,9 @@ class ChangePasswordDialogControllerTest {
     @Test
     void testHandleSave_CallsServiceCorrectly() throws Exception {
         // TRUCCO ANTI-BLOCCO:
-        // Facciamo ritornare FALSE al service.
-        // Così il controller entra nell'ELSE, mostra l'errore (che non blocca) ed esce.
-        // Se ritornassimo TRUE, entrerebbe in showSuccessAlert() -> showAndWait() -> LOOP INFINITO.
+        // Ritorniamo FALSE per simulare un fallimento logico (password errata).
+        // Il controller andrà nell'ELSE -> chiamerà showError() -> che NON blocca.
+        // Se ritornassimo TRUE, il controller chiamerebbe showSuccessAlert() -> showAndWait() -> BLOCCO INFINITO.
         when(mockAccountService.changePassword(anyString(), anyString(), anyString())).thenReturn(false);
 
         runOnFxThread(() -> {
@@ -83,11 +93,12 @@ class ChangePasswordDialogControllerTest {
             }
         });
 
-        // VERIFICA: Anche se abbiamo simulato un fallimento, possiamo verificare
-        // che il controller abbia estratto i dati e chiamato il service correttamente.
+        // VERIFICA:
+        // Anche se abbiamo forzato il fallimento, verifichiamo che il controller abbia chiamato il service
+        // con i parametri giusti. Questo conferma che la logica di estrazione dati funziona.
         verify(mockAccountService, times(1)).changePassword("testUser", "OldPass", "NewPass123");
 
-        // Verifica che NON sia stato chiuso lo stage (perché abbiamo simulato fallimento)
+        // Verifica che la finestra NON sia stata chiusa (perché fallimento)
         verify(mockStage, never()).close();
     }
 
@@ -122,9 +133,10 @@ class ChangePasswordDialogControllerTest {
             try { action.run(); } catch (Exception e) { e.printStackTrace(); }
             finally { latch.countDown(); }
         });
-        // Se si blocca qui, è colpa di Platform.runLater, ma con i test sopra non dovrebbe accadere
-        boolean finished = latch.await(3, TimeUnit.SECONDS);
-        if (!finished) throw new RuntimeException("Timeout FX Thread - Probabile Alert aperto");
+
+        // Timeout di sicurezza
+        boolean finished = latch.await(5, TimeUnit.SECONDS);
+        if (!finished) throw new RuntimeException("Timeout FX Thread - Il test si è bloccato (probabile Alert aperto o GTK missing)");
     }
 
     private void invokeHandleSave(Object target) throws Exception {
