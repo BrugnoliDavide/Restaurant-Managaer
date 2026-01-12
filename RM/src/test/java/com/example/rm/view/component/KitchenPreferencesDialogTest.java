@@ -27,19 +27,15 @@ class KitchenPreferencesDialogTest {
 
     @BeforeAll
     static void initAll() {
-        // Configurazione intelligente OS-agnostic
-        String os = System.getProperty("os.name").toLowerCase();
-        if (os.contains("linux") || os.contains("nix") || os.contains("nux")) {
-            System.setProperty("testfx.robot", "glass");
-            System.setProperty("testfx.headless", "true");
-            System.setProperty("glass.platform", "Monocle");
-            System.setProperty("monocle.platform", "Headless");
-            System.setProperty("prism.order", "sw");
-        }
+        // Configurazione pulita per Xvfb
         System.setProperty("java.awt.headless", "true");
-        try { new JFXPanel(); } catch (Exception e) {}
-    }
+        System.setProperty("prism.order", "sw");
+        System.setProperty("prism.text", "t2k");
 
+        try {
+            new JFXPanel();
+        } catch (Exception e) {}
+    }
     private KitchenPreferencesDialog controller;
     private KitchenPreferencesUseCase mockService;
     private CategoryDAO mockDao;

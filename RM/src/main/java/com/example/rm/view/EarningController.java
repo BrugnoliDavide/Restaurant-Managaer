@@ -1,6 +1,9 @@
 package com.example.rm.view;
 
+import com.example.rm.app.SceneManager;
 import com.example.rm.app.UserSession;
+import com.example.rm.controller.EarningService;
+import com.example.rm.controller.EarningUseCase;
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
@@ -58,9 +61,15 @@ public class EarningController {
     private Timeline pollingTimeline;
 
     private String valueFormat = "€%.2f";
-    
+
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("HH:mm");
+
+    private static EarningUseCase earningUseCase = new EarningService();
+
+    public static void setEarningUseCase(EarningUseCase useCase) {
+        earningUseCase = useCase;
+    }
 
 
 
@@ -103,7 +112,7 @@ public class EarningController {
 
     private void loadOpenOrders() {
         // Ora chiama la versione aggiornata che cerca 'delivered'
-        allOrders = DatabaseService.getOrdersToPay();
+        allOrders = earningUseCase.loadOrdersToPay();
         groupOrdersByTable();
 
         // Applica eventuali filtri di ricerca attivi
@@ -235,7 +244,7 @@ public class EarningController {
 
         card.getChildren().addAll(leftInfo, lblTotal);
 
-        if (DatabaseService.hasPendingOrders(tableNumber)) {
+        if (earningUseCase.hasPendingOrders(tableNumber)) {
             Label warning = new Label("⚠ Ordine non completo");
             warning.setStyle("-fx-text-fill: #FF9800; -fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 2 0;");
             leftInfo.getChildren().add(warning);
@@ -326,15 +335,17 @@ public class EarningController {
         int tavolo = deliveredOrdersShown.get(0).getTavolo();
 
         // 1) Controlla ordini PENDENTI (non delivered)
-        List<Integer> pendingOrderIds = DatabaseService.getPendingOrderIds(tavolo);
+        List<Integer> pendingOrderIds = earningUseCase.getPendingOrderIds(tavolo);
 
         if (!pendingOrderIds.isEmpty()) {
             String articoli = "";
             int maxItems = Math.min(3, pendingOrderIds.size());
             for (int i = 0; i < maxItems; i++) {
                 int id = pendingOrderIds.get(i);
-                List<OrderItem> items = DatabaseService.getOrderItemsDetailed(id);
+                List<OrderItem> items = earningUseCase.getOrderItemsDetailed(id);
                 articoli += items.stream()
+
+
                         .map(it -> it.getQuantita() + "x " + it.getProduct().getNome())
                         .collect(Collectors.joining(", "));
                 if (i < maxItems - 1) {
@@ -360,12 +371,13 @@ public class EarningController {
 
             if (result.get() == annullaPaga) {
                 // Opzione 1: annulla tutti i pendenti
-                pendingOrderIds.forEach(id -> DatabaseService.setOrderStatus(id, "canceled"));
+
+                pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, "canceled"));
                 logger.info("Annullati pendenti tavolo " + tavolo);
                 // Pagherai solo gli ordini già delivered (lista originale)
             } else if (result.get() == deliveredPaga) {
                 // Opzione 2: segna i pendenti come delivered
-                pendingOrderIds.forEach(id -> DatabaseService.setOrderStatus(id, "delivered"));
+                pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, "delivered"));
                 logger.info("Segnati come delivered pendenti tavolo " + tavolo);
                 // Dopo averli marcati delivered, ricarica gli ordini da pagare per questo tavolo
                 List<Order> allDeliveredForTable = DatabaseService.getOrdersToPay().stream()
@@ -386,7 +398,7 @@ public class EarningController {
 
         if (conferma.showAndWait().filter(ButtonType.OK::equals).isPresent()) {
             boolean success = deliveredOrdersShown.stream()
-                    .allMatch(o -> DatabaseService.markOrderAsPaid(o.getId()));
+                    .allMatch(o -> earningUseCase.markOrderAsPaid(o.getId()));
 
             if (success) {
                 selectedTable = null;
@@ -416,10 +428,8 @@ public class EarningController {
             stopPolling(); // Importante: ferma il timer
             UserSession.cleanUserSession();
             try {
-                // Torna al Login
-                Parent loginView = FXMLLoader.load(getClass().getResource("/LoginView.fxml"));
-                profileBtn.getScene().setRoot(loginView);
-            } catch (IOException ex) {
+                SceneManager.showLogin();
+            } catch (Exception ex) {
                 logger.log(Level.SEVERE, "impossibile tornare indietro", ex);
             }
         });

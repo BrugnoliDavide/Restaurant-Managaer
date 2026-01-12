@@ -23,28 +23,16 @@ class ChangePasswordDialogControllerTest {
 
     @BeforeAll
     static void initToolkit() {
-        // 1. Rileva il sistema operativo
-        String os = System.getProperty("os.name").toLowerCase();
-
-        // 2. Se siamo su Linux (GitHub Actions), usa Monocle per il supporto Headless
-        if (os.contains("linux") || os.contains("nix") || os.contains("nux")) {
-            System.setProperty("testfx.robot", "glass");
-            System.setProperty("testfx.headless", "true");
-            System.setProperty("glass.platform", "Monocle");
-            System.setProperty("monocle.platform", "Headless");
-            System.setProperty("prism.order", "sw");
-        }
-
-        // 3. Su tutti i sistemi, imposta AWT headless per sicurezza
-        System.setProperty("java.awt.headless", "true");
+        // Rimuoviamo tutte le proprietà "Monocle" che causano l'errore
+        // Manteniamo solo queste per stabilità:
+        System.setProperty("java.awt.headless", "true"); // Per Swing/AWT
+        System.setProperty("prism.order", "sw");         // Forza rendering software (no GPU)
+        System.setProperty("prism.text", "t2k");         // Rendering testo software
 
         try {
             new JFXPanel(); // Inizializza JavaFX
-        } catch (Exception e) {
-            // Ignora se già inizializzato
-        }
+        } catch (Exception e) {}
     }
-
     private ChangePasswordDialogController controller;
     private UserAccountUseCase mockAccountService;
     private Stage mockStage;
