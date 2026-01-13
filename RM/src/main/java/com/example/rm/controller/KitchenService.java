@@ -46,5 +46,9 @@ public class KitchenService implements KitchenUseCase {
         return DatabaseService.getOrderItemsForDisplay(orderId);
     }
 
+    @Override
+    public boolean updateOrderStatus(int orderId, String status) {
+        return DatabaseService.setOrderStatus(orderId, status);
+    }
 
 }

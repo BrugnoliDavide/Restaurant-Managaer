@@ -1,7 +1,7 @@
 package com.example.rm.view;
 
+import com.example.rm.app.SceneManager;
 import com.example.rm.model.Order;
-import com.example.rm.service.DatabaseService;
 import com.example.rm.service.LoggerService;
 import com.example.rm.view.component.DateHeaderController;
 import com.example.rm.view.component.OrderRowController;
@@ -25,12 +25,19 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import com.example.rm.controller.FinancialService;
+import com.example.rm.controller.FinancialUseCase;
 
 /**
  * Controller per la vista Financial.
  * Gestisce la visualizzazione degli ordini con filtri e navigazione ai dettagli.
  */
 public class FinancialController {
+
+
+    @FXML private VBox ordersContainer;
+    @FXML private Label lblManage;
+    @FXML private TextField txtSearch;
 
     private static final Logger logger = LoggerService.getLogger(FinancialController.class);
 
@@ -39,20 +46,19 @@ public class FinancialController {
     private static final String ERROR_LOAD_ORDER_MESSAGE = "Errore caricamento ordine";
     private static final String DATE_PATTERN = "EEEE d MMMM yyyy";
 
+    private static FinancialUseCase financialUseCase = new FinancialService();
 
-    @FXML private VBox ordersContainer;
-    @FXML private Label lblManage;
-    @FXML private TextField txtSearch;
+    public static void setFinancialUseCase(FinancialUseCase useCase) {
+        financialUseCase = useCase;
+    }
 
-    /* =======================
-       STATE
-       ======================= */
+
+
+
+
 
     private List<Order> allOrdersMaster = new ArrayList<>();
 
-    /* =======================
-       INITIALIZATION
-       ======================= */
 
     @FXML
     public void initialize() {
@@ -83,16 +89,13 @@ public class FinancialController {
         setupSearchListener();
     }
 
-    /* =======================
-       DATA MANAGEMENT
-       ======================= */
 
     /**
      * Carica tutti gli ordini dal database.
      */
     private void loadDataFromDB() {
         try {
-            allOrdersMaster = DatabaseService.getAllOrdersWithTotal();
+            allOrdersMaster = financialUseCase.loadAllOrdersWithTotal();
             renderOrders(allOrdersMaster);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore durante il caricamento degli ordini", e);
@@ -201,9 +204,7 @@ public class FinancialController {
                 order.getDataOra().toString().toLowerCase().contains(query);
     }
 
-    /* =======================
-       RENDERING
-       ======================= */
+
 
     /**
      * Renderizza la lista di ordini raggruppati per data.
@@ -299,9 +300,6 @@ public class FinancialController {
         ordersContainer.getChildren().add(emptyLabel);
     }
 
-    /* =======================
-       FXML LOADING
-       ======================= */
 
     /**
      * Carica un header di data da FXML.
@@ -375,9 +373,7 @@ public class FinancialController {
         return errorLabel;
     }
 
-    /* =======================
-       NAVIGATION
-       ======================= */
+
 
     /**
      * Naviga alla vista di dettaglio di un ordine.
@@ -411,15 +407,7 @@ public class FinancialController {
     private void goBack() {
         try {
             logger.log(Level.INFO, "Ritorno alla vista Manager");
-
-            View managerView = ViewFactory.forRole("manager");
-
-            if (ordersContainer != null && ordersContainer.getScene() != null) {
-                ordersContainer.getScene().setRoot(managerView.getRoot());
-            } else {
-                logger.log(Level.WARNING, "Scene non disponibile per la navigazione");
-            }
-
+            SceneManager.showManager();
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore durante il ritorno al manager", e);
         }

@@ -1,5 +1,6 @@
 package com.example.rm.view;
 
+import com.example.rm.app.SceneManager;
 import com.example.rm.app.UserSession;
 import com.example.rm.model.Order;
 import com.example.rm.preference.KitchenPreferences;
@@ -25,6 +26,8 @@ import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 import static com.example.rm.view.LoginController.logger;
 import com.example.rm.controller.KitchenService;
@@ -86,22 +89,9 @@ public class KitchenController {
         itemLogout.setOnAction(e -> {
             logger.log(Level.INFO, "Logout Cucina effettuato.");
             UserSession.cleanUserSession();
+            SceneManager.showLogin();
 
-            try {
-                Parent loginView = new FXMLLoader(
-                        getClass().getResource("/LoginView.fxml")
-                ).load();
 
-                if (profileBtn.getScene() != null) {
-                    profileBtn.getScene().setRoot(loginView);
-                }
-            } catch (IOException ex) {
-                logger.log(
-                        Level.SEVERE,
-                        "Errore apertura menu profilo",
-                        ex
-                );
-            }
         });
 
         contextMenu.getItems().addAll(
@@ -197,7 +187,8 @@ public class KitchenController {
 
         btnDone.setOnAction(e -> {
             logger.info("Ordine #" + order.getId() + " completato.");
-            DatabaseService.setOrderStatus(order.getId(), "ready");
+            kitchenUseCase.updateOrderStatus(order.getId(), "ready");
+
             ordersContainer.getChildren().remove(card);
         });
 

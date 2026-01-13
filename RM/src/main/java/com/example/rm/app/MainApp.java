@@ -23,15 +23,13 @@ public class MainApp extends Application {
 
         boolean dbOk = DatabaseService.testConnection();
 
-
         AppStatus.setDbConnectionOk(dbOk);
 
         Parent root = LoginController.getFXMLView();
+
         primaryStage.setScene(new Scene(root));
+        SceneManager.setCurrentScene(primaryStage.getScene());
 
-
-        SceneManager.init(primaryStage);
-        SceneManager.showLogin();
         primaryStage.setTitle("Restaurant Manager");
         primaryStage.setMinWidth(400);
         primaryStage.setMinHeight(500);

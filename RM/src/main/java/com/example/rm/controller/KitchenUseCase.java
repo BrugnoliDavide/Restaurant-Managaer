@@ -13,5 +13,5 @@ public interface KitchenUseCase {
     void markOrderAsReady(int orderId);
     void splitMixedOrdersIfNeeded();
     List<String> getOrderItemsDisplay(int orderId);
-
+    boolean updateOrderStatus(int orderId, String status);
 }
