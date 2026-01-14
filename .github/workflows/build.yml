@@ -35,7 +35,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('Restaurant-Managaer/RM/pom.xml') }}
+          key: ${{ runner.os }}-m2-${{ hashFiles('Restaurant-Managaer/rm/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
       - name: Build and analyze
