@@ -85,7 +85,7 @@ public class OrderService implements OrderUseCase {
                     .orElse(null);
 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Errore recupero ordine ID: " + orderId, e);
+            logger.log(Level.SEVERE, "Errore recupero ordine ID: {0}", orderId);
             return null;
         }
     }

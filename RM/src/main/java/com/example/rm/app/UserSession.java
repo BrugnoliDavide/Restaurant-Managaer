@@ -48,15 +48,4 @@ public class UserSession {
         }
         return managedTables.contains(tableNumber);
     }
-
-/*
-    public String getManagedTablesString() {
-        // Utile per ripopolare la casella di testo quando la riapri
-        if (managedTables == null || managedTables.isEmpty()) return "";
-        return managedTables.toString();
-    }*/
-
-
-
-
 }

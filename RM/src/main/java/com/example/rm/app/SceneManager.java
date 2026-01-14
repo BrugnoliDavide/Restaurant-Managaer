@@ -31,7 +31,6 @@ public class SceneManager {
 
     public static void showLogin() {
         primaryStage.setScene(new Scene(ViewFactory.getLoginView().getRoot()));
-
     }
 
     public static void showMenu() {
@@ -42,13 +41,6 @@ public class SceneManager {
         primaryStage.setScene(new Scene(ViewFactory.forRole("menu").getRoot()));
         currentScene = primaryStage.getScene();
     }
-
-    /*
-    public static void showOrders() {
-        primaryStage.setScene(new Scene(ViewFactory.forRole("cameriere").getRoot()));
-        currentScene = primaryStage.getScene();
-    }*/
-
 
     public static void showFinancial() {
         logger.log(Level.INFO,"avvio tentativo recupero storico ordini");
@@ -101,6 +93,4 @@ public class SceneManager {
         View takeOrderView = new com.example.rm.view.screens.TakeOrderView(tavolo);
         currentScene.setRoot(takeOrderView.getRoot());
     }
-
-
 }

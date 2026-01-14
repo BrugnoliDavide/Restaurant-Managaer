@@ -12,17 +12,12 @@ public interface ManagerUseCase {
 
     boolean updateOrderStatus(int orderId, String newStatus);
 
-
     boolean deleteOrder(int orderId);
-
 
     Order findOrderById(int orderId);
 
     List<User> loadAllUsers();
 
     boolean deleteUser(String userId);
-
-    //boolean createUser(String username, String hashedPassword, String role);
-
 
 }

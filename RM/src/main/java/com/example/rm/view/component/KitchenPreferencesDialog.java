@@ -3,7 +3,6 @@ package com.example.rm.view.component;
 import com.example.rm.controller.KitchenPreferencesUseCase;
 import com.example.rm.controller.KitchenPreferencesController;
 import com.example.rm.preference.KitchenPreferences;
-import com.example.rm.service.DatabaseService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -13,12 +12,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -168,20 +165,6 @@ public class KitchenPreferencesDialog {
                         showErrorAlert("Errore durante il reset delle preferenze");
                     }
                 });
-
-
-
-//        if (confirmDialog.showAndWait().get() == ButtonType.OK) {
-//            boolean success = prefsService.reset(username);
-//            if (success) {
-//                currentPreferences = prefsService.load(username);
-//                chkSplitOrders.setSelected(currentPreferences.isSplitMixedCategoryOrders());
-//                populateCategories();
-//                showSuccessAlert("Preferenze ripristinate ai valori di default");
-//            } else {
-//                showErrorAlert("Errore durante il reset delle preferenze");
-//            }
-//        }
     }
 
     private void showSuccessAlert(String message) {
