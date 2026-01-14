@@ -9,7 +9,6 @@ public class TakeOrderView implements View {
 
     private final Parent root;
 
-    //TODO !! da controllare se public va bene
     public final int numeroTavolo;
 
     public TakeOrderView(int numeroTavolo) {

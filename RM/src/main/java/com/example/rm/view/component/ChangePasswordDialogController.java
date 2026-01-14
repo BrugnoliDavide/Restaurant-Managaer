@@ -32,7 +32,8 @@ public class ChangePasswordDialogController {
     private Stage stage;
     private final UserAccountUseCase accountService = new UserAccountController();
     private String username;
-
+    private static String cpfielderrorString = "cp-field-error";
+    
     void setStage(Stage stage) {
         this.stage = stage;
     }
@@ -109,8 +110,8 @@ public class ChangePasswordDialogController {
     }
 
     private void highlightField(PasswordField field) {
-        if (!field.getStyleClass().contains("cp-field-error")) {
-            field.getStyleClass().add("cp-field-error");
+        if (!field.getStyleClass().contains(cpfielderrorString)) {
+            field.getStyleClass().add(cpfielderrorString);
         }
     }
 
@@ -121,9 +122,9 @@ public class ChangePasswordDialogController {
     }
 
     private void resetFieldStyles() {
-        txtCurrentPassword.getStyleClass().remove("cp-field-error");
-        txtNewPassword.getStyleClass().remove("cp-field-error");
-        txtConfirmPassword.getStyleClass().remove("cp-field-error");
+        txtCurrentPassword.getStyleClass().remove(cpfielderrorString);
+        txtNewPassword.getStyleClass().remove(cpfielderrorString);
+        txtConfirmPassword.getStyleClass().remove(cpfielderrorString);
     }
 
     private void showSuccessAlert() {

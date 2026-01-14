@@ -31,7 +31,7 @@ public class AddProductDialog {
         throw new IllegalStateException("Classe di utilità: non può essere istanziata");
     }
 
-    private static final Logger logger = Logger.getLogger(MenuController.class.getName());
+    private static final Logger logger = Logger.getLogger(AddProductDialog.class.getName());
 
     // Metodi legacy per compatibilità (senza callback)
     public static void display() {

@@ -50,9 +50,8 @@ public class WaiterController {
     private void startPolling() {
         refreshNotifications();
 
-        pollingTimeline = new Timeline(new KeyFrame(Duration.seconds(5), event -> {
-            refreshNotifications();
-        }));
+        pollingTimeline = new Timeline(new KeyFrame(Duration.seconds(5),
+                event ->refreshNotifications()));
         pollingTimeline.setCycleCount(Animation.INDEFINITE);
         pollingTimeline.play();
     }

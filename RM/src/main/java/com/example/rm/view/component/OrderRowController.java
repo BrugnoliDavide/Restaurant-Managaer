@@ -1,7 +1,6 @@
 package com.example.rm.view.component;
 
 import com.example.rm.model.Order;
-import com.example.rm.service.DatabaseService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;

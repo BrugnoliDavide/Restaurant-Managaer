@@ -30,7 +30,7 @@ public class ManagerService implements ManagerUseCase {
             return true;
         } catch (Exception e) {
             logger.log(Level.SEVERE,
-                    "Errore durante l'aggiornamento dello stato ordine id={0} a {1}, {2} ",
+                    "Errore durante aggiornamento dello stato ordine id={0} a {1}, {2} ",
                     new Object[]{orderId, newStatus , e});
             return false;
         }

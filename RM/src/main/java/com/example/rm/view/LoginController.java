@@ -179,7 +179,7 @@ public class LoginController {
         try {
             return new FXMLLoader(LoginController.class.getResource("/LoginView.fxml")).load();
         } catch (IOException e) {
-            throw new RuntimeException("Impossibile caricare LoginView.fxml", e);
+            throw new IllegalStateException("Impossibile caricare LoginView.fxml", e);
         }
     }
 }

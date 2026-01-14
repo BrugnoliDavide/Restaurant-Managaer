@@ -10,6 +10,8 @@ import javafx.scene.layout.VBox;
 
 public final class ProductRowFactory {
 
+    //TODO classe merdosa migliorare
+
     private ProductRowFactory() {}
 
     public static HBox row(String title, String subtitle, String value, int quantity, Runnable onAdd, Runnable onRemove) {

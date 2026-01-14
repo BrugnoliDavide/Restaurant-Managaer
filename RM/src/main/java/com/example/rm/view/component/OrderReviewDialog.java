@@ -20,25 +20,16 @@ import java.util.function.Consumer;
 
 public class OrderReviewDialog {
 
+    //TODO classe merdosa controllare
+
     private static final Logger logger = Logger.getLogger(OrderReviewDialog.class.getName());
 
-    @FXML
-    private Label lblTavolo;
-
-    @FXML
-    private Label lblTotale;
-
-    @FXML
-    private VBox vboxProducts;
-
-    @FXML
-    private TextArea txtNote;
-
-    @FXML
-    private Button btnConfirm;
-
-    @FXML
-    private Button btnCancel;
+    @FXML    private Label lblTavolo;
+    @FXML    private Label lblTotale;
+    @FXML    private VBox vboxProducts;
+    @FXML    private TextArea txtNote;
+    @FXML    private Button btnConfirm;
+    @FXML    private Button btnCancel;
 
     private Stage stage;
     private Integer tavolo;
