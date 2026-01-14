@@ -44,6 +44,8 @@ public class TakeOrderController {
     private static final OrderUseCase orderUseCase = new OrderService();
     private static final User currentUser = UserSession.getInstance().getUser();
 
+    private static final String stringaErrore = "ERRORE: ";
+    
     public void init(int numeroTavolo) {
         this.numeroTavolo = numeroTavolo;
         updateTitle();
@@ -60,6 +62,7 @@ public class TakeOrderController {
     private void loadProducts() {
         if (productsContainer == null) {
             logger.log(Level.SEVERE, "productsContainer non inizializzato");
+            showErrorAlert(stringaErrore, "Sessione utente scaduta. Rilogga.");
             return;
         }
 
@@ -69,7 +72,6 @@ public class TakeOrderController {
             renderProducts(prodotti);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore caricamento prodotti", e);
-            showErrorAlert("Errore", "Impossibile caricare i prodotti dal database");
         }
     }
 
@@ -226,7 +228,7 @@ public class TakeOrderController {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore apertura dialog review", e);
-            showErrorAlert("Errore", "Impossibile aprire il dialog di conferma");
+            showErrorAlert(stringaErrore, "Impossibile aprire il dialog di conferma");
         }
     }
 
@@ -247,7 +249,7 @@ public class TakeOrderController {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore invio ordine al database", e);
-            showErrorAlert("Errore", "Errore durante l'invio dell'ordine: " + e.getMessage());
+            showErrorAlert(stringaErrore, "Errore durante l'invio dell'ordine: " + e.getMessage());
         }
     }
 
@@ -260,7 +262,7 @@ public class TakeOrderController {
 
     private void handleOrderFailure() {
         logger.log(Level.SEVERE, "Impossibile inviare ordine per tavolo {0}", numeroTavolo);
-        showErrorAlert("Errore", "Impossibile inviare l'ordine al database.");
+        showErrorAlert(stringaErrore, "Impossibile inviare l'ordine al database.");
     }
 
     private Stage getStage() {
