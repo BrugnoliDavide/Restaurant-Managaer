@@ -4,7 +4,6 @@ import com.example.rm.app.MainApp;
 import com.example.rm.controller.MenuService;
 import com.example.rm.controller.MenuUseCase;
 import com.example.rm.model.MenuProduct;
-import com.example.rm.view.MenuController;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;

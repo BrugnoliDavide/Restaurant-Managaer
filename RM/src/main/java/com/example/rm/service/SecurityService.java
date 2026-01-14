@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import static com.example.rm.service.DBConstants.*;
 
 public final class SecurityService {
 
@@ -20,7 +19,7 @@ public final class SecurityService {
     }
 
     /**
-     * Autentica un utente confrontando la password inserita con l'hash salvato.
+     * Autentica un utente confrontando la password inserita con l'hash salvato per garantire la sicurezza
      *
      * @param username          username
      * @param candidatePassword password in chiaro inserita
@@ -83,12 +82,7 @@ public final class SecurityService {
             return pstmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            logger.log(
-                    Level.SEVERE,
-                    "Errore durante la creazione dell'utente:  {0}", new Object[]{username, e}
-            );
-
-
+            logger.log(Level.SEVERE, "Errore durante la creazione di utente:  {0}, {1}", new Object[]{username, e});
             return false;
         }
     }
@@ -105,11 +99,7 @@ public final class SecurityService {
         String currentRole = authenticate(username, currentPassword);
 
         if (currentRole == null) {
-            logger.log(
-                    Level.WARNING,
-                    "Tentativo cambio password fallito per {0}: password corrente errata",
-                    username
-            );
+            logger.log(Level.WARNING, "Tentativo cambio password fallito per {0}: password corrente errata", username);
             return false;
         }
 
@@ -128,26 +118,15 @@ public final class SecurityService {
             int rowsAffected = pstmt.executeUpdate();
 
             if (rowsAffected > 0) {
-                logger.log(
-                        Level.INFO,
-                        "Password cambiata con successo per utente: {0}",
-                        username
-                );
+                logger.log(Level.INFO, "Password cambiata con successo per utente: {0}", username);
                 return true;
             } else {
-                logger.log(
-                        Level.WARNING,
-                        "Nessuna riga aggiornata per utente: {0}",
-                        username
-                );
+                logger.log(Level.WARNING, "Nessuna riga aggiornata per utente: {0}", username);
                 return false;
             }
 
         } catch (SQLException e) {
-            logger.log(
-                    Level.SEVERE,
-                    "Errore durante cambio password per utente: {0}", username
-            );
+            logger.log(Level.SEVERE, "Errore durante cambio password per utente: {0}", username);
             return false;
         }
     }

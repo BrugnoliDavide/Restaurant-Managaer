@@ -184,8 +184,7 @@ public class MenuController {
             controller.setProduct(product, this::reload, this::openProductDetail);
             return root;
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Errore caricamento ProductRow.fxml per prodotto: " +
-                    (product != null ? product.getNome() : "null"), e);
+            logger.log(Level.SEVERE, "Errore caricamento ProductRow.fxml per prodotto: {0}, {1}",new Object[]{(product != null ? product.getNome() : "null"), e});
             return createErrorLabel();
         }
     }
@@ -215,8 +214,7 @@ public class MenuController {
                 logger.log(Level.WARNING, "Scene non disponibile per la navigazione");
             }
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Errore apertura ProductDetail per prodotto: " +
-                    product.getNome(), e);
+            logger.log(Level.SEVERE, "Errore apertura ProductDetail per prodotto: {0}, {1}", new Object[]{product.getNome(), e});
         }
     }
 

@@ -28,8 +28,8 @@ public class DatabaseService {
     private static String user = null;
     private static String pass = null;
 
-    private static String tipologiaString = "tipologia";
-    private static String todoString = "to-do";
+    private final static String tipologiaString = "tipologia";
+    private final static String todoString = "to-do";
 
     private DatabaseService() {
         throw new IllegalStateException("Utility class");
@@ -938,7 +938,7 @@ public class DatabaseService {
                 return true;
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore scomposizione ordine " + orderId + ": " + e.getMessage(), e);
+            logger.log(Level.SEVERE, "Errore scomposizione ordine {0}, errore:  {}", new Object[]{orderId, e.getMessage()});
             return false;
         }
     }
@@ -959,7 +959,7 @@ public class DatabaseService {
                 return rs.next() && rs.getBoolean(1);
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore controllo ordini pendenti tavolo " + tavolo, e);
+            logger.log(Level.SEVERE, "Errore controllo ordini pendenti tavolo {0}, {1}", new Object[]{tavolo, e});
             return false;
         }
     }
@@ -983,10 +983,10 @@ public class DatabaseService {
                     pendingIds.add(rs.getInt(1));
                 }
             }
-            logger.info(" Trovati " + pendingIds.size() + " ordini pendenti per tavolo " + tavolo + ": " + pendingIds);
+            logger.log(Level.INFO, " Trovati {0} ordini pendenti per tavolo {1}, {2} ", new Object[]{pendingIds.size(), tavolo, pendingIds});
 
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, " ERRORE SQL getPendingOrderIds tavolo " + tavolo + ": " + e.getMessage() + "\nQUERY: " + sql, e);
+            logger.log(Level.SEVERE, " ERRORE SQL getPendingOrderIds tavolo {0}: {1} \nQUERY: {2}, {3}", new Object[]{tavolo, e.getMessage(), sql, e});
         }
         return pendingIds;
     }

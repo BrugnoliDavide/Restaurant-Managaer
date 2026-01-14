@@ -40,9 +40,7 @@ public class OrderDetailController {
     @FXML private Label lblTitle;
     @FXML private VBox contentBox;
 
-
     private OrderUseCase orderUseCase;
-    private SceneManager sceneManager;
 
     private Order order;
 
@@ -59,13 +57,6 @@ public class OrderDetailController {
      */
     public void setOrderUseCase(OrderUseCase orderUseCase) {
         this.orderUseCase = orderUseCase;
-    }
-
-    /**
-     * Imposta lo SceneManager per la navigazione.
-     */
-    public void setSceneManager(SceneManager sceneManager) {
-        this.sceneManager = sceneManager;
     }
 
     @FXML
@@ -99,8 +90,7 @@ public class OrderDetailController {
             return;
         }
 
-        // ✅ USA IL METODO DELL'INTERFACCIA ESISTENTE
-        Order loadedOrder = orderUseCase.getOrderById(orderId);
+       Order loadedOrder = orderUseCase.getOrderById(orderId);
 
         if (loadedOrder == null) {
             logger.log(Level.WARNING, "Ordine non trovato con ID: {0}", orderId);
@@ -173,10 +163,6 @@ public class OrderDetailController {
         );
     }
 
-    /* =======================
-       SECTION CREATORS
-       ======================= */
-
     private VBox createInfoSection() {
         VBox section = new VBox(12);
         section.setPadding(new Insets(0, 0, 10, 0));
@@ -216,9 +202,7 @@ public class OrderDetailController {
         container.getChildren().addAll(label, value);
     }
 
-    /**
-     * Crea la sezione articoli usando OrderUseCase.
-     */
+
     private VBox createItemsSection() {
         VBox section = new VBox(10);
         section.setPadding(new Insets(10, 0, 10, 0));
@@ -226,8 +210,7 @@ public class OrderDetailController {
         Label header = createSectionHeader("Articoli Ordinati");
         section.getChildren().add(header);
 
-        // ✅ USA IL METODO loadOrderItemsForDisplay DELL'INTERFACCIA ESISTENTE
-        List<String> items = loadOrderItems();
+       List<String> items = loadOrderItems();
 
         if (items.isEmpty()) {
             section.getChildren().add(createEmptyItemsLabel());
@@ -243,10 +226,9 @@ public class OrderDetailController {
      */
     private List<String> loadOrderItems() {
         try {
-            // ✅ USA loadOrderItemsForDisplay CHE GIÀ ESISTE
             return orderUseCase.loadOrderItemsForDisplay(order.getId());
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Errore caricamento articoli ordine #" + order.getId(), e);
+            logger.log(Level.SEVERE, "Errore caricamento articoli ordine #{0}, {1}", new Object[]{order.getId(), e});
             return List.of();
         }
     }

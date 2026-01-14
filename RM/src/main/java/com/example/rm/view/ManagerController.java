@@ -1,7 +1,5 @@
 package com.example.rm.view;
 
-import com.example.rm.controller.ManagerService;
-import com.example.rm.controller.ManagerUseCase;
 import javafx.fxml.FXML;
 import javafx.geometry.Side;
 import javafx.scene.control.*;
@@ -14,28 +12,20 @@ import com.example.rm.view.component.ChangePasswordDialog;
 import javafx.stage.Stage;
 import com.example.rm.app.SceneManager;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 public class ManagerController {
 
-    @FXML
-    private Label lblHeaderName;
-    @FXML
-    private Label lblHeaderRole;
-    @FXML
-    private Label lblWelcomeTop;
-    @FXML
-    private Label lblWelcomeName;
-    @FXML
-    private StackPane profileBtn;
-    @FXML
-    private Circle profileCircle;
+    @FXML    private Label lblHeaderName;
+    @FXML    private Label lblHeaderRole;
+    @FXML    private Label lblWelcomeTop;
+    @FXML    private Label lblWelcomeName;
+    @FXML    private StackPane profileBtn;
+    @FXML    private Circle profileCircle;
 
-    private static ManagerUseCase managerUseCase = new ManagerService();
-
-    public static void setManagerUseCase(ManagerUseCase useCase) {
-        managerUseCase = useCase;
-    }
-
+   public static final Logger logger = Logger.getLogger(ManagerController.class.getName());
 
     @FXML
     public void initialize() {
@@ -74,24 +64,16 @@ public class ManagerController {
         }
     }
 
-    // MENU A TENDINA
+
     @FXML
     private void handleProfileMenu(MouseEvent event) {
-
-        if (profileBtn == null || profileBtn.getScene() == null || profileBtn.getScene().getWindow() == null) {
-            System.err.println("Contesto finestra non disponibile per ContextMenu");
-            return;
-        }
-
 
         ContextMenu contextMenu = new ContextMenu();
 
         MenuItem itemStaff = new MenuItem("Gestione Staff");
         itemStaff.getStyleClass().add("context-menu-item");
-        //itemStaff.setStyle("-fx-font-size: 14px; -fx-padding: 5 10 5 10;");
-        itemStaff.setOnAction(e -> {
-            SceneManager.showUsers();
-        });
+        itemStaff.setOnAction(
+                e ->SceneManager.showUsers());
 
         MenuItem itemChangePassword = new MenuItem("Cambia Password");
         itemChangePassword.getStyleClass().add("context-menu-item-info");
@@ -100,7 +82,7 @@ public class ManagerController {
             ChangePasswordDialog.show(stage);
         });
 
-        //  LOGOUT
+
         MenuItem itemLogout = new MenuItem("Logout");
         itemLogout.getStyleClass().add("context-menu-item-danger");
         itemLogout.setOnAction(e -> {
@@ -109,7 +91,7 @@ public class ManagerController {
             SceneManager.showLogin();
         });
 
-        // === ASSEMBLA MENU ===
+
         contextMenu.getItems().addAll(
                 itemStaff,
                 new SeparatorMenuItem(),
@@ -127,7 +109,7 @@ public class ManagerController {
         try {
             SceneManager.showMenu();
         } catch (Exception e) {
-            System.err.println("Errore goToMenu: " + e.getMessage());
+            logger.log(Level.SEVERE, "Errore goToMenu: {0}", e.getMessage());
         }
     }
 
@@ -136,7 +118,7 @@ public class ManagerController {
         try {
             SceneManager.showFinancial();
         } catch (Exception e) {
-            System.err.println("Errore goToFinancial: " + e.getMessage());
-        }
+            logger.log(Level.SEVERE, "Errore goToFinancial: {0}", e.getMessage());
+       }
     }
 }

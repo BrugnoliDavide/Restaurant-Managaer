@@ -24,6 +24,8 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import com.example.rm.controller.FinancialService;
 import com.example.rm.controller.FinancialUseCase;
 
@@ -141,7 +143,6 @@ public class FinancialController {
     }
 
     /**
-     * Normalizza la query di ricerca.
      * @param query Query originale
      * @return Query normalizzata (lowercase, trimmed)
      */
@@ -157,7 +158,7 @@ public class FinancialController {
     private List<Order> filterOrders(String query) {
         return allOrdersMaster.stream()
                 .filter(order -> matchesSearchQuery(order, query))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
