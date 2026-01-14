@@ -28,8 +28,8 @@ public class DatabaseService {
     private static String user = null;
     private static String pass = null;
 
-    private final static String tipologiaString = "tipologia";
-    private final static String todoString = "to-do";
+    private static final  String TIPOLOGIASTRING = "tipologia";
+    private static final  String TODOSTRING = "to-do";
 
     private DatabaseService() {
         throw new IllegalStateException("Utility class");
@@ -66,7 +66,7 @@ public class DatabaseService {
                 prodotti.add(new MenuProduct(
                         rs.getInt("id"),
                         rs.getString("nome"),
-                        rs.getString(tipologiaString),
+                        rs.getString(TIPOLOGIASTRING),
                         rs.getDouble("prezzo_vendita"),
                         rs.getDouble("costo_realizzazione"),
                         rs.getString("allergeni")
@@ -165,7 +165,7 @@ public class DatabaseService {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                categories.add(rs.getString(tipologiaString));
+                categories.add(rs.getString(TIPOLOGIASTRING));
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero categorie", e);
@@ -218,7 +218,7 @@ public class DatabaseService {
                 }
 
                 pstmtOrder.setString(3, note);
-                pstmtOrder.setString(4, todoString);
+                pstmtOrder.setString(4, TODOSTRING);
 
                 pstmtOrder.executeUpdate();
 
@@ -378,7 +378,7 @@ public class DatabaseService {
 
         try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, todoString);
+            pstmt.setString(1, TODOSTRING);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 list.add(new Order(
@@ -397,15 +397,9 @@ public class DatabaseService {
         return list;
     }
 
+
     /**
-     * Recupera gli articoli di un ordine in formato semplice per la visualizzazione.
-     * Usa lo snapshot del nome per gestire prodotti eliminati.
-     *
-     * @param orderId ID dell'ordine
-     * @return Lista di stringhe nel formato "Qta x Nome Prodotto"
-     */
-    /**
-     * Recupera gli articoli di un ordine in formato semplice per la visualizzazione.
+     * Recupera gli articoli di un ordine in formato adatto alla visualizzazione.
      * Usa lo snapshot del nome per gestire prodotti eliminati.
      *
      * @param orderId ID dell'ordine
@@ -590,7 +584,7 @@ public class DatabaseService {
                     return new MenuProduct(
                             rs.getInt("id"),
                             rs.getString("nome"),
-                            rs.getString(tipologiaString),
+                            rs.getString(TIPOLOGIASTRING),
                             rs.getDouble("prezzovendita"),
                             rs.getDouble("costorealizzazione"),
                             rs.getString("allergeni")
@@ -900,11 +894,11 @@ public class DatabaseService {
 
                         connNew.setAutoCommit(false);
 
-                        // Crea nuovo ordine
+
                         pstmtNewOrder.setString(1, username);
                         pstmtNewOrder.setInt(2, tavolo);
                         pstmtNewOrder.setString(3, note);
-                        pstmtNewOrder.setString(4, todoString);
+                        pstmtNewOrder.setString(4, TODOSTRING);
 
                         pstmtNewOrder.executeUpdate();
 

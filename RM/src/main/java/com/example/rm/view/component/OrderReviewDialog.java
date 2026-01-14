@@ -32,7 +32,6 @@ public class OrderReviewDialog {
     @FXML    private Button btnCancel;
 
     private Stage stage;
-    private Integer tavolo;
     private List<OrderItem> items;
     private String initialNote;
     private Consumer<OrderReviewResult> onComplete;
@@ -78,7 +77,7 @@ public class OrderReviewDialog {
 
     private void initialize(Integer tavolo, List<OrderItem> items, String initialNote,
                             Consumer<OrderReviewResult> onComplete) {
-        this.tavolo = tavolo;
+
         this.items = items;
         this.initialNote = initialNote != null ? initialNote : "";
         this.onComplete = onComplete;

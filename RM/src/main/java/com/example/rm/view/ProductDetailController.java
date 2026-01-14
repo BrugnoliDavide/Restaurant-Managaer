@@ -70,7 +70,7 @@ public class ProductDetailController {
         try {
             // Apri dialog di modifica con callback
             com.example.rm.view.component.AddProductDialog.displayEdit(product, success -> {
-                if (success) {
+                if (Boolean.TRUE.equals(success)) {
                     logger.log(Level.INFO, "Prodotto modificato, ricarico dati");
                     reloadProduct();
                 }
@@ -97,10 +97,6 @@ public class ProductDetailController {
             logger.log(Level.SEVERE, "Errore durante l'eliminazione del prodotto");
         }
     }
-
-    /* =======================
-       DATA MANAGEMENT
-       ======================= */
 
     /**
      * Ricarica i dati del prodotto dal database.
@@ -130,10 +126,6 @@ public class ProductDetailController {
         }
     }
 
-    /* =======================
-       PUBLIC API
-       ======================= */
-
     /**
      * Imposta il prodotto da visualizzare e aggiorna la vista.
      * @param product Il prodotto da visualizzare
@@ -155,9 +147,7 @@ public class ProductDetailController {
         return contentBox;
     }
 
-    /* =======================
-       RENDER LOGIC
-       ======================= */
+
 
     /**
      * Renderizza i dettagli del prodotto nella vista.
@@ -245,10 +235,6 @@ public class ProductDetailController {
         );
     }
 
-    /* =======================
-       UI HELPERS
-       ======================= */
-
     /**
      * Aggiunge una riga di dettaglio alla vista.
      * @param title Titolo della riga
@@ -293,9 +279,6 @@ public class ProductDetailController {
         return product.getPrezzoVendita() - product.getCostoRealizzazione();
     }
 
-    /* =======================
-       FORMATTING HELPERS
-       ======================= */
 
     /**
      * Formatta un valore monetario.
@@ -321,9 +304,6 @@ public class ProductDetailController {
         return formatted;
     }
 
-    /* =======================
-       INNER CLASS - Statistics
-       ======================= */
 
     /**
      * Classe di supporto per contenere le statistiche del prodotto.

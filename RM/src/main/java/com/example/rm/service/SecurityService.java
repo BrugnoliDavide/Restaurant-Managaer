@@ -52,7 +52,7 @@ public final class SecurityService {
         } catch (SQLException e) {
             logger.log(
                     Level.SEVERE,
-                    "Errore imprevisto durante il login per utente: {0}", new Object[]{username, e}
+                    "Errore imprevisto durante il login per utente: {0}, {1}", new Object[]{username, e}
             );
         }
 

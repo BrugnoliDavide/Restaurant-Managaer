@@ -235,7 +235,7 @@ public class MenuController {
     private List<MenuProduct> filterProducts(String query) {
         return allProductsMaster.stream()
                 .filter(product -> matchesSearchQuery(product, query))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private boolean matchesSearchQuery(MenuProduct product, String query) {

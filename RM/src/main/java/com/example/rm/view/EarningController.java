@@ -279,23 +279,30 @@ public class EarningController {
         List<Integer> pendingOrderIds = earningUseCase.getPendingOrderIds(tavolo);
 
         if (!pendingOrderIds.isEmpty()) {
-            String articoli = "";
+            StringBuilder articoli = new StringBuilder();
+
             int maxItems = Math.min(3, pendingOrderIds.size());
             for (int i = 0; i < maxItems; i++) {
                 int id = pendingOrderIds.get(i);
                 List<OrderItem> items = earningUseCase.getOrderItemsDetailed(id);
-                articoli += items.stream()
-                        .map(it -> it.getQuantita() + "x " + it.getProduct().getNome())
-                        .collect(Collectors.joining(", "));
+
+                articoli.append(
+                        items.stream()
+                                .map(it -> it.getQuantita() + "x " + it.getProduct().getNome())
+                                .collect(Collectors.joining(", "))
+                );
+
                 if (i < maxItems - 1) {
-                    articoli += "\n";
+                    articoli.append("\n");
                 }
             }
+
 
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("⚠️ " + pendingOrderIds.size() + " ordini pendenti");
             alert.setHeaderText(tavoloString + tavolo + " ha ordini non consegnati:");
-            alert.getDialogPane().setContentText(articoli);
+            alert.getDialogPane().setContentText(articoli.toString());
+
 
             ButtonType annullaPaga = new ButtonType("Paga e cancella i pendenti");
             ButtonType deliveredPaga = new ButtonType("Contrassegna come consegnato e Paga");

@@ -44,7 +44,7 @@ public class TakeOrderController {
     private static final OrderUseCase orderUseCase = new OrderService();
     private static final User currentUser = UserSession.getInstance().getUser();
 
-    private static final String erroreString = "ERRORE: ";
+    private static final String ERRORESTRING = "ERRORE: ";
     
     public void init(int numeroTavolo) {
         this.numeroTavolo = numeroTavolo;
@@ -62,7 +62,7 @@ public class TakeOrderController {
     private void loadProducts() {
         if (productsContainer == null) {
             logger.log(Level.SEVERE, "productsContainer non inizializzato");
-            showErrorAlert(erroreString, "Sessione utente scaduta. Rilogga.");
+            showErrorAlert(ERRORESTRING, "Sessione utente scaduta. Rilogga.");
             return;
         }
 
@@ -228,7 +228,7 @@ public class TakeOrderController {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore apertura dialog review", e);
-            showErrorAlert(erroreString, "Impossibile aprire il dialog di conferma");
+            showErrorAlert(ERRORESTRING, "Impossibile aprire il dialog di conferma");
         }
     }
 
@@ -249,7 +249,7 @@ public class TakeOrderController {
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore invio ordine al database", e);
-            showErrorAlert(erroreString, "Errore durante l'invio dell'ordine: " + e.getMessage());
+            showErrorAlert(ERRORESTRING, "Errore durante l'invio dell'ordine: " + e.getMessage());
         }
     }
 
@@ -262,7 +262,7 @@ public class TakeOrderController {
 
     private void handleOrderFailure() {
         logger.log(Level.SEVERE, "Impossibile inviare ordine per tavolo {0}", numeroTavolo);
-        showErrorAlert(erroreString, "Impossibile inviare l'ordine al database.");
+        showErrorAlert(ERRORESTRING, "Impossibile inviare l'ordine al database.");
     }
 
     private Stage getStage() {

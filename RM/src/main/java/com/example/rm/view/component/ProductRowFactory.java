@@ -55,8 +55,9 @@ public final class ProductRowFactory {
         // 3. Area Controlli (Zona protetta)
         HBox controls = new HBox(12);
         controls.setAlignment(Pos.CENTER);
-        // Fondamentale: Impediamo che il click sul tasto MENO si propaghi alla riga (evita +1 e -1 simultanei)
-        controls.setOnMouseClicked(e -> e.consume());
+        // Fondamentale: si impedisce che il click sul tasto MENO si propaghi alla riga (evita +1 e -1 simultanei)
+        controls.setOnMouseClicked(javafx.event.Event::consume);
+
 
         // Tasto MENO (Decrementa)
         Button btnMinus = new Button("-");

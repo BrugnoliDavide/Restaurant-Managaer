@@ -3,10 +3,6 @@ package com.example.rm.preference;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Serializza e deserializza le preferenze cucina in/da stringa.
- * Formato: "splitOrders:true,categories:Primi,Secondi,Bibite,includeOther:false"
- */
 public final class PreferencesSerializer {
 
     private PreferencesSerializer() {
@@ -52,7 +48,7 @@ public final class PreferencesSerializer {
      * @param username Username per il quale creare le preferenze
      * @return KitchenPreferences deserializzate (o preferenze default se stringa invalida)
      */
-    public static KitchenPreferences deserialize(String serialized, String username) {
+    /*public static KitchenPreferences deserialize(String serialized, String username) {
         KitchenPreferences prefs = new KitchenPreferences(username,
                 PreferencesConstants.DEFAULT_SPLIT_ORDERS,
                 new HashSet<>(),
@@ -107,5 +103,72 @@ public final class PreferencesSerializer {
         }
 
         return prefs;
+    }*/
+
+
+
+    public static KitchenPreferences deserialize(String serialized, String username) {
+        KitchenPreferences prefs = createDefaultPreferences(username);
+
+        if (serialized == null || serialized.isBlank()) {
+            return prefs;
+        }
+
+        try {
+            for (String pair : serialized.split(SPLIT_SEPARATOR)) {
+                parsePair(pair, prefs);
+            }
+            return prefs;
+        } catch (Exception e) {
+            return createDefaultPreferences(username);
+        }
     }
+
+
+    //metodi di supporto: necessari per ridurre la compelssità
+    private static KitchenPreferences createDefaultPreferences(String username) {
+        return new KitchenPreferences(
+                username,
+                PreferencesConstants.DEFAULT_SPLIT_ORDERS,
+                new HashSet<>(),
+                PreferencesConstants.DEFAULT_INCLUDE_OTHER
+        );
+    }
+
+    private static void parsePair(String pair, KitchenPreferences prefs) {
+        if (!pair.contains(KEY_VALUE_SEPARATOR)) {
+            return;
+        }
+
+        String[] keyValue = pair.split(KEY_VALUE_SEPARATOR, 2);
+        String key = keyValue[0].trim();
+        String value = keyValue[1].trim();
+
+        switch (key) {
+            case "splitOrders" -> prefs.setSplitMixedCategoryOrders(parseBoolean(value));
+            case "categories"  -> prefs.setSelectedCategories(parseCategories(value));
+            case "includeOther" -> prefs.setIncludeOtherCategories(parseBoolean(value));
+        }
+    }
+
+    private static boolean parseBoolean(String value) {
+        return Boolean.parseBoolean(value);
+    }
+
+    private static Set<String> parseCategories(String value) {
+        if (value.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        Set<String> categories = new HashSet<>();
+        for (String cat : value.split(CATEGORIES_SEPARATOR)) {
+            String trimmed = cat.trim();
+            if (!trimmed.isEmpty()) {
+                categories.add(trimmed);
+            }
+        }
+        return categories;
+    }
+
+
 }

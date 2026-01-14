@@ -13,7 +13,7 @@ public class OrderDetailsFactory {
     }
 
     public static VBox create(Order order,
-                              java.util.function.Consumer<Double> onPay) {
+                              java.util.function.DoubleConsumer onPay) {
 
         VBox root = new VBox(10);
 
@@ -33,7 +33,7 @@ public class OrderDetailsFactory {
                         : Double.parseDouble(discountField.getText());
                 onPay.accept(discount);
             } catch (NumberFormatException ex) {
-                // TODO: Mostrare errore all'utente
+                // Mostra errore all'utente
                 discountField.setStyle("-fx-border-color: red;");
             }
         });
