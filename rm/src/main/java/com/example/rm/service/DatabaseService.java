@@ -208,55 +208,15 @@ public class DatabaseService {
 
             conn.setAutoCommit(false);
 
-            try {
-                pstmtOrder.setString(1, usernameUtente);
-
-                if (tavolo != null) {
-                    pstmtOrder.setInt(2, tavolo);
-                } else {
-                    pstmtOrder.setNull(2, Types.INTEGER);
-                }
-
-                pstmtOrder.setString(3, note);
-                pstmtOrder.setString(4, TODOSTRING);
-
-                pstmtOrder.executeUpdate();
-
-                // Recupera ID ordine generato
-                int orderId;
-                try (ResultSet keys = pstmtOrder.getGeneratedKeys()) {
-                    if (!keys.next()) {
-                        throw new SQLException("ID ordine non generato");
-                    }
-                    orderId = keys.getInt(1);
-                }
-
-                // Inserimento articoli con prezzi snapshot
-                pstmtItem.setInt(1, orderId);
-                //!! prima era nel ciclo ma SonarCloud consiglia di metterlo fuori
-                for (OrderItem item : items) {
-                    if (item.getProduct() == null) {
-                        logger.log(Level.WARNING, "Articolo con prodotto null saltato");
-                        continue;
-                    }
-
-
-                    pstmtItem.setInt(2, item.getProduct().getId());
-                    pstmtItem.setInt(3, item.getQuantita());
-                    pstmtItem.setDouble(4, item.getPrezzoSnapshot());
-                    pstmtItem.setDouble(5, item.getCostoSnapshot());
-
-                    String nomeProdotto = item.getProduct().getNome();
-                    pstmtItem.setString(6, nomeProdotto);
-                    pstmtItem.addBatch();
-                }
-
-                pstmtItem.executeBatch();
-                conn.commit();
-
-                logger.log(Level.INFO, "Ordine #{0} creato con successo con {1} articoli",
-                        new Object[]{orderId, items.size()});
-                return true;
+            try {return executeCreateOrderTransaction(
+                    conn,
+                    pstmtOrder,
+                    pstmtItem,
+                    usernameUtente,
+                    tavolo,
+                    note,
+                    items
+            );
 
             } catch (SQLException e) {
                 conn.rollback();
@@ -269,6 +229,64 @@ public class DatabaseService {
             return false;
         }
     }
+
+    private static boolean executeCreateOrderTransaction(
+            Connection conn,
+            PreparedStatement pstmtOrder,
+            PreparedStatement pstmtItem,
+            String usernameUtente,
+            Integer tavolo,
+            String note,
+            List<OrderItem> items
+    ) throws SQLException {
+
+        pstmtOrder.setString(1, usernameUtente);
+
+        if (tavolo != null) {
+            pstmtOrder.setInt(2, tavolo);
+        } else {
+            pstmtOrder.setNull(2, Types.INTEGER);
+        }
+
+        pstmtOrder.setString(3, note);
+        pstmtOrder.setString(4, TODOSTRING);
+
+        pstmtOrder.executeUpdate();
+
+        int orderId;
+        try (ResultSet keys = pstmtOrder.getGeneratedKeys()) {
+            if (!keys.next()) {
+                throw new SQLException("ID ordine non generato");
+            }
+            orderId = keys.getInt(1);
+        }
+
+        pstmtItem.setInt(1, orderId);
+
+        for (OrderItem item : items) {
+            if (item.getProduct() == null) {
+                logger.log(Level.WARNING, "Articolo con prodotto null saltato");
+                continue;
+            }
+
+            pstmtItem.setInt(2, item.getProduct().getId());
+            pstmtItem.setInt(3, item.getQuantita());
+            pstmtItem.setDouble(4, item.getPrezzoSnapshot());
+            pstmtItem.setDouble(5, item.getCostoSnapshot());
+            pstmtItem.setString(6, item.getProduct().getNome());
+            pstmtItem.addBatch();
+        }
+
+        pstmtItem.executeBatch();
+        conn.commit();
+
+        logger.log(Level.INFO, "Ordine #{0} creato con successo con {1} articoli",
+                new Object[]{orderId, items.size()});
+
+        return true;
+    }
+
+
 
     public static long getQuantitySold(String nomeProdotto) {
         String sql = "SELECT SUM(oi.quantita) FROM order_items oi JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE mi.nome = ?";
@@ -885,54 +903,67 @@ public class DatabaseService {
                         "prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
                         "VALUES (?, ?, ?, ?, ?, ?)";
 
-                for (Map.Entry<String, List<OrderItem>> entry : itemsByCategory.entrySet()) {
-                    List<OrderItem> categoryItems = entry.getValue();
+                // Usa una SINGOLA connessione e transazione per tutti gli ordini
+                try (Connection connNew = DriverManager.getConnection(url, user, pass);
+                     PreparedStatement pstmtNewOrder = connNew.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
+                     PreparedStatement pstmtNewItem = connNew.prepareStatement(sqlNewItem)) {
 
-                    try (Connection connNew = DriverManager.getConnection(url, user, pass);
-                         PreparedStatement pstmtNewOrder = connNew.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
-                         PreparedStatement pstmtNewItem = connNew.prepareStatement(sqlNewItem)) {
+                    connNew.setAutoCommit(false);
 
-                        connNew.setAutoCommit(false);
+                    try {
+                        for (Map.Entry<String, List<OrderItem>> entry : itemsByCategory.entrySet()) {
+                            List<OrderItem> categoryItems = entry.getValue();
 
+                            // INVARIANTI DEL LOOP - ora effettivamente fuori dal PreparedStatement
+                            // ma eseguiti per ogni nuovo ordine (corretto)
+                            pstmtNewOrder.setString(1, username);
+                            pstmtNewOrder.setInt(2, tavolo);
+                            pstmtNewOrder.setString(3, note);
+                            pstmtNewOrder.setString(4, TODOSTRING);
 
-                        pstmtNewOrder.setString(1, username);
-                        pstmtNewOrder.setInt(2, tavolo);
-                        pstmtNewOrder.setString(3, note);
-                        pstmtNewOrder.setString(4, TODOSTRING);
+                            pstmtNewOrder.executeUpdate();
 
-                        pstmtNewOrder.executeUpdate();
+                            int newOrderId;
+                            try (ResultSet keys = pstmtNewOrder.getGeneratedKeys()) {
+                                if (!keys.next()) {
+                                    throw new SQLException("ID ordine non generato");
+                                }
+                                newOrderId = keys.getInt(1);
+                            }
 
-                        int newOrderId;
-                        try (ResultSet keys = pstmtNewOrder.getGeneratedKeys()) {
-                            if (!keys.next()) throw new SQLException("ID ordine non generato");
-                            newOrderId = keys.getInt(1);
+                            // Inserisci items con snapshot
+                            for (OrderItem item : categoryItems) {
+                                pstmtNewItem.setInt(1, newOrderId);
+                                pstmtNewItem.setInt(2, item.getProduct().getId());
+                                pstmtNewItem.setInt(3, item.getQuantita());
+                                pstmtNewItem.setDouble(4, item.getPrezzoSnapshot());
+                                pstmtNewItem.setDouble(5, item.getCostoSnapshot());
+                                pstmtNewItem.setString(6, item.getNomeSnapshot());
+                                pstmtNewItem.addBatch();
+                            }
+
+                            pstmtNewItem.executeBatch();
+                            pstmtNewItem.clearBatch(); // Pulisci il batch per la prossima categoria
                         }
 
-                        // Inserisci items con snapshot
-                        for (OrderItem item : categoryItems) {
-                            pstmtNewItem.setInt(1, newOrderId);
-                            pstmtNewItem.setInt(2, item.getProduct().getId());
-                            pstmtNewItem.setInt(3, item.getQuantita());
-                            pstmtNewItem.setDouble(4, item.getPrezzoSnapshot());
-                            pstmtNewItem.setDouble(5, item.getCostoSnapshot());
-                            pstmtNewItem.setString(6, item.getNomeSnapshot());
-                            pstmtNewItem.addBatch();
-                        }
+                        // Marca l'ordine originale come "decomposed"
+                        setOrderStatus(orderId, "decomposed");
 
-                        pstmtNewItem.executeBatch();
                         connNew.commit();
+
+                        logger.log(Level.INFO, "Ordine {0} scomposto in {1} ordini per categoria",
+                                new Object[]{orderId, itemsByCategory.size()});
+                        return true;
+
+                    } catch (SQLException e) {
+                        connNew.rollback();
+                        throw e;
                     }
                 }
-
-                // Marca l'ordine originale come "decomposed"
-                setOrderStatus(orderId, "decomposed");
-
-                logger.log(Level.INFO, "Ordine {0} scomposto in {1} ordini per categoria",
-                        new Object[]{orderId, itemsByCategory.size()});
-                return true;
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore scomposizione ordine {0}, errore:  {}", new Object[]{orderId, e.getMessage()});
+            logger.log(Level.SEVERE, "Errore scomposizione ordine {0}, errore: {1}",
+                    new Object[]{orderId, e.getMessage()});
             return false;
         }
     }

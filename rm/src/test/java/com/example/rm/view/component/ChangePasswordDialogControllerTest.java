@@ -28,8 +28,10 @@ class ChangePasswordDialogControllerTest {
         System.setProperty("prism.text", "t2k");         // Rendering testo software
 
         try {
-            new JFXPanel(); // Inizializza JavaFX
-        } catch (Exception e) {}
+            new JFXPanel();
+        } catch (Exception e) {
+            throw new IllegalStateException("Impossibile inizializzare JavaFX Toolkit", e);
+        }
     }
     private ChangePasswordDialogController controller;
     private UserAccountUseCase mockAccountService;

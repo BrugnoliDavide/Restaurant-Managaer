@@ -221,8 +221,9 @@ public class TakeOrderController {
             List<OrderItem> items = new ArrayList<>(carrello.values());
 
             OrderReviewDialog.show(stage, numeroTavolo, items, "", result -> {
-                if (result.confirmed) {
-                    sendOrderToDatabase(items, result.note);
+                if (result.isConfirmed()) {
+                    sendOrderToDatabase(items, result.getNote());
+
                 }
             });
 

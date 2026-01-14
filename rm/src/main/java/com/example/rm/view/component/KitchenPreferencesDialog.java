@@ -112,13 +112,11 @@ public class KitchenPreferencesDialog {
             // Raccogli categorie selezionate
             Set<String> selectedCategories = new HashSet<>();
             for (var node : vboxCategories.getChildren()) {
-                if (node instanceof CheckBox) {
-                    CheckBox chk = (CheckBox) node;
-                    if (chk.isSelected()) {
-                        selectedCategories.add(chk.getText());
-                    }
+                if (node instanceof CheckBox chk && chk.isSelected()) {
+                    selectedCategories.add(chk.getText());
                 }
             }
+
 
             currentPreferences.setSplitMixedCategoryOrders(chkSplitOrders.isSelected());
             currentPreferences.setSelectedCategories(selectedCategories);

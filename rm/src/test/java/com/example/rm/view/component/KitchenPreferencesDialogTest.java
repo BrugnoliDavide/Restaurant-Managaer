@@ -31,7 +31,9 @@ class KitchenPreferencesDialogTest {
 
         try {
             new JFXPanel();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            throw new IllegalStateException("Impossibile inizializzare JavaFX Toolkit", e);
+        }
     }
     private KitchenPreferencesDialog controller;
     private KitchenPreferencesUseCase mockService;

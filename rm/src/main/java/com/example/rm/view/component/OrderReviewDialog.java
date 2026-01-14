@@ -33,19 +33,29 @@ public class OrderReviewDialog {
 
     private Stage stage;
     private List<OrderItem> items;
-    private String initialNote;
     private Consumer<OrderReviewResult> onComplete;
 
 
     public static class OrderReviewResult {
-        public boolean confirmed;
-        public String note;
+
+        private final boolean confirmed;
+        private final String note;
 
         public OrderReviewResult(boolean confirmed, String note) {
             this.confirmed = confirmed;
             this.note = note;
         }
+
+        public boolean isConfirmed() {
+            return confirmed;
+        }
+
+        public String getNote() {
+            return note;
+        }
     }
+
+
 
     public static void show(Stage owner, Integer tavolo, List<OrderItem> items,
                             String initialNote, Consumer<OrderReviewResult> onComplete) {
@@ -79,23 +89,19 @@ public class OrderReviewDialog {
                             Consumer<OrderReviewResult> onComplete) {
 
         this.items = items;
-        this.initialNote = initialNote != null ? initialNote : "";
         this.onComplete = onComplete;
 
-        // Setta tavolo
+        String noteIniziale = initialNote != null ? initialNote : "";
+        txtNote.setText(noteIniziale);
+
+
         if (tavolo != null && tavolo > 0) {
             lblTavolo.setText("Tavolo N° " + tavolo);
         } else {
             lblTavolo.setText("Asporto / Delivery");
         }
 
-        // Popola prodotti
         populateProducts();
-
-        // Setta note iniziali
-        txtNote.setText(this.initialNote);
-
-        // Event handlers
         btnConfirm.setOnAction(e -> handleConfirm());
         btnCancel.setOnAction(e -> handleCancel());
     }
