@@ -22,13 +22,14 @@ public class KitchenPreferences {
     private boolean splitMixedCategoryOrders;
 
     /**
-     * Categorie esplicitamente selezionate (es: "Primi", "Secondi", "Bibite")
+     * Categorie esplicitamente selezionate
      */
     private Set<String> selectedCategories;
 
     /**
      * Se true: include anche categorie NON nella lista selectedCategories
      * (utile per categorie aggiunte DOPO aver salvato le preferenze)
+     * al momento non implementato
      */
     private boolean includeOtherCategories;
 
@@ -109,32 +110,13 @@ public class KitchenPreferences {
      * @return true se l'ordine rientra nelle preferenze
      */
     public boolean shouldDisplayOrder(Set<String> orderCategories) {
-        if (orderCategories == null || orderCategories.isEmpty()) {
-            return false;
-        }
-
-        // Se nessuna categoria selezionata, non mostra nulla
-        if (selectedCategories.isEmpty()) {
-            return false;
-        }
-
-        // Verifica se ALMENO UNA categoria dell'ordine è selezionata
-        boolean hasSelectedCategory = orderCategories.stream()
-                .anyMatch(this.selectedCategories::contains);
-
-        if (hasSelectedCategory) {
-            return true;  // Mostra ordini con categorie selezionate
-        }
-
-        // Se "Altro" è attivo, mostra anche categorie NON nella lista selezionata
-        if (includeOtherCategories) {
-            boolean hasUnselectedCategory = orderCategories.stream()
-                    .anyMatch(cat -> !this.selectedCategories.contains(cat));
-            return hasUnselectedCategory;  // Mostra se ha categorie non selezionate
-        }
-
-        return false;
+        return orderCategories != null
+                && !orderCategories.isEmpty()
+                && !selectedCategories.isEmpty()
+                && (includeOtherCategories
+                || orderCategories.stream().anyMatch(selectedCategories::contains));
     }
+
 
     @Override
     public String toString() {

@@ -346,8 +346,7 @@ public class FinancialController {
             return root;
 
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Errore caricamento OrderRow.fxml per ordine #" +
-                    order.getId(), e);
+            logger.log(Level.SEVERE, "Errore caricamento OrderRow.fxml per ordine #{0} , {1}", new Object[]{order.getId(), e});
             return createErrorLabel();
         }
     }
@@ -386,8 +385,7 @@ public class FinancialController {
             }
 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Errore durante la navigazione al dettaglio ordine #" +
-                    order.getId(), e);
+            logger.log(Level.SEVERE, "Errore durante la navigazione al dettaglio ordine #{0}, {1}", new Object[]{ order.getId(), e});
         }
     }
 

@@ -51,7 +51,9 @@ public class EarningController {
     private Timeline pollingTimeline;
 
     private String valueFormat = "€%.2f";
-
+    private String selectedString = "selected";
+    private String tavoloString = "Tavolo ";
+    
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("HH:mm");
 
@@ -77,9 +79,8 @@ public class EarningController {
     }
 
     private void startPolling() {
-        pollingTimeline = new Timeline(new KeyFrame(Duration.seconds(5), e -> {
-            refreshDataPreservingSelection();
-        }));
+        pollingTimeline = new Timeline(new KeyFrame(Duration.seconds(5),
+                e ->  refreshDataPreservingSelection()));
         pollingTimeline.setCycleCount(Animation.INDEFINITE);
         pollingTimeline.play();
     }
@@ -163,7 +164,7 @@ public class EarningController {
             ordersContainer.getChildren().add(card);
 
             if (selectedTable != null && selectedTable == tableNumber) {
-                card.getStyleClass().add("selected");
+                card.getStyleClass().add(selectedString);
                 selectedCard = card;
             }
         }
@@ -178,7 +179,7 @@ public class EarningController {
         VBox leftInfo = new VBox(5);
         HBox.setHgrow(leftInfo, Priority.ALWAYS);
 
-        Label lblTable = new Label("Tavolo " + tableNumber);
+        Label lblTable = new Label(tavoloString + tableNumber);
         lblTable.getStyleClass().add("table-title");
 
         String time = "";
@@ -205,11 +206,11 @@ public class EarningController {
 
         card.setOnMouseClicked(e -> {
             if (selectedCard != null && selectedCard != card) {
-                selectedCard.getStyleClass().remove("selected");
+                selectedCard.getStyleClass().remove(selectedString);
             }
             selectedCard = card;
             selectedTable = tableNumber;
-            card.getStyleClass().add("selected");
+            card.getStyleClass().add(selectedString);
 
             showTableDetails(tableNumber, orders, totalAmount);
         });
@@ -223,7 +224,7 @@ public class EarningController {
         VBox content = new VBox(15);
         content.setPadding(new Insets(0));
 
-        Label lblTitle = new Label("Tavolo " + tableNumber);
+        Label lblTitle = new Label(tavoloString + tableNumber);
         lblTitle.getStyleClass().add("details-title");
 
         Separator sep1 = new Separator();
@@ -293,7 +294,7 @@ public class EarningController {
 
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("⚠️ " + pendingOrderIds.size() + " ordini pendenti");
-            alert.setHeaderText("Tavolo " + tavolo + " ha ordini non consegnati:");
+            alert.setHeaderText(tavoloString + tavolo + " ha ordini non consegnati:");
             alert.getDialogPane().setContentText(articoli);
 
             ButtonType annullaPaga = new ButtonType("Paga e cancella i pendenti");
@@ -308,10 +309,10 @@ public class EarningController {
 
             if (result.get() == annullaPaga) {
                 pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, "canceled"));
-                logger.info("Annullati pendenti tavolo " + tavolo);
+                logger.log(Level.INFO,"Annullati pendenti tavolo {0}", tavolo);
             } else if (result.get() == deliveredPaga) {
                 pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, "delivered"));
-                logger.info("Segnati come delivered pendenti tavolo " + tavolo);
+                logger.log(Level.INFO,"Segnati come delivered pendenti tavolo ",  tavolo);
                 List<Order> allDeliveredForTable = DatabaseService.getOrdersToPay().stream()
                         .filter(o -> o.getTavolo() == tavolo)
                         .collect(Collectors.toList());

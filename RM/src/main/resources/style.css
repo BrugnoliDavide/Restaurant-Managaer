@@ -1786,19 +1786,7 @@
     -fx-background-color: transparent;
 }
 
-/* === SEARCH FIELD === */
-.earning-search-field {
-    -fx-background-color: #FFFFFF;
-    -fx-border-color: #CCCCCC;
-    -fx-border-width: 1px;
-    -fx-border-radius: 6px;
-    -fx-background-radius: 6px;
-    -fx-padding: 10px;
-    -fx-font-size: 14px;
-    -fx-text-fill: #333333;
-    -fx-prompt-text-fill: #999999;
-    -fx-pref-width: 200px;
-}
+
 
 .earning-search-field:focused {
     -fx-border-color: #888888;

@@ -28,7 +28,8 @@ public class DatabaseService {
     private static String user = null;
     private static String pass = null;
 
-
+    private static String tipologiaString = "tipologia";
+    private static String todoString = "to-do";
 
     private DatabaseService() {
         throw new IllegalStateException("Utility class");
@@ -65,7 +66,7 @@ public class DatabaseService {
                 prodotti.add(new MenuProduct(
                         rs.getInt("id"),
                         rs.getString("nome"),
-                        rs.getString("tipologia"),
+                        rs.getString(tipologiaString),
                         rs.getDouble("prezzo_vendita"),
                         rs.getDouble("costo_realizzazione"),
                         rs.getString("allergeni")
@@ -150,7 +151,7 @@ public class DatabaseService {
             }
 
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "ERRORE SQL durante eliminazione: " + e.getMessage(), e);
+            logger.log(Level.SEVERE, "ERRORE SQL durante eliminazione: {0}, {1}", new Object[]{e.getMessage(), e});
             return false;
         }
     }
@@ -164,7 +165,7 @@ public class DatabaseService {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                categories.add(rs.getString("tipologia"));
+                categories.add(rs.getString(tipologiaString));
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero categorie", e);
@@ -217,7 +218,7 @@ public class DatabaseService {
                 }
 
                 pstmtOrder.setString(3, note);
-                pstmtOrder.setString(4, "to-do");
+                pstmtOrder.setString(4, todoString);
 
                 pstmtOrder.executeUpdate();
 
@@ -231,13 +232,15 @@ public class DatabaseService {
                 }
 
                 // Inserimento articoli con prezzi snapshot
+                pstmtItem.setInt(1, orderId);
+                //!! prima era nel ciclo ma SonarCloud consiglia di metterlo fuori
                 for (OrderItem item : items) {
                     if (item.getProduct() == null) {
                         logger.log(Level.WARNING, "Articolo con prodotto null saltato");
                         continue;
                     }
 
-                    pstmtItem.setInt(1, orderId);
+
                     pstmtItem.setInt(2, item.getProduct().getId());
                     pstmtItem.setInt(3, item.getQuantita());
                     pstmtItem.setDouble(4, item.getPrezzoSnapshot());
@@ -375,7 +378,7 @@ public class DatabaseService {
 
         try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, "to-do");
+            pstmt.setString(1, todoString);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 list.add(new Order(
@@ -430,7 +433,7 @@ public class DatabaseService {
             }
 
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore dettagli ordine " + orderId, e);
+            logger.log(Level.SEVERE, "Errore dettagli ordine {0}, {1}", new Object[]{ orderId, e});
         }
 
         return details;
@@ -475,16 +478,6 @@ public class DatabaseService {
         }
     }
 
-    // Metodo helper per chiudere le risorse senza sporcare il codice con try-catch
-    private static void closeQuietly(AutoCloseable resource) {
-        try {
-            if (resource != null) resource.close();
-        } catch (Exception e) {
-            logger.warning("Chiusura risorsa ignorata: " + e.getMessage());
-        }
-    }
-
-
     //metodi necessari per mostrare all'utente i dati di connessione usati l'ultima volta e permettervi la modifica
     public static String getDBHost() {
         if (url == null) return "";
@@ -494,7 +487,8 @@ public class DatabaseService {
 
     public static String getDBPort() {
         if (url == null) return "";
-        String noPrefix = url.replace(POSTGRES_PREFIX + getDBHost(), "");int start = noPrefix.indexOf(":") + 1;
+        String noPrefix = url.replace(POSTGRES_PREFIX + getDBHost(), "");
+        int start = noPrefix.indexOf(":") + 1;
         int end = noPrefix.indexOf("/");
         return noPrefix.substring(start, end);
     }
@@ -596,7 +590,7 @@ public class DatabaseService {
                     return new MenuProduct(
                             rs.getInt("id"),
                             rs.getString("nome"),
-                            rs.getString("tipologia"),
+                            rs.getString(tipologiaString),
                             rs.getDouble("prezzovendita"),
                             rs.getDouble("costorealizzazione"),
                             rs.getString("allergeni")
@@ -610,10 +604,10 @@ public class DatabaseService {
         return null;
     }
 
-    // TODO: prima di consegnare revisionare assolutamente
+
     /**
      * Recupera gli articoli dettagliati di un ordine.
-     * Gestisce correttamente i prodotti eliminati usando gli snapshot.
+     * Gestisce anche i prodotti eliminati usando gli snapshot.
      *
      * @param orderId ID dell'ordine
      * @return Lista di OrderItem con dati completi
@@ -646,20 +640,16 @@ public class DatabaseService {
                 double costoSnap = rs.getDouble("costo_realizzazione_snapshot");
                 String nomeSnap = rs.getString("nome_prodotto_snapshot");
 
-                // Crea oggetto prodotto (può essere null se eliminato)
-                MenuProduct product;
+               MenuProduct product;
 
-                // Controlla se il prodotto esiste ancora nel menu
                 Integer productId = rs.getObject("product_id", Integer.class);
 
                 if (productId != null) {
-                    // Prodotto ancora esistente
                     product = new MenuProduct();
                     product.setId(productId);
                     product.setNome(rs.getString("product_nome"));
                     product.setTipologia(rs.getString("product_tipologia"));
                 } else {
-                    // Prodotto eliminato - crea oggetto dummy con dati snapshot
                     product = new MenuProduct();
                     product.setId(menuItemId);
                     product.setNome(nomeSnap != null ? nomeSnap : "Prodotto eliminato");
@@ -677,7 +667,7 @@ public class DatabaseService {
             }
 
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore recupero dettagli articoli ordine " + orderId, e);
+            logger.log(Level.SEVERE, "Errore recupero dettagli articoli ordine {0}, {1}", new Object[]{ orderId, e});
         }
 
         return items;
@@ -734,7 +724,7 @@ public class DatabaseService {
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore caricamento preferenze cucina per " + username, e);
+            logger.log(Level.SEVERE, "Errore caricamento preferenze cucina per {0}, {1}", new Object[]{ username, e});
         }
 
         // Fallback: preferenze di default
@@ -772,7 +762,7 @@ public class DatabaseService {
 
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
-                logger.log(Level.INFO, "Preferenze cucina salvate per " + preferences.getUsername());
+                logger.log(Level.INFO, "Preferenze cucina salvate per {0}", preferences.getUsername());
                 return true;
             }
         } catch (SQLException e) {
@@ -783,7 +773,7 @@ public class DatabaseService {
     }
 
     /**
-     * Elimina le preferenze di un utente cucina (le setta a NULL).
+     * Elimina le preferenze di un utente cucina (cioè le setta a NULL).
      * @param username Username della cucina
      * @return true se eliminazione riuscita
      */
@@ -797,7 +787,7 @@ public class DatabaseService {
             int affectedRows = pstmt.executeUpdate();
 
             if (affectedRows > 0) {
-                logger.log(Level.INFO, "Preferenze cucina eliminate per " + username);
+                logger.log(Level.INFO, "Preferenze cucina eliminate per {0}", username);
                 return true;
             }
         } catch (SQLException e) {
@@ -816,9 +806,7 @@ public class DatabaseService {
 
         KitchenPreferences prefs = getKitchenPreferences(username);
 
-
         List<Order> allOrders = getKitchenActiveOrders();
-
 
         if (prefs.isIncludeOtherCategories()) {
             return allOrders;
@@ -833,7 +821,7 @@ public class DatabaseService {
             List<OrderItem> items = getOrderItemsDetailed(order.getId());
             Set<String> orderCategories = extractCategoriesFromItems(items);
 
-            // Se TUTTE le categorie dell'ordine sono selezionate, includilo
+            // Se tutte le categorie dell'ordine sono selezionate, includilo
             if (orderCategories.stream().allMatch(selectedCategories::contains)) {
                 filteredOrders.add(order);
             }
@@ -916,7 +904,7 @@ public class DatabaseService {
                         pstmtNewOrder.setString(1, username);
                         pstmtNewOrder.setInt(2, tavolo);
                         pstmtNewOrder.setString(3, note);
-                        pstmtNewOrder.setString(4, "to-do");
+                        pstmtNewOrder.setString(4, todoString);
 
                         pstmtNewOrder.executeUpdate();
 
@@ -933,7 +921,7 @@ public class DatabaseService {
                             pstmtNewItem.setInt(3, item.getQuantita());
                             pstmtNewItem.setDouble(4, item.getPrezzoSnapshot());
                             pstmtNewItem.setDouble(5, item.getCostoSnapshot());
-                            pstmtNewItem.setString(6, item.getNomeSnapshot()); // ✅ Mantieni snapshot nome
+                            pstmtNewItem.setString(6, item.getNomeSnapshot());
                             pstmtNewItem.addBatch();
                         }
 

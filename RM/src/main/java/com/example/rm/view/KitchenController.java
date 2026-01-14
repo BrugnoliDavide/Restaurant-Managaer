@@ -73,9 +73,7 @@ public class KitchenController {
 
         MenuItem itemPreference = new MenuItem("Preference");
         itemPreference.getStyleClass().add("context-menu-item-info");
-        itemPreference.setOnAction(e -> {
-            showPreferencesDialog();
-        });
+        itemPreference.setOnAction(e ->  showPreferencesDialog());
 
         MenuItem itemLogout = new MenuItem("Logout");
         itemLogout.getStyleClass().add("context-menu-item-danger");
@@ -122,9 +120,7 @@ public class KitchenController {
             lblActiveFilters.setText("Filtri attivi: " + categoriesText);
         }
 
-        System.out.println("Recuperando ordini filtrati per: " + username);
         List<Order> activeOrders = kitchenUseCase.loadFilteredOrders(username);
-        System.out.println("Ordini filtrati recuperati: " + activeOrders.size());
 
         if (activeOrders.isEmpty()) {
             Label empty = new Label("Nessun ordine in attesa.");
@@ -197,8 +193,8 @@ public class KitchenController {
             Stage stage = (Stage) profileBtn.getScene().getWindow();
 
             KitchenPreferencesDialog.show(stage, username, success -> {
-                if (success) {
-                    logger.log(Level.INFO, "Preferenze cucina aggiornate per " + username);
+                if (Boolean.TRUE.equals(success)) {
+                    logger.log(Level.INFO, "Preferenze cucina aggiornate per {0}", username);
                     refreshData();
                 }
             });
