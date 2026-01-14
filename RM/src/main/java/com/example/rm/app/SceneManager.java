@@ -18,6 +18,8 @@ public class SceneManager {
 
     private static Scene currentScene;
 
+    private SceneManager() {}
+
     public static void setCurrentScene(Scene scene) {
         currentScene = scene;
     }
@@ -34,23 +36,24 @@ public class SceneManager {
 
     public static void showMenu() {
         if (primaryStage == null) {
-            System.err.println("primaryStage null in showMenu");
+            logger.log(Level.WARNING, "SceneManager is null");
             return;
         }
         primaryStage.setScene(new Scene(ViewFactory.forRole("menu").getRoot()));
         currentScene = primaryStage.getScene();
     }
 
+    /*
     public static void showOrders() {
         primaryStage.setScene(new Scene(ViewFactory.forRole("cameriere").getRoot()));
         currentScene = primaryStage.getScene();
-    }
+    }*/
 
 
     public static void showFinancial() {
         logger.log(Level.INFO,"avvio tentativo recupero storico ordini");
         if (currentScene == null) {
-            System.err.println("currentScene null in showFinancial");
+            logger.log(Level.WARNING, "currentScene null in showFinancial");
             return;
         }
         View financialView = getOrCreateView("financial");

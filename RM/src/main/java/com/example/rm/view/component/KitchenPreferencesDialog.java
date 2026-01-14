@@ -154,17 +154,34 @@ public class KitchenPreferencesDialog {
         confirmDialog.setContentText("Tutte le preferenze verranno ripristinate ai valori di default.");
         confirmDialog.initOwner(stage);
 
-        if (confirmDialog.showAndWait().get() == ButtonType.OK) {
-            boolean success = prefsService.reset(username);
-            if (success) {
-                currentPreferences = prefsService.load(username);
-                chkSplitOrders.setSelected(currentPreferences.isSplitMixedCategoryOrders());
-                populateCategories();
-                showSuccessAlert("Preferenze ripristinate ai valori di default");
-            } else {
-                showErrorAlert("Errore durante il reset delle preferenze");
-            }
-        }
+
+        confirmDialog.showAndWait()
+                .filter(ButtonType.OK::equals)
+                .ifPresent(bt -> {
+                    boolean success = prefsService.reset(username);
+                    if (success) {
+                        currentPreferences = prefsService.load(username);
+                        chkSplitOrders.setSelected(currentPreferences.isSplitMixedCategoryOrders());
+                        populateCategories();
+                        showSuccessAlert("Preferenze ripristinate ai valori di default");
+                    } else {
+                        showErrorAlert("Errore durante il reset delle preferenze");
+                    }
+                });
+
+
+
+//        if (confirmDialog.showAndWait().get() == ButtonType.OK) {
+//            boolean success = prefsService.reset(username);
+//            if (success) {
+//                currentPreferences = prefsService.load(username);
+//                chkSplitOrders.setSelected(currentPreferences.isSplitMixedCategoryOrders());
+//                populateCategories();
+//                showSuccessAlert("Preferenze ripristinate ai valori di default");
+//            } else {
+//                showErrorAlert("Errore durante il reset delle preferenze");
+//            }
+//        }
     }
 
     private void showSuccessAlert(String message) {

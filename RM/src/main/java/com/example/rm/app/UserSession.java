@@ -5,7 +5,7 @@ import com.example.rm.model.User;
 public class UserSession {
 
     private static UserSession instance;
-    private User user;
+    private final User user;
 
     private UserSession(User user) {
         this.user = user;
@@ -49,11 +49,12 @@ public class UserSession {
         return managedTables.contains(tableNumber);
     }
 
+/*
     public String getManagedTablesString() {
         // Utile per ripopolare la casella di testo quando la riapri
         if (managedTables == null || managedTables.isEmpty()) return "";
         return managedTables.toString();
-    }
+    }*/
 
 
 

@@ -2,7 +2,6 @@ package com.example.rm.app;
 
 import com.example.rm.service.DatabaseService;
 import com.example.rm.view.LoginController;
-import com.example.rm.view.screens.MenuView;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;

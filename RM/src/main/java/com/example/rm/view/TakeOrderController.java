@@ -26,13 +26,9 @@ import com.example.rm.controller.MenuService;
 import com.example.rm.controller.OrderService;
 import com.example.rm.app.SceneManager;
 
-import static com.example.rm.app.SceneManager.showWaiter;
 
 
-/**
- * Controller per la presa ordini al tavolo.
- * Gestisce il carrello e l'invio degli ordini al database.
- */
+  //Gestisce il carrello e l'invio degli ordini al database.
 public class TakeOrderController {
 
     private static final Logger logger = Logger.getLogger(TakeOrderController.class.getName());
@@ -53,15 +49,6 @@ public class TakeOrderController {
         updateTitle();
         loadProducts();
         updateSendButton();
-
-        //TODO da togliere
-        logger.log(Level.INFO, "UserSession login: {0}", currentUser.getUsername());
-
-        if (currentUser == null) {
-            logger.log(Level.SEVERE, "UserSession NULL - login fallito!");
-            showErrorAlert("Errore", "Sessione utente scaduta. Rilogga.");
-            return;
-        }
     }
 
     private void updateTitle() {
@@ -205,8 +192,6 @@ public class TakeOrderController {
     @FXML
     private void handleCancel() {
         try {
-            //Stage stage = getStage();
-            //if (stage != null) stage.close();
             SceneManager.showWaiter();
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore durante l'annullamento", e);
@@ -251,12 +236,8 @@ public class TakeOrderController {
                     items,
                     numeroTavolo,
                     note,
-                    UserSession.getInstance().getUser()
+                    currentUser
             );
-
-
-
-
 
             if (success) {
                 handleOrderSuccess();
@@ -265,24 +246,6 @@ public class TakeOrderController {
             }
 
         } catch (Exception e) {
-/*
-            //TODO da toglire questa merda
-            logger.log(Level.INFO, "DEBUG User prima createOrder: {}",
-                    currentUser != null ? currentUser.getUsername() : "NULL!!!");
-            boolean successu = orderUseCase.createOrder(items, numeroTavolo, note, currentUser);
-            logger.log(Level.INFO, "createOrder success: {}", successu);
-            e.printStackTrace();
-
-            boolean successe = orderUseCase.createOrder(
-                    items,
-                    numeroTavolo,
-                    note,
-                    UserSession.getInstance().getUser());
-            if (successe) {System.out.println("success è true fanculo");}
-            //cancella dal TODO a quinegro
-            */
-
-
             logger.log(Level.SEVERE, "Errore invio ordine al database", e);
             showErrorAlert("Errore", "Errore durante l'invio dell'ordine: " + e.getMessage());
         }
@@ -290,15 +253,8 @@ public class TakeOrderController {
 
     private void handleOrderSuccess() {
         logger.log(Level.INFO, "Ordine inviato con successo per tavolo {0}", numeroTavolo);
-
         showInfoAlert("Successo", "Ordine inviato con successo!");
-
         clearCart();
-        //loadProducts();
-
-        //Stage stage = getStage();
-        //if (stage != null) stage.close();
-
         SceneManager.showWaiter();
     }
 
@@ -306,15 +262,7 @@ public class TakeOrderController {
         logger.log(Level.SEVERE, "Impossibile inviare ordine per tavolo {0}", numeroTavolo);
         showErrorAlert("Errore", "Impossibile inviare l'ordine al database.");
     }
-/*
-    private void navigateBackToWaiter() {
-        try {
-            handleCancel();
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Errore navigazione a waiter view", e);
-        }
-    }
-*/
+
     private Stage getStage() {
         if (btnSend == null || btnSend.getScene() == null) {
             return null;

@@ -32,8 +32,6 @@ public class KitchenPreferences {
      */
     private boolean includeOtherCategories;
 
-    // ==================== COSTRUTTORI ====================
-
     public KitchenPreferences() {
         this.selectedCategories = new HashSet<>();
         this.splitMixedCategoryOrders = false;
@@ -51,8 +49,6 @@ public class KitchenPreferences {
                 : new HashSet<>();
         this.includeOtherCategories = includeOtherCategories;
     }
-
-    // ==================== GETTERS/SETTERS ====================
 
     public String getUsername() {
         return username;
@@ -106,15 +102,9 @@ public class KitchenPreferences {
         this.includeOtherCategories = includeOtherCategories;
     }
 
-    // ==================== UTILITY METHODS ====================
+
 
     /**
-     * Verifica se un ordine dovrebbe essere visualizzato in base alle preferenze.
-     * @param orderCategories Categorie dell'ordine
-     * @return true se l'ordine rientra nelle preferenze
-     */
-    /**
-     * Verifica se un ordine dovrebbe essere visualizzato in base alle preferenze.
      * @param orderCategories Categorie dell'ordine
      * @return true se l'ordine rientra nelle preferenze
      */

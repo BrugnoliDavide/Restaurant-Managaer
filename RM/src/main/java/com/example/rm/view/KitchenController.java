@@ -4,14 +4,11 @@ import com.example.rm.app.SceneManager;
 import com.example.rm.app.UserSession;
 import com.example.rm.model.Order;
 import com.example.rm.preference.KitchenPreferences;
-import com.example.rm.service.DatabaseService;
 import com.example.rm.view.component.KitchenPreferencesDialog;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
-import javafx.scene.Parent;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -21,15 +18,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import com.example.rm.view.component.ChangePasswordDialog;
 import javafx.stage.Stage;
-
-import java.io.IOException;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-
-import static com.example.rm.view.LoginController.logger;
 import com.example.rm.controller.KitchenService;
 import com.example.rm.controller.KitchenUseCase;
 
@@ -44,6 +36,7 @@ public class KitchenController {
     @FXML private Label lblActiveFilters;
 
     private static KitchenUseCase kitchenUseCase = new KitchenService();
+    public static final Logger logger = Logger.getLogger(KitchenController.class.getName());
 
     public static void setKitchenUseCase(KitchenUseCase useCase) {
         kitchenUseCase = useCase;

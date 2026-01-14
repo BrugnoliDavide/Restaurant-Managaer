@@ -95,11 +95,6 @@ public class ManagerController {
 
         MenuItem itemChangePassword = new MenuItem("Cambia Password");
         itemChangePassword.getStyleClass().add("context-menu-item-info");
-        /*itemChangePassword.setStyle(
-                "-fx-font-size: 14px; " +
-                        "-fx-padding: 5 10 5 10; " +
-                        "-fx-text-fill: #2196F3;"
-        );*/
         itemChangePassword.setOnAction(e -> {
             Stage stage = (Stage) profileBtn.getScene().getWindow();
             ChangePasswordDialog.show(stage);
@@ -108,12 +103,6 @@ public class ManagerController {
         //  LOGOUT
         MenuItem itemLogout = new MenuItem("Logout");
         itemLogout.getStyleClass().add("context-menu-item-danger");
-        /*itemLogout.setStyle(
-                "-fx-font-size: 14px; " +
-                        "-fx-padding: 5 10 5 10; " +
-                        "-fx-text-fill: red; " +
-                        "-fx-font-weight: bold;"
-        );*/
         itemLogout.setOnAction(e -> {
             SceneManager.clearViewCache();
             UserSession.cleanUserSession();
@@ -139,7 +128,6 @@ public class ManagerController {
             SceneManager.showMenu();
         } catch (Exception e) {
             System.err.println("Errore goToMenu: " + e.getMessage());
-            e.printStackTrace();  // Forza console
         }
     }
 
@@ -149,7 +137,6 @@ public class ManagerController {
             SceneManager.showFinancial();
         } catch (Exception e) {
             System.err.println("Errore goToFinancial: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 }
