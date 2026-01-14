@@ -17,16 +17,12 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-
         DatabaseService.loadFromPreferences();
-
-
         boolean dbOk = DatabaseService.testConnection();
-
         AppStatus.setDbConnectionOk(dbOk);
 
         Parent root = LoginController.getFXMLView();
-
+        SceneManager.init(primaryStage);
         primaryStage.setScene(new Scene(root));
         SceneManager.setCurrentScene(primaryStage.getScene());
 
@@ -36,8 +32,8 @@ public class MainApp extends Application {
         primaryStage.setResizable(true);
         setLogo(primaryStage);
         primaryStage.show();
-
     }
+
 
     public static void setLogo(Stage stage) {
         try {

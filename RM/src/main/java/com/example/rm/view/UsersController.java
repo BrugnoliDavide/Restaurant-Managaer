@@ -1,5 +1,6 @@
 package com.example.rm.view;
 
+import com.example.rm.app.SceneManager;
 import com.example.rm.model.User;
 import com.example.rm.service.DatabaseService;
 import com.example.rm.service.SecurityService;
@@ -12,6 +13,8 @@ import javafx.scene.control.*;
 import java.util.logging.Level;
 
 import static com.example.rm.view.LoginController.logger;
+import com.example.rm.controller.ManagerUseCase;
+import com.example.rm.controller.ManagerService;
 
 public class UsersController {
 
@@ -21,6 +24,7 @@ public class UsersController {
     @FXML private ComboBox<String> comboRole;
     @FXML private Parent rootPane;
 
+    private static final ManagerUseCase managerUseCase = new ManagerService();
 
     @FXML
     public void initialize() {
@@ -29,7 +33,7 @@ public class UsersController {
     }
 
     private void loadData() {
-        usersTable.setItems(FXCollections.observableArrayList(DatabaseService.getAllUsers()));
+        usersTable.setItems(FXCollections.observableArrayList(managerUseCase.loadAllUsers()));
     }
 
     @FXML
@@ -44,7 +48,7 @@ public class UsersController {
         }
 
 
-        // Usiamo SecurityService per hashare la password prima di salvarla
+        // SecurityService trova l'hash della password prima di salvarla
         boolean ok = SecurityService.registerUser(u, p, r.toLowerCase());
 
         if (ok) {
@@ -76,7 +80,7 @@ public class UsersController {
 
 
 
-            boolean ok = DatabaseService.deleteUser(selected.getUsername());
+            boolean ok = managerUseCase.deleteUser(selected.getUsername());
             if (ok) {
                 loadData();
             } else {
@@ -90,10 +94,7 @@ public class UsersController {
 
     @FXML
     private void goBack() {
-        View managerView = ViewFactory.forRole("manager");
-        rootPane
-                .getScene()
-                .setRoot(managerView.getRoot());
+        SceneManager.showManager();
     }
 
 

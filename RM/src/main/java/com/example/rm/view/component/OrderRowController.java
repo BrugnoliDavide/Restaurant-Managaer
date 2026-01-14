@@ -13,11 +13,10 @@ import java.util.logging.Logger;
 
 public class OrderRowController {
 
-    // IMPORTANTE: Questi fx:id DEVONO corrispondere a quelli in OrderRow.fxml
-    @FXML private HBox root;
-    @FXML private Label lblTitle;      // Corrisponde a fx:id="lblTitle"
-    @FXML private Label lblSubtitle;   // Corrisponde a fx:id="lblSubtitle"
 
+    @FXML private HBox root;
+    @FXML private Label lblTitle;
+    @FXML private Label lblSubtitle;
     private Order order;
     private Consumer<Order> onClickCallback;
 
@@ -63,8 +62,7 @@ public class OrderRowController {
                 subtitle.append(order.getDataOra().format(timeFormatter));
             }
 
-            // Aggiungi dettagli ordine
-            List<String> items = DatabaseService.getOrderItemsForDisplay(order.getId());
+            List<String> items = order.getDisplayItems();
             if (!items.isEmpty()) {
                 subtitle.append(" - ");
                 subtitle.append(String.join(", ", items));

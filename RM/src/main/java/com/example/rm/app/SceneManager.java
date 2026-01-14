@@ -7,11 +7,14 @@ import javafx.stage.Stage;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SceneManager {
 
     private static Stage primaryStage;
     private static final Map<String, View> viewCache = new HashMap<>();
+    public static final Logger logger = Logger.getLogger(SceneManager.class.getName());
 
     private static Scene currentScene;
 
@@ -26,19 +29,31 @@ public class SceneManager {
 
     public static void showLogin() {
         primaryStage.setScene(new Scene(ViewFactory.getLoginView().getRoot()));
+
     }
 
     public static void showMenu() {
-        primaryStage.setScene(new Scene(ViewFactory.forRole("manager").getRoot()));
+        if (primaryStage == null) {
+            System.err.println("primaryStage null in showMenu");
+            return;
+        }
+        primaryStage.setScene(new Scene(ViewFactory.forRole("menu").getRoot()));
+        currentScene = primaryStage.getScene();
     }
 
     public static void showOrders() {
-        primaryStage.setScene(new Scene(ViewFactory.forRole("waiter").getRoot()));
+        primaryStage.setScene(new Scene(ViewFactory.forRole("cameriere").getRoot()));
+        currentScene = primaryStage.getScene();
     }
 
 
     public static void showFinancial() {
-        View financialView = getOrCreateView("financial");  // ← usa cache
+        logger.log(Level.INFO,"avvio tentativo recupero storico ordini");
+        if (currentScene == null) {
+            System.err.println("currentScene null in showFinancial");
+            return;
+        }
+        View financialView = getOrCreateView("financial");
         currentScene.setRoot(financialView.getRoot());
     }
 
@@ -53,10 +68,16 @@ public class SceneManager {
         currentScene.setRoot(usersView.getRoot());
     }
 
+    public static void showWaiter() {
+        View usersView = getOrCreateView("cameriere");
+        currentScene.setRoot(usersView.getRoot());
+    }
+
 
     // metodo generico per qualsiasi ruolo
     public static void showView(String role) {
         primaryStage.setScene(new Scene(ViewFactory.forRole(role).getRoot()));
+        currentScene = primaryStage.getScene();
     }
 
     private static View getOrCreateView(String roleKey) {
@@ -71,6 +92,11 @@ public class SceneManager {
 
     public static void clearViewCache() {
         viewCache.clear();
+    }
+
+    public static void showTakeOrder(int tavolo) {
+        View takeOrderView = new com.example.rm.view.screens.TakeOrderView(tavolo);
+        currentScene.setRoot(takeOrderView.getRoot());
     }
 
 

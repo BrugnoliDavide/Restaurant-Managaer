@@ -10,16 +10,13 @@ public class MenuProduct implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    // MODIFICA 1: Aggiunto 'transient' e rimosso 'final'
-    // 'transient' dice a Java di non provare a serializzare questi oggetti complessi automaticamente.
-    private transient IntegerProperty id;
+   private transient IntegerProperty id;
     private transient StringProperty nome;
     private transient StringProperty tipologia;
     private transient DoubleProperty prezzoVendita;
     private transient DoubleProperty costoRealizzazione;
     private transient StringProperty allergeni;
 
-    // COSTRUTTORE 1: Vuoto
     public MenuProduct() {
         this.id = new SimpleIntegerProperty(0);
         this.nome = new SimpleStringProperty("");
@@ -29,7 +26,6 @@ public class MenuProduct implements Serializable {
         this.allergeni = new SimpleStringProperty("");
     }
 
-    // COSTRUTTORE 2: Completo
     public MenuProduct(int id, String nome, String tipologia,
                        double prezzo, double costo, String allergeni) {
         this.id = new SimpleIntegerProperty(id);
@@ -40,23 +36,20 @@ public class MenuProduct implements Serializable {
         this.allergeni = new SimpleStringProperty(allergeni != null ? allergeni : "");
     }
 
-    // COSTRUTTORE 3: Senza ID
+    // Senza ID
     public MenuProduct(String nome, String tipologia,
                        double prezzo, double costo, String allergeni) {
         this(0, nome, tipologia, prezzo, costo, allergeni);
     }
 
-    // COSTRUTTORE 4: Legacy
+    // Legacy
     public MenuProduct(String nome, String tipologia, double prezzo, double costo) {
         this(0, nome, tipologia, prezzo, costo, "");
     }
 
-    // === MODIFICA 2: Metodi per gestire la Serializzazione Manuale ===
-    // Questi metodi vengono chiamati automaticamente da Java quando l'oggetto viene salvato/caricato
 
     private void writeObject(ObjectOutputStream s) throws IOException {
         s.defaultWriteObject();
-        // Scriviamo i valori "puri" (int, String, double) invece delle Property
         s.writeInt(getId());
         s.writeUTF(getNome() != null ? getNome() : "");
         s.writeUTF(getTipologia() != null ? getTipologia() : "");
@@ -76,7 +69,6 @@ public class MenuProduct implements Serializable {
         this.allergeni = new SimpleStringProperty(s.readUTF());
     }
 
-    // === GETTER E SETTER (INVARIATI) ===
 
     public int getId() { return id.get(); }
     public void setId(int id) { this.id.set(id); }
@@ -104,7 +96,7 @@ public class MenuProduct implements Serializable {
     }
     public StringProperty allergeniProperty() { return allergeni; }
 
-    // METODI CALCOLATI
+
 
     public double getMargine() {
         return getPrezzoVendita() - getCostoRealizzazione();

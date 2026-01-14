@@ -1,25 +1,20 @@
 package com.example.rm.view;
 
+import com.example.rm.app.SceneManager;
 import com.example.rm.app.UserSession;
+import com.example.rm.controller.OrderService;
+import com.example.rm.controller.OrderUseCase;
 import com.example.rm.model.Order;
-import com.example.rm.service.DatabaseService;
-import com.example.rm.view.screens.TakeOrderView;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
 import javafx.scene.control.*;
-import javafx.scene.effect.DropShadow;
-import javafx.scene.effect.GaussianBlur;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 import javafx.geometry.Side;
@@ -45,19 +40,17 @@ public class WaiterController {
     @FXML private VBox notificationsContainer;
 
     private Timeline pollingTimeline;
+    private static final OrderUseCase orderUseCase = new OrderService();
 
     @FXML
     public void initialize() {
         setupUserSession();
-        setupHoverEffects();
         startPolling();
     }
 
     private void startPolling() {
-
         refreshNotifications();
 
-        // Configura il refresh ogni 5 secondi
         pollingTimeline = new Timeline(new KeyFrame(Duration.seconds(5), event -> {
             refreshNotifications();
         }));
@@ -65,7 +58,6 @@ public class WaiterController {
         pollingTimeline.play();
     }
 
-    //quando si esce dalla schermata per fermare il timer
     public void stopPolling() {
         if (pollingTimeline != null) {
             pollingTimeline.stop();
@@ -73,80 +65,61 @@ public class WaiterController {
     }
 
     private void refreshNotifications() {
-
-        List<Order> readyOrders = DatabaseService.getReadyOrdersForWaiter();
+        List<Order> readyOrders = orderUseCase.loadReadyOrdersForWaiter();
         notificationsContainer.getChildren().clear();
         UserSession session = UserSession.getInstance();
 
         for (Order order : readyOrders) {
-
             if (session.isTableManaged(order.getTavolo())) {
                 notificationsContainer.getChildren().add(createNotificationCard(order));
-        } }
+            }
+        }
     }
 
     private VBox createNotificationCard(Order order) {
-
         VBox card = new VBox(10);
-        card.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-padding: 15; -fx-max-width: 300;");
-
-
-        DropShadow shadow = new DropShadow();
-        shadow.setColor(Color.color(0, 0, 0, 0.15));
-        shadow.setRadius(10);
-        shadow.setOffsetY(2);
-        card.setEffect(shadow);
-
+        card.getStyleClass().add("notification-card");
 
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
 
+        Circle dot = new Circle(6);
+        dot.getStyleClass().add("notification-dot");
 
-        Circle dot = new Circle(6, Color.web("#00E676"));
-        Circle glow = new Circle(10, Color.web("#00E676", 0.4));
-        glow.setEffect(new GaussianBlur(3));
+        Circle glow = new Circle(10);
+        glow.getStyleClass().add("notification-glow");
+
         StackPane indicator = new StackPane(glow, dot);
 
         Label title = new Label("To deliver: table " + order.getTavolo());
-        title.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #333;");
+        title.getStyleClass().add("notification-title");
 
         header.getChildren().addAll(indicator, title);
 
-
         VBox contentBox = new VBox(2);
-        List<String> items = DatabaseService.getOrderItemsForDisplay(order.getId());
+        List<String> items = orderUseCase.loadOrderItemsForDisplay(order.getId());
 
-        // Mostriamo solo i primi 3 elementi per non allungare troppo la card, poi "..."
         int limit = 3;
         for (int i = 0; i < items.size(); i++) {
             if (i >= limit) {
                 Label more = new Label("... (+" + (items.size() - limit) + " altri)");
-                more.setStyle("-fx-text-fill: #888; -fx-font-size: 11px;");
+                more.getStyleClass().add("notification-more");
                 contentBox.getChildren().add(more);
                 break;
             }
             Label itemLbl = new Label(items.get(i));
-            itemLbl.setStyle("-fx-text-fill: #555; -fx-font-size: 13px;");
+            itemLbl.getStyleClass().add("notification-item");
             itemLbl.setWrapText(true);
             contentBox.getChildren().add(itemLbl);
         }
 
-        // --- FOOTER: Bottone Delivered ---
         Button btnDelivered = new Button("Delivered");
         btnDelivered.setMaxWidth(Double.MAX_VALUE);
-        btnDelivered.setStyle(
-                "-fx-background-color: #2B2B2B; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-background-radius: 8; " +
-                        "-fx-cursor: hand;"
-        );
+        btnDelivered.getStyleClass().add("btn-delivered");
 
-        // Azione Bottone
         btnDelivered.setOnAction(e -> {
-            boolean success = DatabaseService.markOrderAsDelivered(order.getId());
+            boolean success = orderUseCase.markOrderAsDelivered(order.getId());
             if (success) {
-                // Rimuovi la card immediatamente dalla UI
                 notificationsContainer.getChildren().remove(card);
                 logger.info("Ordine " + order.getId() + " segnato come consegnato.");
             }
@@ -155,7 +128,6 @@ public class WaiterController {
         card.getChildren().addAll(header, contentBox, new Separator(), btnDelivered);
         return card;
     }
-
 
     private void setupUserSession() {
         UserSession session = UserSession.getInstance();
@@ -166,13 +138,6 @@ public class WaiterController {
         }
     }
 
-    private void setupHoverEffects() {
-        if (profileBtn != null && profileCircle != null) {
-            profileBtn.setOnMouseEntered(e -> profileCircle.setStrokeWidth(3));
-            profileBtn.setOnMouseExited(e -> profileCircle.setStrokeWidth(0));
-        }
-    }
-
     @FXML
     private void handleProfileMenu(MouseEvent event) {
         ContextMenu contextMenu = new ContextMenu();
@@ -180,19 +145,19 @@ public class WaiterController {
         MenuItem itemTableFilter = new MenuItem("Gestione Tavoli");
         itemTableFilter.setOnAction(e -> showTableFilterDialog());
 
-
         MenuItem itemChangePassword = new MenuItem("Cambia Password");
         itemChangePassword.setOnAction(e -> ChangePasswordDialog.show((Stage) profileBtn.getScene().getWindow()));
 
         MenuItem itemLogout = new MenuItem("Logout");
-        itemLogout.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+        itemLogout.getStyleClass().add("context-menu-item-danger");
         itemLogout.setOnAction(e -> {
-            stopPolling(); // IMPORTANTE: ferma il timer al logout
+            stopPolling();
             UserSession.cleanUserSession();
             try {
-                Parent loginView = new FXMLLoader(getClass().getResource("/LoginView.fxml")).load();
-                if (profileBtn.getScene() != null) profileBtn.getScene().setRoot(loginView);
-            } catch (Exception ex) { logger.log(Level.SEVERE, "Logout error", ex); }
+                SceneManager.showLogin();
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, "Logout error", ex);
+            }
         });
 
         contextMenu.getItems().addAll(itemTableFilter, itemChangePassword, new SeparatorMenuItem(), itemLogout);
@@ -201,23 +166,21 @@ public class WaiterController {
 
     @FXML
     private void handleNewOrder() {
-        stopPolling(); // Ferma il polling quando si cambia schermata
+        stopPolling();
         String input = txtTable.getText().trim();
         try {
             int tavoloSelezionato = Integer.parseInt(input);
             if (tavoloSelezionato <= 0) throw new NumberFormatException();
-            txtTable.setStyle("-fx-border-color: #DDD;");
+
+            txtTable.getStyleClass().remove("input-error");
 
             if (btnNewOrder.getScene() != null) {
-                View takeOrderView = new TakeOrderView(tavoloSelezionato);
-                btnNewOrder.getScene().setRoot(takeOrderView.getRoot());
+                SceneManager.showTakeOrder(tavoloSelezionato);
             }
         } catch (NumberFormatException ex) {
-            txtTable.setStyle("-fx-border-color: red; -fx-border-width: 2;");
+            txtTable.getStyleClass().add("input-error");
         }
     }
-
-
 
     private void showTableFilterDialog() {
         TextInputDialog dialog = new TextInputDialog();
@@ -225,17 +188,11 @@ public class WaiterController {
         dialog.setHeaderText("Quali tavoli vuoi gestire oggi?");
         dialog.setContentText("Inserisci tavoli (es: 1-5; 10; 12):");
 
-
         dialog.showAndWait().ifPresent(input -> {
-
             java.util.Set<Integer> selectedTables = com.example.rm.util.TableSelectionUtils.parseTableString(input);
-
-            //alva nella sessione
             UserSession.getInstance().setManagedTables(selectedTables);
-
             refreshNotifications();
-
-            logger.log(Level.INFO,"Filtro tavoli aggiornato seguendo: {0}", input);
+            logger.log(Level.INFO, "Filtro tavoli aggiornato seguendo: {0}", input);
         });
     }
 }

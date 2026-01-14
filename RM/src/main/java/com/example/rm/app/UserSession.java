@@ -5,14 +5,13 @@ import com.example.rm.model.User;
 public class UserSession {
 
     private static UserSession instance;
-    private User user; // Qui salviamo l'oggetto "astratto" (che può essere Manager, Waiter, ecc.)
+    private User user;
 
-    // Costruttore privato
     private UserSession(User user) {
         this.user = user;
     }
 
-    // Singleton: Crea o recupera l'istanza
+    // Singleton
     public static UserSession getInstance(User user) {
         if (instance == null) {
             instance = new UserSession(user);
@@ -20,24 +19,24 @@ public class UserSession {
         return instance;
     }
 
-    // Singleton: Recupera l'istanza esistente
+
     public static UserSession getInstance() {
         return instance;
     }
 
-    // Logout: Pulisce tutto
+
     public static void cleanUserSession() {
         instance = null;
     }
 
-    // Getter dell'utente corrente
+
     public User getUser() {
         return user;
     }
 
     private java.util.Set<Integer> managedTables = null;
 
-    // Aggiungi questi metodi
+
     public void setManagedTables(java.util.Set<Integer> tables) {
         this.managedTables = tables;
     }
@@ -53,7 +52,7 @@ public class UserSession {
     public String getManagedTablesString() {
         // Utile per ripopolare la casella di testo quando la riapri
         if (managedTables == null || managedTables.isEmpty()) return "";
-        return managedTables.toString(); // Semplificazione, puoi formattarla meglio se vuoi
+        return managedTables.toString();
     }
 
 

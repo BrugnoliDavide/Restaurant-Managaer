@@ -6,10 +6,10 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
+<?import javafx.scene.layout.StackPane?>
 <BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.ManagerController">
 
     <padding>
@@ -19,7 +19,7 @@
     <top>
         <HBox alignment="CENTER_LEFT" spacing="15" stylesheets="@style.css">
 
-            <!--<StackPane fx:id="profileBtn" styleClass="profile-stack" />-->
+        <StackPane fx:id="profileBtn" styleClass="profile-stack" />
          <Circle fx:id="profileCircle" fill="LIGHTBLUE" onMouseClicked="#handleProfileMenu" radius="25" stroke="TOMATO" strokeWidth="0" styleClass="profile-circle" />
 
 

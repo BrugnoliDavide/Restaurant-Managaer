@@ -15,6 +15,22 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.value.ObservableValue;
 
 
+/*
+!!
+
+ !!
+
+!! la classe non serve a un cazzo può essere deprecata
+
+ !!
+
+!!
+
+
+
+
+ */
+
 public class OrderController {
 
     private static final Logger logger = Logger.getLogger(OrderController.class.getName());

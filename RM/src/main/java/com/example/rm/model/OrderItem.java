@@ -1,9 +1,6 @@
 package com.example.rm.model;
 
-/**
- * Rappresenta un articolo all'interno di un ordine.
- * Mantiene uno snapshot dei dati del prodotto al momento dell'ordine.
- */
+
 public class OrderItem {
 
     private MenuProduct product;
@@ -12,9 +9,7 @@ public class OrderItem {
     private double costoSnapshot;
     private String nomeSnapshot;  // ✅ NUOVO: Nome del prodotto al momento dell'ordine
 
-    /* =======================
-       CONSTRUCTORS
-       ======================= */
+
 
     public OrderItem() {
     }
@@ -28,9 +23,7 @@ public class OrderItem {
         this.nomeSnapshot = nomeSnapshot;
     }
 
-    /* =======================
-       GETTERS & SETTERS
-       ======================= */
+
 
     public MenuProduct getProduct() {
         return product;
@@ -72,13 +65,9 @@ public class OrderItem {
         this.nomeSnapshot = nomeSnapshot;
     }
 
-    /* =======================
-       UTILITY METHODS
-       ======================= */
+
 
     /**
-     * Ottiene il nome da visualizzare.
-     * Usa lo snapshot se disponibile, altrimenti il nome del prodotto.
      * @return Nome del prodotto
      */
     public String getDisplayName() {
@@ -89,17 +78,14 @@ public class OrderItem {
     }
 
     /**
-     * Calcola il totale per questo articolo.
+ .
      * @return Prezzo snapshot * quantità
      */
     public double getTotale() {
         return prezzoSnapshot * quantita;
     }
 
-    /**
-     * Calcola il costo totale per questo articolo.
-     * @return Costo snapshot * quantità
-     */
+
     public double getCostoTotale() {
         return costoSnapshot * quantita;
     }

@@ -78,6 +78,12 @@ public class ManagerController {
     @FXML
     private void handleProfileMenu(MouseEvent event) {
 
+        if (profileBtn == null || profileBtn.getScene() == null || profileBtn.getScene().getWindow() == null) {
+            System.err.println("Contesto finestra non disponibile per ContextMenu");
+            return;
+        }
+
+
         ContextMenu contextMenu = new ContextMenu();
 
         MenuItem itemStaff = new MenuItem("Gestione Staff");
@@ -87,7 +93,6 @@ public class ManagerController {
             SceneManager.showUsers();
         });
 
-        // === OPZIONE 2: CAMBIA PASSWORD (NUOVO) ===
         MenuItem itemChangePassword = new MenuItem("Cambia Password");
         itemChangePassword.getStyleClass().add("context-menu-item-info");
         /*itemChangePassword.setStyle(
@@ -110,6 +115,7 @@ public class ManagerController {
                         "-fx-font-weight: bold;"
         );*/
         itemLogout.setOnAction(e -> {
+            SceneManager.clearViewCache();
             UserSession.cleanUserSession();
             SceneManager.showLogin();
         });
@@ -129,11 +135,21 @@ public class ManagerController {
 
     @FXML
     private void goToMenu() {
-        SceneManager.showMenu();
+        try {
+            SceneManager.showMenu();
+        } catch (Exception e) {
+            System.err.println("Errore goToMenu: " + e.getMessage());
+            e.printStackTrace();  // Forza console
+        }
     }
 
     @FXML
     private void goToFinancial() {
-        SceneManager.showFinancial();
+        try {
+            SceneManager.showFinancial();
+        } catch (Exception e) {
+            System.err.println("Errore goToFinancial: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

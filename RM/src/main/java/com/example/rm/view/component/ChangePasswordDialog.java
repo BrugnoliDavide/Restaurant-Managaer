@@ -20,7 +20,7 @@ public class ChangePasswordDialog {
     public static void show(Stage owner) {
         try {
             FXMLLoader loader = new FXMLLoader(
-                    ChangePasswordDialog.class.getResource("ChangePasswordDialog.fxml"));
+                    ChangePasswordDialog.class.getResource("/ChangePasswordDialog.fxml"));
             VBox root = loader.load();
             ChangePasswordDialogController controller = loader.getController();
 

@@ -26,34 +26,23 @@ public class ProductDetailController {
     private static final Logger logger = Logger.getLogger(ProductDetailController.class.getName());
     private static final double POSITIVE_TREND_THRESHOLD = 30.0;
 
-    /* =======================
-       FXML BINDINGS
-       ======================= */
-
     @FXML private Label lblBack;
     @FXML private Label lblName;
     @FXML private Button btnEdit;
     @FXML private Button btnDelete;
     @FXML private VBox contentBox;
 
-    /* =======================
-       STATE
-       ======================= */
+
 
     private MenuProduct product;
 
-    /* =======================
-       INITIALIZATION
-       ======================= */
+
 
     @FXML
     public void initialize() {
         setupEventHandlers();
     }
 
-    /* =======================
-       EVENT HANDLERS
-       ======================= */
 
     private void setupEventHandlers() {
         lblBack.setOnMouseClicked(event -> onBack());

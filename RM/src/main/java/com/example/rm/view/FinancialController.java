@@ -12,7 +12,6 @@ import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -90,23 +89,22 @@ public class FinancialController {
     }
 
 
-    /**
-     * Carica tutti gli ordini dal database.
-     */
     private void loadDataFromDB() {
         try {
-            allOrdersMaster = financialUseCase.loadAllOrdersWithTotal();
+            logger.log(Level.INFO, "Caricamento ordini con items...");
+            allOrdersMaster = financialUseCase.loadAllOrdersWithDisplayItems();  // ← QUESTO!
+            logger.log(Level.INFO, "Caricati {0} ordini", allOrdersMaster.size());
             renderOrders(allOrdersMaster);
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Errore durante il caricamento degli ordini", e);
+            logger.log(Level.SEVERE, "Errore loadDataFromDB", e);
             allOrdersMaster = new ArrayList<>();
             renderOrders(allOrdersMaster);
         }
     }
 
-    /* =======================
-       SEARCH & FILTER
-       ======================= */
+
+
+
 
     /**
      * Configura il listener per la ricerca in tempo reale.
@@ -189,27 +187,18 @@ public class FinancialController {
         return String.valueOf(order.getTavolo()).contains(query);
     }
 
-    /**
-     * Verifica se il totale corrisponde alla query.
-     */
+
     private boolean matchesTotal(Order order, String query) {
         return String.valueOf(order.getTotale()).contains(query);
     }
 
-    /**
-     * Verifica se la data corrisponde alla query.
-     */
+
     private boolean matchesDate(Order order, String query) {
         return order.getDataOra() != null &&
                 order.getDataOra().toString().toLowerCase().contains(query);
     }
 
 
-
-    /**
-     * Renderizza la lista di ordini raggruppati per data.
-     * @param ordersToRender Lista di ordini da visualizzare
-     */
     private void renderOrders(List<Order> ordersToRender) {
         if (ordersContainer == null) {
             logger.log(Level.SEVERE, "Impossibile renderizzare: ordersContainer è null");

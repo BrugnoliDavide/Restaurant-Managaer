@@ -208,7 +208,6 @@ public class DatabaseService {
             conn.setAutoCommit(false);
 
             try {
-                // Inserimento ordine
                 pstmtOrder.setString(1, usernameUtente);
 
                 if (tavolo != null) {
@@ -231,7 +230,7 @@ public class DatabaseService {
                     orderId = keys.getInt(1);
                 }
 
-                // Inserimento articoli con snapshot completo
+                // Inserimento articoli con prezzi snapshot
                 for (OrderItem item : items) {
                     if (item.getProduct() == null) {
                         logger.log(Level.WARNING, "Articolo con prodotto null saltato");
@@ -244,10 +243,8 @@ public class DatabaseService {
                     pstmtItem.setDouble(4, item.getPrezzoSnapshot());
                     pstmtItem.setDouble(5, item.getCostoSnapshot());
 
-                    // ✅ NUOVO: Salva il nome del prodotto
                     String nomeProdotto = item.getProduct().getNome();
                     pstmtItem.setString(6, nomeProdotto);
-
                     pstmtItem.addBatch();
                 }
 
@@ -256,7 +253,6 @@ public class DatabaseService {
 
                 logger.log(Level.INFO, "Ordine #{0} creato con successo con {1} articoli",
                         new Object[]{orderId, items.size()});
-
                 return true;
 
             } catch (SQLException e) {
@@ -1035,13 +1031,9 @@ public class DatabaseService {
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return rs.getDouble(1);
-
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore realized income", e);
         }
-
         return 0;
     }
-
-
 }

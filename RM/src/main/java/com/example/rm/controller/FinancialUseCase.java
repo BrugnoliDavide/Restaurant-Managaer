@@ -5,4 +5,5 @@ import java.util.List;
 
 public interface FinancialUseCase {
     List<Order> loadAllOrdersWithTotal();
+    List<Order> loadAllOrdersWithDisplayItems();
 }
