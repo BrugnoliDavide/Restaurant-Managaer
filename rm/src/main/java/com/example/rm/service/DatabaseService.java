@@ -183,47 +183,52 @@ public class DatabaseService {
      * @param utente Utente che crea l'ordine
      * @return true se l'ordine è stato creato con successo
      */
-    public static boolean createOrder(List<OrderItem> items, Integer tavolo, String note, User utente) {
+    public static boolean createOrder(
+            List<OrderItem> items,
+            Integer tavolo,
+            String note,
+            User utente
+    ) {
 
-        if (utente == null) {
-            logger.log(Level.WARNING, "Tentativo di creare ordine senza utente");
+        if (utente == null || items == null || items.isEmpty()) {
+            logger.warning("Tentativo di creare ordine non valido");
             return false;
         }
 
         String usernameUtente = utente.getUsername();
 
-        if (items == null || items.isEmpty()) {
-            logger.log(Level.WARNING, "Tentativo di creare ordine senza articoli");
-            return false;
-        }
+        String sqlOrder =
+                "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
 
-        String sqlOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
-        String sqlItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, " +
-                "prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+        String sqlItem =
+                "INSERT INTO order_items (order_id, menu_item_id, quantita, " +
+                        "prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(url, user, pass);
-             PreparedStatement pstmtOrder = conn.prepareStatement(sqlOrder, Statement.RETURN_GENERATED_KEYS);
-             PreparedStatement pstmtItem = conn.prepareStatement(sqlItem)) {
+             PreparedStatement pstmtOrder =
+                     conn.prepareStatement(sqlOrder, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement pstmtItem =
+                     conn.prepareStatement(sqlItem)) {
 
             conn.setAutoCommit(false);
 
-            try {
-                return executeCreateOrderTransaction(
-                        conn, pstmtOrder, pstmtItem,
-                        usernameUtente, tavolo, note, items
-                );
-            } catch (SQLException e) {
-                handleCreateOrderFailure(conn, e);
-                return false;
-            }
+            boolean result = executeCreateOrderTransaction(
+                    conn, pstmtOrder, pstmtItem,
+                    usernameUtente, tavolo, note, items
+            );
 
+            conn.commit();
+            return result;
 
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore creazione ordine", e);
             return false;
         }
     }
+
+
+
 
     private static boolean executeCreateOrderTransaction(
             Connection conn,
@@ -273,7 +278,7 @@ public class DatabaseService {
         }
 
         pstmtItem.executeBatch();
-        conn.commit();
+
 
         logger.log(Level.INFO, "Ordine #{0} creato con successo con {1} articoli",
                 new Object[]{orderId, items.size()});
