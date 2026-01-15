@@ -214,7 +214,7 @@ public class DatabaseService {
             conn.setAutoCommit(false);
 
             boolean result = executeCreateOrderTransaction(
-                    conn, pstmtOrder, pstmtItem,
+                    pstmtOrder, pstmtItem,
                     usernameUtente, tavolo, note, items
             );
 
@@ -231,7 +231,6 @@ public class DatabaseService {
 
 
     private static boolean executeCreateOrderTransaction(
-            Connection conn,
             PreparedStatement pstmtOrder,
             PreparedStatement pstmtItem,
             String usernameUtente,
@@ -285,18 +284,6 @@ public class DatabaseService {
 
         return true;
     }
-
-    private static void handleCreateOrderFailure(Connection conn, SQLException e) {
-        try {
-            conn.rollback();
-        } catch (SQLException rollbackEx) {
-            e.addSuppressed(rollbackEx);
-        }
-        logger.log(Level.SEVERE,
-                "Errore durante la creazione dell'ordine, rollback eseguito", e);
-    }
-
-
 
 
     public static long getQuantitySold(String nomeProdotto) {
