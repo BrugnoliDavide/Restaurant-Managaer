@@ -208,16 +208,7 @@ public class DatabaseService {
 
             conn.setAutoCommit(false);
 
-            try {return executeCreateOrderTransaction(
-                    conn,
-                    pstmtOrder,
-                    pstmtItem,
-                    usernameUtente,
-                    tavolo,
-                    note,
-                    items
-            );
-
+            try {return executeCreateOrderTransaction(conn, pstmtOrder, pstmtItem, usernameUtente, tavolo, note, items);
             } catch (SQLException e) {
                 conn.rollback();
                 logger.log(Level.SEVERE, "Errore durante la creazione dell'ordine, rollback eseguito", e);
@@ -897,76 +888,98 @@ public class DatabaseService {
                     return true;
                 }
 
-                // SQL per creare nuovi ordini con snapshot
-                String sqlNewOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
-                String sqlNewItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, " +
-                        "prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)";
-
-                // Usa una SINGOLA connessione e transazione per tutti gli ordini
-                try (Connection connNew = DriverManager.getConnection(url, user, pass);
-                     PreparedStatement pstmtNewOrder = connNew.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
-                     PreparedStatement pstmtNewItem = connNew.prepareStatement(sqlNewItem)) {
-
-                    connNew.setAutoCommit(false);
-
-                    try {
-                        for (Map.Entry<String, List<OrderItem>> entry : itemsByCategory.entrySet()) {
-                            List<OrderItem> categoryItems = entry.getValue();
-
-                            // INVARIANTI DEL LOOP - ora effettivamente fuori dal PreparedStatement
-                            // ma eseguiti per ogni nuovo ordine (corretto)
-                            pstmtNewOrder.setString(1, username);
-                            pstmtNewOrder.setInt(2, tavolo);
-                            pstmtNewOrder.setString(3, note);
-                            pstmtNewOrder.setString(4, TODOSTRING);
-
-                            pstmtNewOrder.executeUpdate();
-
-                            int newOrderId;
-                            try (ResultSet keys = pstmtNewOrder.getGeneratedKeys()) {
-                                if (!keys.next()) {
-                                    throw new SQLException("ID ordine non generato");
-                                }
-                                newOrderId = keys.getInt(1);
-                            }
-
-                            // Inserisci items con snapshot
-                            for (OrderItem item : categoryItems) {
-                                pstmtNewItem.setInt(1, newOrderId);
-                                pstmtNewItem.setInt(2, item.getProduct().getId());
-                                pstmtNewItem.setInt(3, item.getQuantita());
-                                pstmtNewItem.setDouble(4, item.getPrezzoSnapshot());
-                                pstmtNewItem.setDouble(5, item.getCostoSnapshot());
-                                pstmtNewItem.setString(6, item.getNomeSnapshot());
-                                pstmtNewItem.addBatch();
-                            }
-
-                            pstmtNewItem.executeBatch();
-                            pstmtNewItem.clearBatch(); // Pulisci il batch per la prossima categoria
-                        }
-
-                        // Marca l'ordine originale come "decomposed"
-                        setOrderStatus(orderId, "decomposed");
-
-                        connNew.commit();
-
-                        logger.log(Level.INFO, "Ordine {0} scomposto in {1} ordini per categoria",
-                                new Object[]{orderId, itemsByCategory.size()});
-                        return true;
-
-                    } catch (SQLException e) {
-                        connNew.rollback();
-                        throw e;
-                    }
+                // Crea nuovi ordini per categoria
+                try (Connection connNew = DriverManager.getConnection(url, user, pass)) {
+                    createCategoryOrders(connNew, itemsByCategory, username, tavolo, note, orderId);
+                    return true;
                 }
+
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore scomposizione ordine {0}, errore: {1}",
+            logger.log(Level.SEVERE, "Errore scomposizione ordine {0}, errore {1}",
                     new Object[]{orderId, e.getMessage()});
             return false;
         }
     }
+
+
+    /**
+     * Crea nuovi ordini separati per ogni categoria usando una singola transazione.
+     * @param connNew Connessione già aperta
+     * @param itemsByCategory Mappa categoria -> lista items
+     * @param username Username originale
+     * @param tavolo Tavolo originale
+     * @param note Note originali
+     * @param orderId ID ordine originale (per update status)
+     * @throws SQLException In caso di errore DB
+     */
+    private static void createCategoryOrders(Connection connNew,
+                                             Map<String, List<OrderItem>> itemsByCategory,
+                                             String username, Integer tavolo, String note,
+                                             int orderId) throws SQLException {
+
+        String sqlNewOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
+        String sqlNewItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, " +
+                "prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement pstmtNewOrder = connNew.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement pstmtNewItem = connNew.prepareStatement(sqlNewItem)) {
+
+            connNew.setAutoCommit(false);
+
+            try {
+                for (Map.Entry<String, List<OrderItem>> entry : itemsByCategory.entrySet()) {
+                    List<OrderItem> categoryItems = entry.getValue();
+
+                    pstmtNewOrder.setString(1, username);
+                    pstmtNewOrder.setInt(2, tavolo);
+                    pstmtNewOrder.setString(3, note);
+                    pstmtNewOrder.setString(4, TODOSTRING);
+
+                    pstmtNewOrder.executeUpdate();
+
+                    int newOrderId;
+                    try (ResultSet keys = pstmtNewOrder.getGeneratedKeys()) {
+                        if (!keys.next()) {
+                            throw new SQLException("ID ordine non generato");
+                        }
+                        newOrderId = keys.getInt(1);
+                    }
+
+                    // Inserisci items con snapshot
+                    for (OrderItem item : categoryItems) {
+                        pstmtNewItem.setInt(1, newOrderId);
+                        pstmtNewItem.setInt(2, item.getProduct().getId());
+                        pstmtNewItem.setInt(3, item.getQuantita());
+                        pstmtNewItem.setDouble(4, item.getPrezzoSnapshot());
+                        pstmtNewItem.setDouble(5, item.getCostoSnapshot());
+                        pstmtNewItem.setString(6, item.getNomeSnapshot());
+                        pstmtNewItem.addBatch();
+                    }
+
+                    pstmtNewItem.executeBatch();
+                    pstmtNewItem.clearBatch(); // Pulisci il batch per la prossima categoria
+                }
+
+                // Marca l'ordine originale come "decomposed"
+                setOrderStatus(orderId, "decomposed");
+
+                connNew.commit();
+
+                logger.log(Level.INFO, "Ordine {0} scomposto in {1} ordini per categoria",
+                        new Object[]{orderId, itemsByCategory.size()});
+
+            } catch (SQLException e) {
+                connNew.rollback();
+                throw e;
+            }
+        }
+    }
+
+
+
+
 
     public static boolean hasPendingOrders(int tavolo) {
         String sql = """

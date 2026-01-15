@@ -9,10 +9,8 @@
 
 <VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.component.OrderReviewDialog">
 
-    <!-- TITOLO -->
     <Label styleClass="text-header" stylesheets="@style.css" text="Revisione Ordine" />
 
-    <!-- SEZIONE: TAVOLO E DETTAGLI -->
     <VBox spacing="10" styleClass="generic-card" stylesheets="@style.css">
 
         <Label styleClass="text-title" text="Dettagli Ordine" />
@@ -30,7 +28,6 @@
         </HBox>
     </VBox>
 
-    <!-- SEZIONE: ELENCO PRODOTTI -->
     <VBox spacing="10" styleClass="generic-card">
 
         <Label styleClass="text-title" text="Prodotti Ordinati" />
@@ -40,7 +37,7 @@
         </ScrollPane>
     </VBox>
 
-    <!-- SEZIONE: NOTE -->
+
     <VBox spacing="10" styleClass="generic-card">
 
         <Label styleClass="text-title" text="Note Aggiuntive" />
@@ -50,7 +47,7 @@
         <Label style="-fx-font-size: 11px; -fx-text-fill: #999; -fx-font-style: italic;" styleClass="text-muted" text="(es: senza aglio, cottura al dente, ecc.)" />
     </VBox>
 
-    <!-- PULSANTI -->
+
     <HBox spacing="10" style="-fx-padding: 10 0 0 0;">
         <Button fx:id="btnConfirm" style="-fx-padding: 12 40; -fx-font-size: 14px; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" styleClass="btn-secondary" stylesheets="@style.css" text="✓ Conferma Ordine" />
 

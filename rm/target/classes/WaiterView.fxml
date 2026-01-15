@@ -25,11 +25,11 @@
             </StackPane>
 
             <VBox spacing="2">
-                <Label fx:id="lblHeaderName" styleClass="header-name" text="..." />
-                <Label fx:id="lblHeaderRole" styleClass="header-role" text="..." />
+                <Label fx:id="lblHeaderName" styleClass="text-title" text="..." />
+                <Label fx:id="lblHeaderRole" styleClass="text-subtitle" text="..." />
             </VBox>
 
-            <Label fx:id="lblWelcomeTop" styleClass="waiter-welcome-msg" text="..." />
+            <Label fx:id="lblWelcomeTop" styleClass="text-muted" text="..." />
 
             <Region HBox.hgrow="ALWAYS" />
         </HBox>
@@ -50,14 +50,14 @@
     </center>
 
     <bottom>
-        <VBox alignment="CENTER" spacing="10" styleClass="waiter-bottom-bar">
+        <VBox alignment="CENTER" prefHeight="168.0" prefWidth="179.0" spacing="10" stylesheets="@style.css">
             <padding><Insets bottom="10" top="20" /></padding>
 
-            <Button fx:id="btnNewOrder" onAction="#handleNewOrder" styleClass="btn-new-order" text="new&#10;order" textAlignment="CENTER" />
+            <Button fx:id="btnNewOrder" onAction="#handleNewOrder" styleClass="dashboard-btn" text="new&#10;order" textAlignment="CENTER" />
 
             <Label styleClass="waiter-table-label" text="table" />
 
-            <TextField fx:id="txtTable" alignment="CENTER" promptText="number" styleClass="waiter-table-input" />
+            <TextField fx:id="txtTable" alignment="CENTER" maxWidth="700.0" promptText="number" styleClass="input-standard" />
         </VBox>
     </bottom>
 

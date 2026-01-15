@@ -1,48 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane styleClass="view-background"
-            stylesheets="@/style.css"
-            xmlns="http://javafx.com/javafx/17.0.12"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.rm.view.OrderDetailController">
+<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.OrderDetailController">
 
     <!-- HEADER -->
     <top>
-        <VBox spacing="15">
+        <VBox spacing="15" stylesheets="@style.css">
             <padding>
-                <Insets top="20" right="20" bottom="10" left="20"/>
+                <Insets bottom="10" left="20" right="20" top="20" />
             </padding>
 
             <!-- Link Indietro -->
-            <Label fx:id="lblBack"
-                   text="← Financial"
-                   onMouseClicked="#goBack"
-                   styleClass="link-label"/>
+            <Label fx:id="lblBack" onMouseClicked="#goBack" styleClass="text-link" text="← Financial" />
 
             <!-- Titolo -->
-            <Label fx:id="lblTitle"
-                   text="Ordine #123"
-                   styleClass="text-header"
-                   style="-fx-font-size: 28px;"/>
+            <Label fx:id="lblTitle" style="-fx-font-size: 28px;" styleClass="text-header" text="Ordine #123" />
         </VBox>
     </top>
 
     <!-- CONTENT -->
     <center>
-        <ScrollPane fitToWidth="true"
-                    hbarPolicy="NEVER"
-                    vbarPolicy="AS_NEEDED"
-                    style="-fx-background-color: transparent;">
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent;" vbarPolicy="AS_NEEDED">
 
-            <VBox fx:id="contentBox"
-                  spacing="20"
-                  style="-fx-background-color: white;">
+            <VBox fx:id="contentBox" spacing="20" style="-fx-background-color: white;">
                 <padding>
-                    <Insets top="20" right="30" bottom="30" left="30"/>
+                    <Insets bottom="30" left="30" right="30" top="20" />
                 </padding>
 
                 <!-- Contenuto dinamico caricato dal controller -->

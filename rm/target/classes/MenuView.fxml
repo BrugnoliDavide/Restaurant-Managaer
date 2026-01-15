@@ -21,7 +21,7 @@
             </padding>
 
 
-            <Label fx:id="lblManage" onMouseClicked="#goBack" styleClass="link-label" text="← Manage" />
+            <Label fx:id="lblManage" onMouseClicked="#goBack" styleClass="text-link" text="← Manage" />
 
 
             <HBox alignment="CENTER_LEFT" spacing="20">

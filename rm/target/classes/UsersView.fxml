@@ -26,7 +26,7 @@
     </top>
 
     <center>
-        <TableView fx:id="usersTable" style="-fx-background-color: transparent;">
+        <TableView fx:id="usersTable" style="-fx-background-color: transparent;" stylesheets="@style.css">
             <columns>
                 <TableColumn prefWidth="200" text="Username">
                     <cellValueFactory>
@@ -66,7 +66,7 @@
 
             <Region HBox.hgrow="ALWAYS" />
 
-            <Button onAction="#handleDelete" style="-fx-background-color: #E02E2E; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-primary" stylesheets="@style.css" text="Rimuovi Selezionato" />
+            <Button onAction="#handleDelete" style="-fx-background-color: #E02E2E; -fx-text-fill: white; -fx-cursor: hand;" styleClass="btn-secondary" stylesheets="@style.css" text="Rimuovi Selezionato" />
 
             <Button onAction="#goBack" styleClass="dashboard-btn" stylesheets="@style.css" text="Indietro" />
         </HBox>

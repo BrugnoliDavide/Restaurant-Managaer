@@ -39,7 +39,11 @@ public class WaiterController {
     @FXML private VBox notificationsContainer;
 
     private Timeline pollingTimeline;
-    private static final OrderUseCase orderUseCase = new OrderService();
+    private static OrderUseCase orderUseCase = new OrderService();
+    static void setOrderUseCase(OrderUseCase useCase) {
+        orderUseCase = useCase;
+    }
+
 
     @FXML
     public void initialize() {
