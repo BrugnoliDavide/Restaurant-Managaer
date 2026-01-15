@@ -913,26 +913,23 @@ public class DatabaseService {
      * @param orderId ID ordine originale (per update status)
      * @throws SQLException In caso di errore DB
      */
-    private static void createCategoryOrders(Connection connNew, Map<String, List<OrderItem>> itemsByCategory, String username, Integer tavolo, String note, int orderId) throws SQLException {
+    private static void createCategoryOrders(Connection connNew, Map<String, List<OrderItem>> itemsByCategory,
+                                             String username, Integer tavolo, String note, int orderId) throws SQLException {
         String sqlNewOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
-        String sqlNewItem = "INSERT INTO order_items (...) VALUES (?, ?, ?, ?, ?, ?)";
+        String sqlNewItem = "INSERT INTO order_items (orderid, menuitemid, quantita, prezzovenditasnapshot, costorealizzazionesnapshot, nomeprodottosnapshot) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmtNewOrder = connNew.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement pstmtNewItem = connNew.prepareStatement(sqlNewItem)) {
 
             connNew.setAutoCommit(false);
             try {
+                List<OrderItem> allItemsForBatch = itemsByCategory.values().stream()
+                        .flatMap(List::stream)
+                        .collect(Collectors.toList());
+
                 for (Map.Entry<String, List<OrderItem>> entry : itemsByCategory.entrySet()) {
-                    List<OrderItem> categoryItems = entry.getValue();
-
-
-                    pstmtNewOrder.setString(1, username);
-                    if (tavolo != null) pstmtNewOrder.setInt(2, tavolo);
-                    else pstmtNewOrder.setNull(2, Types.INTEGER);
-                    pstmtNewOrder.setString(3, note);
-                    pstmtNewOrder.setString(4, TODOSTRING);
-                    pstmtNewOrder.executeUpdate();  // ← CRUCIALE
-
+                    setOrderParams(pstmtNewOrder, username, tavolo, note);
+                    pstmtNewOrder.executeUpdate();
 
                     int newOrderId;
                     try (ResultSet keys = pstmtNewOrder.getGeneratedKeys()) {
@@ -940,8 +937,7 @@ public class DatabaseService {
                         newOrderId = keys.getInt(1);
                     }
 
-
-                    for (OrderItem item : categoryItems) {
+                    for (OrderItem item : entry.getValue()) {
                         pstmtNewItem.setInt(1, newOrderId);
                         pstmtNewItem.setInt(2, item.getProduct().getId());
                         pstmtNewItem.setInt(3, item.getQuantita());
@@ -950,10 +946,11 @@ public class DatabaseService {
                         pstmtNewItem.setString(6, item.getNomeSnapshot());
                         pstmtNewItem.addBatch();
                     }
-                    pstmtNewItem.executeBatch();
-                    pstmtNewItem.clearBatch();
                 }
-                // era stata implementata l'istruzione setOrderStatus(orderId, "decomposed"); ma ritenendola inutile (e anzi pericolosa) l'ho commentata
+
+
+                pstmtNewItem.executeBatch();
+
                 connNew.commit();
             } catch (SQLException e) {
                 connNew.rollback();
@@ -962,6 +959,17 @@ public class DatabaseService {
         }
     }
 
+    // Helper privato per parametri invarianti (rimuove duplicazione)
+    private static void setOrderParams(PreparedStatement pstmt, String username, Integer tavolo, String note) throws SQLException {
+        pstmt.setString(1, username);
+        if (tavolo != null) {
+            pstmt.setInt(2, tavolo);
+        } else {
+            pstmt.setNull(2, Types.INTEGER);
+        }
+        pstmt.setString(3, note);
+        pstmt.setString(4, TODOSTRING);
+    }
 
 
     public static boolean hasPendingOrders(int tavolo) {
