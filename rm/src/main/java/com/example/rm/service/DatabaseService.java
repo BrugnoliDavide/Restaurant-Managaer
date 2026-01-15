@@ -890,7 +890,7 @@ public class DatabaseService {
 
                 // Crea nuovi ordini per categoria
                 try (Connection connNew = DriverManager.getConnection(url, user, pass)) {
-                    createCategoryOrders(connNew, itemsByCategory, username, tavolo, note, orderId);
+                    createCategoryOrders(connNew, itemsByCategory, username, tavolo, note);
                     return true;
                 }
 
@@ -903,61 +903,89 @@ public class DatabaseService {
     }
 
 
-    /**
-     * Crea nuovi ordini separati per ogni categoria usando una singola transazione.
-     * @param connNew Connessione già aperta
-     * @param itemsByCategory Mappa categoria -> lista items
-     * @param username Username originale
-     * @param tavolo Tavolo originale
-     * @param note Note originali
-     * @param orderId ID ordine originale (per update status)
-     * @throws SQLException In caso di errore DB
-     */
-    private static void createCategoryOrders(Connection connNew, Map<String, List<OrderItem>> itemsByCategory,
-                                             String username, Integer tavolo, String note, int orderId) throws SQLException {
-        String sqlNewOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
-        String sqlNewItem = "INSERT INTO order_items (orderid, menuitemid, quantita, prezzovenditasnapshot, costorealizzazionesnapshot, nomeprodottosnapshot) VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (PreparedStatement pstmtNewOrder = connNew.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
-             PreparedStatement pstmtNewItem = connNew.prepareStatement(sqlNewItem)) {
+// Nota: aggiorna i nomi delle colonne nella query order_items secondo il tuo schema reale.
+    private static void createCategoryOrders(Connection conn, Map<String, List<OrderItem>> itemsByCategory,
+                                             String username, Integer tavolo, String note) throws SQLException {
+        final String sqlNewOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
+        final String sqlNewItem = "INSERT INTO order_items (order_id, product_id, quantita, prezzo_snapshot, costo_snapshot, nome_snapshot) VALUES (?, ?, ?, ?, ?, ?)";
 
-            connNew.setAutoCommit(false);
-            try {
-                List<OrderItem> allItemsForBatch = itemsByCategory.values().stream()
-                        .flatMap(List::stream)
-                        .collect(Collectors.toList());
+        boolean previousAutoCommit = conn.getAutoCommit();
+        try (PreparedStatement pstmtNewOrder = conn.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement pstmtNewItem = conn.prepareStatement(sqlNewItem)) {
 
-                for (Map.Entry<String, List<OrderItem>> entry : itemsByCategory.entrySet()) {
-                    setOrderParams(pstmtNewOrder, username, tavolo, note);
-                    pstmtNewOrder.executeUpdate();
+            conn.setAutoCommit(false);
 
-                    int newOrderId;
-                    try (ResultSet keys = pstmtNewOrder.getGeneratedKeys()) {
-                        if (!keys.next()) throw new SQLException("ID non generato");
-                        newOrderId = keys.getInt(1);
-                    }
-
-                    for (OrderItem item : entry.getValue()) {
-                        pstmtNewItem.setInt(1, newOrderId);
-                        pstmtNewItem.setInt(2, item.getProduct().getId());
-                        pstmtNewItem.setInt(3, item.getQuantita());
-                        pstmtNewItem.setDouble(4, item.getPrezzoSnapshot());
-                        pstmtNewItem.setDouble(5, item.getCostoSnapshot());
-                        pstmtNewItem.setString(6, item.getNomeSnapshot());
-                        pstmtNewItem.addBatch();
-                    }
+            for (Map.Entry<String, List<OrderItem>> entry : itemsByCategory.entrySet()) {
+                List<OrderItem> categoryItems = entry.getValue();
+                if (categoryItems == null || categoryItems.isEmpty()) {
+                    continue; // niente da fare per questa categoria
                 }
 
+                // Inserisce l'ordine e ottiene il nuovo ID (estratto in metodo separato)
+                int newOrderId = insertOrderAndGetId(pstmtNewOrder, username, tavolo, note);
 
+                // Parametro loop-invariant: order_id è lo stesso per tutti gli items di questa categoria
+                pstmtNewItem.setInt(1, newOrderId);
+
+                // Per ogni item, impostiamo i parametri variabili e aggiungiamo al batch
+                for (OrderItem item : categoryItems) {
+                    pstmtNewItem.setInt(2, item.getProduct().getId());
+                    pstmtNewItem.setInt(3, item.getQuantita());
+                    pstmtNewItem.setDouble(4, item.getPrezzoSnapshot());
+                    pstmtNewItem.setDouble(5, item.getCostoSnapshot());
+                    pstmtNewItem.setString(6, item.getNomeSnapshot());
+                    pstmtNewItem.addBatch();
+                }
+
+                // Esecuzione batch per la categoria corrente
                 pstmtNewItem.executeBatch();
+                pstmtNewItem.clearBatch();
+            }
 
-                connNew.commit();
-            } catch (SQLException e) {
-                connNew.rollback();
-                throw e;
+            conn.commit();
+        } catch (SQLException e) {
+            try {
+                conn.rollback();
+            } catch (SQLException rbEx) {
+                // preferibile non nascondere il rollback error
+                e.addSuppressed(rbEx);
+            }
+            throw e;
+        } finally {
+            // Ripristino auto-commit al valore precedente, anche in caso di eccezione
+            try {
+                conn.setAutoCommit(previousAutoCommit);
+            } catch (SQLException ex) {
+                // loggare o aggiungere come suppressed all'eccezione principale a runtime
+                throw ex;
             }
         }
     }
+
+    private static int insertOrderAndGetId(PreparedStatement pstmtNewOrder, String username, Integer tavolo, String note) throws SQLException {
+        // Imposta i parametri dell'inserimento ordine (variabili, ripetute per ogni ordine)
+        pstmtNewOrder.setString(1, username);
+        if (tavolo != null) {
+            pstmtNewOrder.setInt(2, tavolo);
+        } else {
+            pstmtNewOrder.setNull(2, Types.INTEGER);
+        }
+        pstmtNewOrder.setString(3, note);
+        // Sostituire "TODO_STATUS" con lo stato effettivo richiesto
+        pstmtNewOrder.setString(4, "TODO_STATUS");
+
+        pstmtNewOrder.executeUpdate();
+
+        try (ResultSet keys = pstmtNewOrder.getGeneratedKeys()) {
+            if (!keys.next()) {
+                throw new SQLException("ID non generato per il nuovo ordine");
+            }
+            return keys.getInt(1);
+        }
+    }
+
+
 
     // Helper privato per parametri invarianti (rimuove duplicazione)
     private static void setOrderParams(PreparedStatement pstmt, String username, Integer tavolo, String note) throws SQLException {
