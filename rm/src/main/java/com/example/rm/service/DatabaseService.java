@@ -104,7 +104,6 @@ public class DatabaseService {
         }
     }
 
-
     public static boolean updateProduct(MenuProduct p) {
         String sql = "UPDATE menu_items SET nome = ?, tipologia = ?, prezzo_vendita = ?, costo_realizzazione = ?, allergeni = ? WHERE id = ?";
 
@@ -521,13 +520,9 @@ public class DatabaseService {
         return pass;
     }
 
-
-
     public static boolean isConfigured() {
         return url != null && user != null && pass != null;
     }
-
-
 
     public static boolean testConnection() {
         if (url == null || user == null || pass == null) {
@@ -583,8 +578,6 @@ public class DatabaseService {
     public static boolean markOrderAsDelivered(int orderId) {
         return setOrderStatus(orderId, "delivered");
     }
-
-
 
     public static MenuProduct getProductById(int productId) {
         String sql = "SELECT id, nome, tipologia, prezzovendita, costorealizzazione, allergeni " +
@@ -710,7 +703,6 @@ public class DatabaseService {
         }
         return 0;
     }
-
 
 
     /**
@@ -988,6 +980,7 @@ public class DatabaseService {
             return keys.getInt(1);
         }
     }
+
     private static void rollbackQuietly(Connection conn, SQLException original) {
         try {
             conn.rollback();
@@ -1004,11 +997,6 @@ public class DatabaseService {
                     .log(Level.SEVERE, "Impossibile ripristinare autoCommit", ex);
         }
     }
-
-
-
-
-
 
     public static boolean hasPendingOrders(int tavolo) {
         String sql = """
@@ -1057,8 +1045,6 @@ public class DatabaseService {
         }
         return pendingIds;
     }
-
-
 
     public static double getRealizedIncome(
             int productId,

@@ -28,7 +28,6 @@ public final class DBConfigStore {
     private static final String KEY_USER = "db.user";
     private static final String KEY_PASS = "db.pass";
 
-    // Configurazione AES-GCM
     private static final String SECRET_SEED = "DB_CONFIG_LOCAL_SECRET";
     private static final String ALGORITHM = "AES/GCM/NoPadding";
     private static final int GCM_IV_LENGTH = 12;
@@ -38,9 +37,6 @@ public final class DBConfigStore {
         throw new AssertionError("Utility class");
     }
 
-    /**
-     * Genera una chiave AES-256 derivata dal seed segreto
-     */
     private static SecretKeySpec getKey() {
         try {
             MessageDigest sha = MessageDigest.getInstance("SHA-256");
@@ -51,9 +47,6 @@ public final class DBConfigStore {
         }
     }
 
-    /**
-     * Cifra una stringa usando AES-GCM
-     */
     private static String encrypt(String value) {
         if (value == null || value.isEmpty()) {
             return "";
@@ -82,9 +75,6 @@ public final class DBConfigStore {
         }
     }
 
-    /**
-     * Decifra una stringa cifrata con AES-GCM
-     */
     private static String decrypt(String encrypted) {
         if (encrypted == null || encrypted.isEmpty()) {
             return "";
@@ -118,9 +108,6 @@ public final class DBConfigStore {
         }
     }
 
-    /**
-     * Salva la configurazione del database nelle preferenze
-     */
     public static void save(String host, String port, String db, String user, String pass) {
         prefs.put(KEY_HOST, host);
         prefs.put(KEY_PORT, port);
@@ -153,9 +140,6 @@ public final class DBConfigStore {
         return prefs.get(KEY_USER, "");
     }
 
-    /**
-     * Recupera e decifra la password del database
-     */
     public static String getPassword() {
         String encrypted = prefs.get(KEY_PASS, "");
         if (encrypted.isBlank()) {
@@ -174,9 +158,6 @@ public final class DBConfigStore {
         return decrypted;
     }
 
-    /**
-     * Cancella completamente tutte le configurazioni salvate
-     */
     public static void clearAll() {
         try {
             prefs.clear();
@@ -186,9 +167,6 @@ public final class DBConfigStore {
         }
     }
 
-    /**
-     * Verifica se esiste una configurazione completa (esclusa password)
-     */
     public static boolean hasConfiguration() {
         return !getHost().isEmpty()
                 && !getPort().isEmpty()
@@ -196,9 +174,6 @@ public final class DBConfigStore {
                 && !getUser().isEmpty();
     }
 
-    /**
-     * Verifica se la password è configurata e decifrabile correttamente
-     */
     public static boolean hasValidPassword() {
         String encrypted = prefs.get(KEY_PASS, "");
         if (encrypted.isEmpty()) {
