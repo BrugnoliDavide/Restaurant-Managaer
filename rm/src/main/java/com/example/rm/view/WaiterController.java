@@ -40,9 +40,9 @@ public class WaiterController {
 
     private Timeline pollingTimeline;
     private static OrderUseCase orderUseCase = new OrderService();
-    static void setOrderUseCase(OrderUseCase useCase) {
-        orderUseCase = useCase;
-    }
+    //static void setOrderUseCase(OrderUseCase useCase) {
+    //    orderUseCase = useCase;
+    //}
 
 
     @FXML
