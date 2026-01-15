@@ -904,31 +904,40 @@ public class DatabaseService {
 
 
 
-// Nota: aggiorna i nomi delle colonne nella query order_items secondo il tuo schema reale.
-    private static void createCategoryOrders(Connection conn, Map<String, List<OrderItem>> itemsByCategory,
-                                             String username, Integer tavolo, String note) throws SQLException {
-        final String sqlNewOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
-        final String sqlNewItem = "INSERT INTO order_items (order_id, product_id, quantita, prezzo_snapshot, costo_snapshot, nome_snapshot) VALUES (?, ?, ?, ?, ?, ?)";
+    private static void createCategoryOrders(Connection conn,
+                                             Map<String, List<OrderItem>> itemsByCategory,
+                                             String username,
+                                             Integer tavolo,
+                                             String note) throws SQLException {
+
+        final String sqlNewOrder =
+                "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
+
+        final String sqlNewItem =
+                "INSERT INTO order_items (order_id, menu_item_id, quantita, prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)";
 
         boolean previousAutoCommit = conn.getAutoCommit();
-        try (PreparedStatement pstmtNewOrder = conn.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
-             PreparedStatement pstmtNewItem = conn.prepareStatement(sqlNewItem)) {
+
+        try (PreparedStatement pstmtNewOrder =
+                     conn.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
+             PreparedStatement pstmtNewItem =
+                     conn.prepareStatement(sqlNewItem)) {
 
             conn.setAutoCommit(false);
 
-            for (Map.Entry<String, List<OrderItem>> entry : itemsByCategory.entrySet()) {
-                List<OrderItem> categoryItems = entry.getValue();
+            for (List<OrderItem> categoryItems : itemsByCategory.values()) {
+
                 if (categoryItems == null || categoryItems.isEmpty()) {
-                    continue; // niente da fare per questa categoria
+                    continue;
                 }
 
-                // Inserisce l'ordine e ottiene il nuovo ID (estratto in metodo separato)
-                int newOrderId = insertOrderAndGetId(pstmtNewOrder, username, tavolo, note);
+                int newOrderId = insertOrderAndGetId(
+                        pstmtNewOrder, username, tavolo, note
+                );
 
-                // Parametro loop-invariant: order_id è lo stesso per tutti gli items di questa categoria
                 pstmtNewItem.setInt(1, newOrderId);
 
-                // Per ogni item, impostiamo i parametri variabili e aggiungiamo al batch
                 for (OrderItem item : categoryItems) {
                     pstmtNewItem.setInt(2, item.getProduct().getId());
                     pstmtNewItem.setInt(3, item.getQuantita());
@@ -938,33 +947,22 @@ public class DatabaseService {
                     pstmtNewItem.addBatch();
                 }
 
-                // Esecuzione batch per la categoria corrente
                 pstmtNewItem.executeBatch();
                 pstmtNewItem.clearBatch();
             }
 
             conn.commit();
+
         } catch (SQLException e) {
-            try {
-                conn.rollback();
-            } catch (SQLException rbEx) {
-                // preferibile non nascondere il rollback error
-                e.addSuppressed(rbEx);
-            }
+            rollbackQuietly(conn, e);
             throw e;
+
         } finally {
-            // Ripristino auto-commit al valore precedente, anche in caso di eccezione
-            try {
-                conn.setAutoCommit(previousAutoCommit);
-            } catch (SQLException ex) {
-                // loggare o aggiungere come suppressed all'eccezione principale a runtime
-                throw ex;
-            }
+            restoreAutoCommitQuietly(conn, previousAutoCommit);
         }
     }
 
     private static int insertOrderAndGetId(PreparedStatement pstmtNewOrder, String username, Integer tavolo, String note) throws SQLException {
-        // Imposta i parametri dell'inserimento ordine (variabili, ripetute per ogni ordine)
         pstmtNewOrder.setString(1, username);
         if (tavolo != null) {
             pstmtNewOrder.setInt(2, tavolo);
@@ -972,8 +970,7 @@ public class DatabaseService {
             pstmtNewOrder.setNull(2, Types.INTEGER);
         }
         pstmtNewOrder.setString(3, note);
-        // Sostituire "TODO_STATUS" con lo stato effettivo richiesto
-        pstmtNewOrder.setString(4, "TODO_STATUS");
+        pstmtNewOrder.setString(4, TODOSTRING);
 
         pstmtNewOrder.executeUpdate();
 
@@ -984,20 +981,26 @@ public class DatabaseService {
             return keys.getInt(1);
         }
     }
-
-
-
-    // Helper privato per parametri invarianti (rimuove duplicazione)
-    private static void setOrderParams(PreparedStatement pstmt, String username, Integer tavolo, String note) throws SQLException {
-        pstmt.setString(1, username);
-        if (tavolo != null) {
-            pstmt.setInt(2, tavolo);
-        } else {
-            pstmt.setNull(2, Types.INTEGER);
+    private static void rollbackQuietly(Connection conn, SQLException original) {
+        try {
+            conn.rollback();
+        } catch (SQLException rollbackEx) {
+            original.addSuppressed(rollbackEx);
         }
-        pstmt.setString(3, note);
-        pstmt.setString(4, TODOSTRING);
     }
+
+    private static void restoreAutoCommitQuietly(Connection conn, boolean previousAutoCommit) {
+        try {
+            conn.setAutoCommit(previousAutoCommit);
+        } catch (SQLException ex) {
+            Logger.getLogger(DatabaseService.class.getName())
+                    .log(Level.SEVERE, "Impossibile ripristinare autoCommit", ex);
+        }
+    }
+
+
+
+
 
 
     public static boolean hasPendingOrders(int tavolo) {
