@@ -208,12 +208,16 @@ public class DatabaseService {
 
             conn.setAutoCommit(false);
 
-            try {return executeCreateOrderTransaction(conn, pstmtOrder, pstmtItem, usernameUtente, tavolo, note, items);
+            try {
+                return executeCreateOrderTransaction(
+                        conn, pstmtOrder, pstmtItem,
+                        usernameUtente, tavolo, note, items
+                );
             } catch (SQLException e) {
-                conn.rollback();
-                logger.log(Level.SEVERE, "Errore durante la creazione dell'ordine, rollback eseguito", e);
+                handleCreateOrderFailure(conn, e);
                 return false;
             }
+
 
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore creazione ordine", e);
@@ -276,6 +280,17 @@ public class DatabaseService {
 
         return true;
     }
+
+    private static void handleCreateOrderFailure(Connection conn, SQLException e) {
+        try {
+            conn.rollback();
+        } catch (SQLException rollbackEx) {
+            e.addSuppressed(rollbackEx);
+        }
+        logger.log(Level.SEVERE,
+                "Errore durante la creazione dell'ordine, rollback eseguito", e);
+    }
+
 
 
 
