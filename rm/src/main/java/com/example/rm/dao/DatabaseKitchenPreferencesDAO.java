@@ -1,7 +1,12 @@
 package com.example.rm.dao;
 
+import com.example.rm.preference.DemoModeManager;
 import com.example.rm.preference.KitchenPreferences;
 import com.example.rm.service.DatabaseService;
+
+import java.util.logging.Level;
+
+import static com.example.rm.view.KitchenController.logger;
 
 public class DatabaseKitchenPreferencesDAO implements KitchenPreferencesDAO {
 
@@ -13,7 +18,12 @@ public class DatabaseKitchenPreferencesDAO implements KitchenPreferencesDAO {
 
     @Override
     public boolean save(KitchenPreferences preferences) {
-        return DatabaseService.saveKitchenPreferences(preferences);
+        if (DemoModeManager.isDemoMode()) {
+            logger.log(Level.INFO,"modalità DEMO attiva: preferenze cucina saranno valide fino alla chiusura del sistema");
+            return true;
+        } else {
+            return DatabaseService.saveKitchenPreferences(preferences);
+        }
     }
 
     @Override

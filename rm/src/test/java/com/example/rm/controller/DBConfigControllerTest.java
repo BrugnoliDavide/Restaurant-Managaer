@@ -60,9 +60,7 @@ class DBConfigControllerTest {
 
     @Test
     void saveConfig_SavesSuccessfully_WithValidInput() {
-        // save(...) è void → non si stubba con thenReturn
-        // qui non serve stubbare: verifichiamo solo che venga chiamato con i parametri giusti
-        boolean result = controller.saveConfig("localhost", "5432", "testdb", "user", "pass123");
+         boolean result = controller.saveConfig("localhost", "5432", "testdb", "user", "pass123");
 
         assertTrue(result);
 

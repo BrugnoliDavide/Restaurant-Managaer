@@ -37,7 +37,7 @@ class DatabaseProductDAOTest {
     @Test
     void save_WhenNewProduct_IdIsZero_CallsAddProduct() {
         MenuProduct p = new MenuProduct();
-        p.setId(0); // MenuProduct default id = 0, ma lo settiamo esplicitamente[ file:61 ]
+        p.setId(0);
 
         mockedDb.when(() -> DatabaseService.addProduct(p)).thenReturn(true);
 

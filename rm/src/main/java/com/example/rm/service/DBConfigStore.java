@@ -1,5 +1,7 @@
 package com.example.rm.service;
 
+import com.example.rm.preference.DemoModeManager;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -109,17 +111,25 @@ public final class DBConfigStore {
     }
 
     public static void save(String host, String port, String db, String user, String pass) {
-        prefs.put(KEY_HOST, host);
-        prefs.put(KEY_PORT, port);
-        prefs.put(KEY_NAME, db);
-        prefs.put(KEY_USER, user);
 
-        if (pass != null && !pass.isBlank()) {
-            String encryptedPass = encrypt(pass);
-            if (!encryptedPass.isEmpty()) {
-                prefs.put(KEY_PASS, encryptedPass);
-            } else {
-                logger.log(Level.WARNING, "Impossibile cifrare la password: non verrà salvata");
+        if (DemoModeManager.isDemoMode()) {
+            logger.log(Level.INFO,"modalità DEMO attiva: i dati inseririti saranno eliminati alla chiusura del sistema");
+            return;
+        }
+        else{
+
+            prefs.put(KEY_HOST, host);
+            prefs.put(KEY_PORT, port);
+            prefs.put(KEY_NAME, db);
+            prefs.put(KEY_USER, user);
+
+            if (pass != null && !pass.isBlank()) {
+                String encryptedPass = encrypt(pass);
+                if (!encryptedPass.isEmpty()) {
+                    prefs.put(KEY_PASS, encryptedPass);
+                } else {
+                    logger.log(Level.WARNING, "Impossibile cifrare la password: non verrà salvata");
+                }
             }
         }
     }

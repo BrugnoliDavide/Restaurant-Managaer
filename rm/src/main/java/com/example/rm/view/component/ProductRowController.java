@@ -43,9 +43,6 @@ public class ProductRowController {
         setupContextMenu();
     }
 
-    /* =========================
-       EVENTS
-       ========================= */
 
     @FXML
     private void onHover() {
@@ -67,9 +64,6 @@ public class ProductRowController {
         );
     }
 
-    /* =========================
-       CONTEXT MENU
-       ========================= */
 
     private void setupContextMenu() {
 
@@ -107,7 +101,6 @@ public class ProductRowController {
                         product.getPrezzoVendita(),
                         quantitySold)
         );
-
         setupContextMenu();
     }
 
@@ -123,10 +116,4 @@ public class ProductRowController {
             onSelect.accept(product);
         }
     }
-
-
-
-
-
-
 }

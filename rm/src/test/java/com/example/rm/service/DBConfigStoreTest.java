@@ -18,17 +18,12 @@ class DBConfigStoreTest {
     private static final String TEST_USER = "test_user";
     private static final String TEST_PASSWORD = "MySecurePassword123!@#";
 
-    /**
-     * Pulisce le preferenze prima di ogni test per garantire isolamento
-     */
     @BeforeEach
     void setUp() {
         DBConfigStore.clearAll();
     }
 
-    /**
-     * Pulisce le preferenze dopo ogni test
-     */
+
     @AfterEach
     void tearDown() {
         DBConfigStore.clearAll();
@@ -38,10 +33,8 @@ class DBConfigStoreTest {
     @Order(1)
     @DisplayName("Test salvataggio configurazione completa")
     void testSaveCompleteConfiguration() {
-        // Arrange & Act
         DBConfigStore.save(TEST_HOST, TEST_PORT, TEST_DB, TEST_USER, TEST_PASSWORD);
 
-        // Assert
         assertEquals(TEST_HOST, DBConfigStore.getHost(), "Host non salvato correttamente");
         assertEquals(TEST_PORT, DBConfigStore.getPort(), "Port non salvato correttamente");
         assertEquals(TEST_DB, DBConfigStore.getDbName(), "Database name non salvato correttamente");
@@ -53,17 +46,15 @@ class DBConfigStoreTest {
     @Order(2)
     @DisplayName("Test cifratura e decifratura password")
     void testPasswordEncryptionDecryption() {
-        // Arrange
         String[] testPasswords = {
                 "simple",
                 "Complex!Password123",
                 "P@ssw0rd_With_Special_Ch@rs!",
-                "密碼測試", // Password con caratteri unicode
+                "密碼測試", // Password con caratteri unicode "strani"
                 "very_long_password_that_exceeds_normal_length_to_test_edge_cases_1234567890",
-                "" // Password vuota
+                ""
         };
 
-        // Act & Assert
         for (String password : testPasswords) {
             DBConfigStore.save(TEST_HOST, TEST_PORT, TEST_DB, TEST_USER, password);
             String retrieved = DBConfigStore.getPassword();
@@ -71,7 +62,6 @@ class DBConfigStoreTest {
             assertEquals(password, retrieved,
                     String.format("Password '%s' non decifrata correttamente", password));
 
-            // Pulisce per il prossimo test
             DBConfigStore.clearAll();
         }
     }
@@ -148,14 +138,11 @@ class DBConfigStoreTest {
     @Order(7)
     @DisplayName("Test persistenza tra istanze")
     void testPersistenceAcrossInstances() {
-        // Arrange & Act - Prima istanza salva
         DBConfigStore.save(TEST_HOST, TEST_PORT, TEST_DB, TEST_USER, TEST_PASSWORD);
 
-        // Simula nuova istanza recuperando direttamente dalle Preferences
         Preferences prefs = Preferences.userNodeForPackage(DBConfigStore.class);
         String savedHost = prefs.get("db.host", "");
 
-        // Assert
         assertEquals(TEST_HOST, savedHost, "I dati non persistono correttamente");
         assertEquals(TEST_PASSWORD, DBConfigStore.getPassword(),
                 "Password non persiste correttamente tra recuperi");
@@ -165,18 +152,14 @@ class DBConfigStoreTest {
     @Order(8)
     @DisplayName("Test modifica password esistente")
     void testUpdatePassword() {
-        // Arrange
         String firstPassword = "FirstPassword123";
         String secondPassword = "SecondPassword456";
 
-        // Act
         DBConfigStore.save(TEST_HOST, TEST_PORT, TEST_DB, TEST_USER, firstPassword);
         assertEquals(firstPassword, DBConfigStore.getPassword());
 
-        // Aggiorna solo la password
         DBConfigStore.save(TEST_HOST, TEST_PORT, TEST_DB, TEST_USER, secondPassword);
 
-        // Assert
         assertEquals(secondPassword, DBConfigStore.getPassword(),
                 "Password non aggiornata correttamente");
         assertEquals(TEST_HOST, DBConfigStore.getHost(), "Host non dovrebbe cambiare");
@@ -292,18 +275,17 @@ class DBConfigStoreTest {
     @Order(15)
     @DisplayName("Test compatibilità Unicode completo")
     void testFullUnicodeSupport() {
-        // Arrange - Varie lingue e simboli
+        //Varie lingue e simboli
         String[] unicodePasswords = {
                 "日本語パスワード",           // Giapponese
                 "密碼測試中文",              // Cinese
                 "Пароль_Русский",          // Russo
                 "كلمة_المرور_العربية",      // Arabo
                 "סיסמה_עברית",             // Ebraico
-                "🔐🔑🛡️🔒💻",              // Emoji
+                "🔐🔑🛡️🔒💻",             // Emoji
                 "Ελληνικό_Κωδικός"         // Greco
         };
 
-        // Act & Assert
         for (String password : unicodePasswords) {
             DBConfigStore.save(TEST_HOST, TEST_PORT, TEST_DB, TEST_USER, password);
             assertEquals(password, DBConfigStore.getPassword(),

@@ -2,15 +2,13 @@ package com.example.rm.view.component;
 
 import com.example.rm.controller.DBConfigController;
 import com.example.rm.controller.DBConfigUseCase;
+import com.example.rm.preference.DemoModeManager;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 /**
- * Controller JavaFX per il popup di configurazione database.
+ * Controller per il popup di configurazione database.
  */
 public class DBConfigPopupController {
 
@@ -22,18 +20,19 @@ public class DBConfigPopupController {
     @FXML private Label lblPasswordStatus;
     @FXML private Button saveButton;
     @FXML private Button cancelButton;
+    @FXML private CheckBox demoModeCheckBox;
 
     private final DBConfigUseCase configService = new DBConfigController();
 
     @FXML
     private void initialize() {
-        // Carica configurazione corrente tramite use case
-        DBConfigUseCase.DBConfig config = configService.loadConfig();
+       DBConfigUseCase.DBConfig config = configService.loadConfig();
 
         addressField.setText(config.host);
         portField.setText(config.port);
         dbNameField.setText(config.dbName);
         usernameField.setText(config.username);
+        demoModeCheckBox.setSelected(DemoModeManager.isDemoMode());
 
         if (config.hasPassword) {
             lblPasswordStatus.setText("Password già configurata");
@@ -53,6 +52,7 @@ public class DBConfigPopupController {
         String dbName = dbNameField.getText();
         String user = usernameField.getText();
         String newPass = passwordField.getText();
+        DemoModeManager.setDemoMode(demoModeCheckBox.isSelected());
 
         boolean success = configService.saveConfig(address, port, dbName, user, newPass);
 

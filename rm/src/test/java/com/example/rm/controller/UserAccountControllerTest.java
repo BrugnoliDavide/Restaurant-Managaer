@@ -9,9 +9,7 @@ import org.mockito.MockedStatic;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Test di unità per UserAccountController.
- */
+
 class UserAccountControllerTest {
 
     private MockedStatic<SecurityService> mockedSecurityService;

@@ -10,9 +10,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Test per KitchenPreferencesController che ora usa DAO.
- */
 class KitchenPreferencesControllerTest {
 
     private KitchenPreferencesDAO daoMock;

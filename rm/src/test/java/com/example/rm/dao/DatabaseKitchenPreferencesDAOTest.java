@@ -12,9 +12,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Test unitari per DatabaseKitchenPreferencesDAO.
- */
 class DatabaseKitchenPreferencesDAOTest {
 
     private MockedStatic<DatabaseService> mockedDbService;
