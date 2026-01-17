@@ -1,5 +1,6 @@
 package com.example.rm.view;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Side;
 import javafx.scene.control.*;
@@ -36,6 +37,17 @@ public class ManagerController {
         String displayName = "Utente";
         String displayRole = "Ruolo";
         String welcomeMsg = "Welcome";
+
+        if (com.example.rm.preference.SimpleGraphicsManager.isEinkMode()) {
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Dashboard non disponibile");
+                alert.setHeaderText(null);
+                alert.setContentText("Questa dashboard non si può aprire in modalità semplificata.");
+                alert.showAndWait();
+            });
+        }
+
 
         if (session != null && session.getUser() != null) {
             // Recuperiamo l'oggetto Utente Polimorfico

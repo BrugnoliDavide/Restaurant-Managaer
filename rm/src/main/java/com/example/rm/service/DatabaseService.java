@@ -1,7 +1,6 @@
 package com.example.rm.service;
 
 import com.example.rm.dao.OrderDAO;
-import com.example.rm.dao.OrderTierOneDAO;
 import com.example.rm.dao.impl.OrderDAOPostgres;
 import com.example.rm.dao.impl.OrderDAOFile;
 
@@ -38,7 +37,7 @@ public class DatabaseService {
     private static final  String TIPOLOGIASTRING = "tipologia";
     private static final  String TODOSTRING = "to-do";
 
-    private static OrderTierOneDAO orderDAO = null;
+    private static OrderDAO orderDAO = null;
 
 
     private DatabaseService() {
@@ -315,7 +314,7 @@ public class DatabaseService {
     public static boolean testConnection() {
         if (url == null || user == null || pass == null) {
             logger.warning("Tentativo test DB senza configurazione completa");
-            throw new DatabaseNotConfiguredException(            );
+            return false;
         }
 
         try (Connection conn = getConnection()) {

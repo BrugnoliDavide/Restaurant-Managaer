@@ -1,4 +1,4 @@
-/* 1. ROOT E VARIABILI TEMA (ereditarietà base) */
+/* 1. ROOT E VARIABILI TEMA  */
 .root {
     -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
     -fx-bg-primary: #F4F4F4;
@@ -20,7 +20,7 @@
     -fx-icon-color: #FFFFFF;
 }
 
-/* 2. LOGIN FISSO (priorità !important) */
+/* 2. LOGIN FISSO */
 .login-root-fixed { -fx-background-color: #E0E0E0 !important; }
 .login-card-fixed {
     -fx-background-color: #FFFFFF !important;
@@ -502,4 +502,45 @@
     -fx-text-fill: #999999;
     -fx-padding: 30px;
     -fx-font-style: italic;
+}
+
+
+.product-row {
+    -fx-background-color: white;
+    -fx-border-color: #EEE;
+    -fx-border-width: 0 0 1 0;
+    -fx-cursor: hand;
+}
+.product-row:hover {
+    -fx-background-color: #F9F9F9;
+}
+
+.product-row-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+}
+.product-row-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #999;
+}
+.product-row-value {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2ecc71;
+}
+
+.product-row-minus {
+    -fx-background-color: #FFE5E5;
+    -fx-text-fill: #E74C3C;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-background-radius: 5;
+}
+.product-row-qty {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333;
+    -fx-min-width: 20;
+    -fx-alignment: center;
 }

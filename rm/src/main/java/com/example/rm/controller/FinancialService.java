@@ -1,7 +1,6 @@
 package com.example.rm.controller;
 
-import com.example.rm.dao.DatabaseOrderDAO;
-import com.example.rm.dao.OrderDAO;
+
 import com.example.rm.model.Order;
 import com.example.rm.service.DatabaseService;
 import com.example.rm.service.LoggerService;
@@ -12,7 +11,6 @@ import java.util.logging.Logger;
 
 
 public class FinancialService implements FinancialUseCase {
-    private static final OrderDAO orderDAO = new DatabaseOrderDAO();  // Singleton
     private static final Logger logger = LoggerService.getLogger(FinancialService.class);
 
 
@@ -23,7 +21,7 @@ public class FinancialService implements FinancialUseCase {
 
     @Override
     public List<Order> loadAllOrdersWithDisplayItems() {
-        List<Order> orders = orderDAO.loadAllOrdersWithDisplayItems();
+        List<Order> orders = DatabaseService.getAllOrdersWithTotal();
         for (Order order : orders) {
             order.getDisplayItems();
         }

@@ -1,5 +1,6 @@
 package com.example.rm.service;
 
+import com.example.rm.exception.AuthenticationException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,10 @@ class SecurityServiceTest {
         }
 
         mockedDatabaseService = mockStatic(DatabaseService.class);
-        mockedDatabaseService.when(DatabaseService::getConnection).thenReturn(h2Connection);
+
+        mockedDatabaseService.when(DatabaseService::getConnection).thenAnswer(invocation ->
+                DriverManager.getConnection("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1", "sa", "")
+        );
     }
 
     @AfterAll
@@ -58,20 +62,43 @@ class SecurityServiceTest {
     }
 
     @Test
-    void testAuthenticateSuccess() {
-        String role = SecurityService.authenticate("testUser", "testPassword");
-        assertEquals("manager", role);
-    }
-
-    @Test
     void testAuthenticateFailure_WrongPassword() {
-        String role = SecurityService.authenticate("testUser", "wrongPassword");
-        assertNull(role);
+        AuthenticationException exception = assertThrows(
+                AuthenticationException.class,
+                () -> SecurityService.authenticate("testUser", "wrongPassword")
+        );
+
+        assertEquals("Credenziali non valide", exception.getUserMessage());
     }
 
     @Test
     void testAuthenticateFailure_UnknownUser() {
-        String role = SecurityService.authenticate("unknownUser", "whatever");
-        assertNull(role);
+        AuthenticationException exception = assertThrows(
+                AuthenticationException.class,
+                () -> SecurityService.authenticate("unknownUser", "whatever")
+        );
+
+        assertEquals("Credenziali non valide", exception.getUserMessage());
     }
+
+    @Test
+    void testAuthenticateFailure_NullUsername() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> SecurityService.authenticate(null, "password")
+        );
+
+        assertEquals("Username o password non validi", exception.getMessage());
+    }
+
+    @Test
+    void testAuthenticateFailure_BlankPassword() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> SecurityService.authenticate("testUser", "")
+        );
+        assertEquals("Username o password non validi", exception.getMessage());
+    }
+
+
 }

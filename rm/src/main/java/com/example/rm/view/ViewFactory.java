@@ -2,7 +2,9 @@ package com.example.rm.view;
 
 import com.example.rm.exception.ViewNotFoundException;
 import com.example.rm.preference.SimpleGraphicsManager;
+import com.example.rm.view.EinkScreen.EarningEinkView;
 import com.example.rm.view.EinkScreen.KitchenEinkView;
+import com.example.rm.view.EinkScreen.TakeOrderEinkView;
 import com.example.rm.view.EinkScreen.WaiterEinkView;
 import com.example.rm.view.screens.*;
 
@@ -24,20 +26,17 @@ public final class ViewFactory {
             case "users"     -> new UsersView();
             case "financial" -> new FinancialView();
             case "menu"      -> new MenuView();
-            case "cassiere"  -> new EarningView();
+            case "cassiere"  -> eink ? new EarningEinkView(): new EarningView();
             default -> throw new ViewNotFoundException("Nessuna view associata al ruolo: " + role);
         };
     }
 
     public static View forTakeOrder(int numeroTavolo) {
+        if (numeroTavolo <= 0) throw new IllegalArgumentException("Numero tavolo non valido: " + numeroTavolo);
 
-        if (numeroTavolo <= 0) {
-            throw new IllegalArgumentException(
-                    "Numero tavolo non valido: " + numeroTavolo
-            );
-        }
-
-        return new TakeOrderView(numeroTavolo);
+        boolean eink = SimpleGraphicsManager.isEinkMode();
+        if (eink) return new TakeOrderEinkView(numeroTavolo);
+        else  return  new TakeOrderView(numeroTavolo);
     }
 
     public static View create(String viewType, Object... params) {

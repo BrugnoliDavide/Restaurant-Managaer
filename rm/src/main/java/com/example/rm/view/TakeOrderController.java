@@ -27,7 +27,6 @@ import com.example.rm.controller.OrderService;
 import com.example.rm.app.SceneManager;
 
 
-
   //Gestisce il carrello e l'invio degli ordini al database.
 public class TakeOrderController {
 
@@ -87,6 +86,10 @@ public class TakeOrderController {
     private HBox createProductRow(MenuProduct prodotto) {
         int currentQuantity = getCurrentQuantity(prodotto.getId());
         String formattedPrice = formatPrice(prodotto.getPrezzoVendita());
+
+
+
+
 
         return ProductRowFactory.row(
                 prodotto.getNome(),
@@ -207,6 +210,15 @@ public class TakeOrderController {
             return;
         }
         btnSend.setDisable(true);
+
+        // E-ink: invio diretto, niente dialog di review
+        if (com.example.rm.preference.SimpleGraphicsManager.isEinkMode()) {
+            List<OrderItem> items = new ArrayList<>(carrello.values());
+            sendOrderToDatabase(items, ""); // oppure una note predefinita / nulla
+            return;
+        }
+
+
         showOrderReviewDialog();
     }
 

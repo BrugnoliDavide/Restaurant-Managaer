@@ -15,63 +15,49 @@ public final class ProductRowFactory {
 
     public static HBox row(String title, String subtitle, String value, int quantity, Runnable onAdd, Runnable onRemove) {
         HBox row = new HBox();
+        row.getStyleClass().add("product-row");
         row.setAlignment(Pos.CENTER_LEFT);
         row.setSpacing(15);
         row.setPadding(new javafx.geometry.Insets(10, 15, 10, 15));
 
-        String baseStyle = "-fx-background-color: white; -fx-border-color: #EEE; -fx-border-width: 0 0 1 0; -fx-cursor: hand;";
-        String hoverStyle = "-fx-background-color: #F9F9F9; -fx-border-color: #EEE; -fx-border-width: 0 0 1 0; -fx-cursor: hand;";
-        row.setStyle(baseStyle);
+        row.setOnMouseClicked(e -> { if (onAdd != null) onAdd.run(); });
 
-        row.setOnMouseEntered(e -> row.setStyle(hoverStyle));
-        row.setOnMouseExited(e -> row.setStyle(baseStyle));
-
-       row.setOnMouseClicked(e -> {
-           //incremento quantità
-            if (onAdd != null) onAdd.run();
-        });
-
-        // 1. Label Informative
         VBox labels = new VBox(2);
+        labels.getStyleClass().add("product-row-labels");
+
         Label lblTitle = new Label(title);
-        lblTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        lblTitle.getStyleClass().add("product-row-title");
         labels.getChildren().add(lblTitle);
 
         if (subtitle != null && !subtitle.isBlank()) {
             Label lblSub = new Label(subtitle);
-            lblSub.setStyle("-fx-font-size: 12px; -fx-text-fill: #999;");
+            lblSub.getStyleClass().add("product-row-subtitle");
             labels.getChildren().add(lblSub);
         }
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-
         Label lblValue = new Label(value);
-        lblValue.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2ecc71;");
+        lblValue.getStyleClass().add("product-row-value");
 
-        //  Area Controlli (Zona protetta)
         HBox controls = new HBox(12);
+        controls.getStyleClass().add("product-row-controls");
         controls.setAlignment(Pos.CENTER);
-        // si impedisce che il click sul tasto MENO si propaghi alla riga (evita +1 e -1 simultanei)
         controls.setOnMouseClicked(javafx.event.Event::consume);
 
-
-        // tasto meno
         Button btnMinus = new Button("-");
+        btnMinus.getStyleClass().add("product-row-minus");
         btnMinus.setMinWidth(30);
-        btnMinus.setStyle("-fx-background-color: #FFE5E5; -fx-text-fill: #E74C3C; -fx-font-weight: bold; -fx-cursor: hand; -fx-background-radius: 5;");
-        btnMinus.setOnAction(e -> {
-            if (onRemove != null) onRemove.run();
-        });
+        btnMinus.setOnAction(e -> { if (onRemove != null) onRemove.run(); });
 
-        //  lblQty = label Quantità
         Label lblQty = new Label(quantity > 0 ? String.valueOf(quantity) : "");
-        lblQty.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333; -fx-min-width: 20; -fx-alignment: center;");
+        lblQty.getStyleClass().add("product-row-qty");
 
         controls.getChildren().addAll(btnMinus, lblQty);
-
         row.getChildren().addAll(labels, spacer, lblValue, controls);
         return row;
     }
+
+
 }

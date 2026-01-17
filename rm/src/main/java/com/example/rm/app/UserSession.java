@@ -2,7 +2,6 @@ package com.example.rm.app;
 
 import com.example.rm.exception.InvalidUserSessionException;
 import com.example.rm.model.User;
-import javafx.scene.Scene;
 
 public class UserSession {
 
@@ -50,4 +49,22 @@ public class UserSession {
         }
         return managedTables.contains(tableNumber);
     }
+
+
+    /**
+     * metodi esclusivo per i test
+            * @param testUser Utente da utilizzare nei test
+     */
+    public static void setInstanceForTesting(User testUser) {
+        instance = new UserSession(testUser);
+    }
+
+    /**
+     *
+     * ATTENZIONE: Questo metodo NON deve essere utilizzato nel codice di produzione.
+     */
+    public static void clearInstanceForTesting() {
+        instance = null;
+    }
 }
+

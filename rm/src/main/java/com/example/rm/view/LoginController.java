@@ -22,7 +22,7 @@ import java.io.IOException;
 
 import java.util.logging.Logger;
 import java.util.logging.Level;
-
+import com.example.rm.exception.AuthenticationException;
 
 public class LoginController {
 
@@ -36,9 +36,7 @@ public class LoginController {
 
     @FXML
     public void initialize() {
-
         updateDbStatusIndicator();
-
 
         if (gearIcon == null) {
             throw new IllegalStateException("gearIcon non è stato iniettato correttamente dal file FXML");
@@ -56,6 +54,7 @@ public class LoginController {
 
         if (!ok) {
             logger.warning("Login bloccato: DB non raggiungibile");
+            showError();
             return;
         }
 
@@ -76,26 +75,28 @@ public class LoginController {
 
 
         String role = SecurityService.authenticate(user, pass);
+        try{
+            if (role != null) {
 
-        if (role != null) {
+                logger.log(
+                        Level.INFO, "Login COMPLETATO per utente: {0} [Ruolo assegnato: {1}]",
+                        new Object[]{user, role}
+                );
 
-            logger.log(
-                    Level.INFO,"Login COMPLETATO per utente: {0} [Ruolo assegnato: {1}]",
-                    new Object[]{ user, role }
-            );
+                com.example.rm.model.User currentUser = UsersFactory.createUser(user, role);
+                UserSession.getInstance(currentUser);
+                navigateToRole(role.toLowerCase());
 
+            }
+        }catch (AuthenticationException e) {
 
-            com.example.rm.model.User currentUser = UsersFactory.createUser(user, role);
-
-
-            UserSession.getInstance(currentUser);
-
-
-            navigateToRole(role.toLowerCase());
-
-        } else {
+            logger.log(Level.WARNING, "Login fallito: {0}", e.getUserMessage());
+            showError();
+        }catch (Exception e) {
+            logger.log(Level.SEVERE, "Errore imprevisto durante il login", e);
             showError();
         }
+
     }
 
 

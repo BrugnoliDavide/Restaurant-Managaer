@@ -12,15 +12,15 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<BorderPane fx:id="root" styleClass="waiter-root" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.WaiterController">
+<BorderPane fx:id="root" styleClass="waiter-root" stylesheets="@/styleBN.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.WaiterController">
 
     <padding>
         <Insets bottom="20" left="20" right="20" top="20" />
     </padding>
 
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="waiter-header" stylesheets="@styleBN.css">
-            <StackPane fx:id="profileBtn" onMouseClicked="#handleProfileMenu" styleClass="profile-stack" stylesheets="@styleBN.css">
+        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="waiter-header" stylesheets="@../styleBN.css">
+            <StackPane fx:id="profileBtn" onMouseClicked="#handleProfileMenu" styleClass="profile-stack" stylesheets="@../styleBN.css">
                 <Circle fx:id="profileCircle" radius="25" styleClass="profile-circle" />
             </StackPane>
 
@@ -50,10 +50,10 @@
     </center>
 
     <bottom>
-        <VBox alignment="CENTER" prefHeight="168.0" prefWidth="179.0" spacing="10" stylesheets="@styleBN.css">
+        <VBox alignment="CENTER" prefHeight="168.0" prefWidth="179.0" spacing="10" stylesheets="@../styleBN.css">
             <padding><Insets bottom="10" top="20" /></padding>
 
-            <Button fx:id="btnNewOrder" onAction="#handleNewOrder" prefHeight="59.0" prefWidth="145.0" styleClass="dashboard-btn" text="new&#10;order" textAlignment="CENTER" />
+            <Button fx:id="btnNewOrder" onAction="#handleNewOrder" prefHeight="59.0" prefWidth="145.0" styleClass="eink-btn" stylesheets="@../styleBN.css" text="new&#10;order" textAlignment="CENTER" />
 
             <Label styleClass="waiter-table-label" text="table" />
 

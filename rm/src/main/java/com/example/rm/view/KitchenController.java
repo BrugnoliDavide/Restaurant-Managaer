@@ -4,7 +4,8 @@ import com.example.rm.app.SceneManager;
 import com.example.rm.app.UserSession;
 import com.example.rm.model.Order;
 import com.example.rm.preference.KitchenPreferences;
-import com.example.rm.view.component.KitchenPreferencesDialog;
+import com.example.rm.preference.SimpleGraphicsManager;
+import com.example.rm.view.component.*;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,7 +17,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
-import com.example.rm.view.component.ChangePasswordDialog;
 import javafx.stage.Stage;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -42,9 +42,16 @@ public class KitchenController {
         kitchenUseCase = useCase;
     }
 
+    private KitchenOrderCardFactory cardFactory;
+
     @FXML
     public void initialize() {
         UserSession session = UserSession.getInstance();
+
+        if (SimpleGraphicsManager.isEinkMode()){
+            this.cardFactory = new KitchenOrderCardFactoryEink(kitchenUseCase);
+        } else this.cardFactory = new KitchenOrderCardFactoryClassic(kitchenUseCase);
+
 
         if (session != null && session.getUser() != null) {
             com.example.rm.model.User currentUser = session.getUser();
@@ -98,6 +105,7 @@ public class KitchenController {
 
     @FXML
     public void refreshData() {
+
         ordersContainer.getChildren().clear();
 
         UserSession session = UserSession.getInstance();
@@ -130,8 +138,16 @@ public class KitchenController {
         }
 
         for (Order order : activeOrders) {
-            HBox card = createOrderCard(order);
-            ordersContainer.getChildren().add(card);
+
+            final javafx.scene.Node[] cardRef = new javafx.scene.Node[1];
+
+            cardRef[0] = cardFactory.createOrderCard(order, () -> {
+                logger.info("Ordine #" + order.getId() + " completato.");
+                kitchenUseCase.updateOrderStatus(order.getId(), "ready");
+                ordersContainer.getChildren().remove(cardRef[0]);
+            });
+
+            ordersContainer.getChildren().add(cardRef[0]);
         }
     }
 

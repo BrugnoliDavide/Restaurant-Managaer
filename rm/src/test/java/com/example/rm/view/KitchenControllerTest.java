@@ -1,6 +1,8 @@
 package com.example.rm.view;
 
+import com.example.rm.app.UserSession;
 import com.example.rm.controller.KitchenUseCase;
+import com.example.rm.model.User;
 import com.example.rm.preference.KitchenPreferences;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -11,45 +13,91 @@ import javafx.scene.shape.Circle;
 import org.junit.jupiter.api.*;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class KitchenControllerTest {
 
+    private static volatile boolean javaFxInitialized = false;
+
     @BeforeAll
-    static void initJavaFx() {
-        // Avvia il toolkit JavaFX una volta sola
-        new JFXPanel();
+    static void initJavaFx() throws Exception {
+        if (!javaFxInitialized) {
+            CountDownLatch latch = new CountDownLatch(1);
+            new Thread(() -> {
+                new JFXPanel();
+                javaFxInitialized = true;
+                latch.countDown();
+            }).start();
+            assertTrue(latch.await(5, TimeUnit.SECONDS), "JavaFX initialization timeout");
+        }
+    }
+
+    @BeforeEach
+    void setupUserSession() {
+        // Crea un utente mock
+        User mockUser = mock(User.class);
+        when(mockUser.getUsername()).thenReturn("testKitchen");
+        when(mockUser.getRole()).thenReturn("kitchen");
+
+        // Usa il metodo di test per inizializzare la sessione
+        UserSession.setInstanceForTesting(mockUser);
+    }
+
+    @AfterEach
+    void cleanup() {
+        // Pulisce la UserSession dopo ogni test
+        UserSession.clearInstanceForTesting();
+
+        // Ripristina il KitchenUseCase di default
+        KitchenController.setKitchenUseCase(null);
     }
 
     @Test
     void refreshData_whenNoOrders_showsEmptyLabel() throws Exception {
+        // Setup mock
         KitchenUseCase uc = mock(KitchenUseCase.class);
         KitchenPreferences prefs = mock(KitchenPreferences.class);
 
-        when(uc.loadPreferences("guest")).thenReturn(prefs);
+        when(uc.loadPreferences(anyString())).thenReturn(prefs);
         when(prefs.isSplitMixedCategoryOrders()).thenReturn(false);
         when(prefs.isIncludeOtherCategories()).thenReturn(true);
-        when(uc.loadFilteredOrders("guest")).thenReturn(Collections.emptyList());
+        when(prefs.getSelectedCategories()).thenReturn(new HashSet<>());
+        when(uc.loadFilteredOrders(anyString())).thenReturn(Collections.emptyList());
 
-        // NB: richiede che tu abbia aggiunto KitchenController.setKitchenUseCase(...)
-        KitchenController.setKitchenUseCase(uc); // [file:182]
+        KitchenController.setKitchenUseCase(uc);
 
-        KitchenController controller = new KitchenController();
-        setFxFields(controller);
+        AtomicReference<VBox> ordersContainerRef = new AtomicReference<>();
 
-        runOnFxThread(controller::refreshData);
+        runOnFxThreadAndWait(() -> {
+            KitchenController controller = new KitchenController();
+            setFxFields(controller);
 
-        VBox ordersContainer = (VBox) getField(controller, "ordersContainer"); // [file:182]
-        assertEquals(1, ordersContainer.getChildren().size());
-        assertTrue(ordersContainer.getChildren().get(0) instanceof Label);
-        assertEquals("Nessun ordine in attesa.", ((Label) ordersContainer.getChildren().get(0)).getText());
+            ordersContainerRef.set((VBox) getField(controller, "ordersContainer"));
+            controller.refreshData();
+        });
 
-        verify(uc).loadPreferences("guest");
-        verify(uc).loadFilteredOrders("guest");
+        runOnFxThreadAndWait(() -> {
+            VBox ordersContainer = ordersContainerRef.get();
+
+            assertNotNull(ordersContainer, "ordersContainer non deve essere null");
+            assertEquals(1, ordersContainer.getChildren().size(),
+                    "Deve esserci esattamente un elemento");
+            assertTrue(ordersContainer.getChildren().get(0) instanceof Label,
+                    "L'elemento deve essere una Label");
+
+            Label emptyLabel = (Label) ordersContainer.getChildren().get(0);
+            assertEquals("Nessun ordine in attesa.", emptyLabel.getText(),
+                    "Il testo della label deve corrispondere");
+        });
+
+        verify(uc, atLeastOnce()).loadPreferences("testKitchen");
+        verify(uc, atLeastOnce()).loadFilteredOrders("testKitchen");
         verify(uc, never()).splitMixedOrdersIfNeeded();
     }
 
@@ -58,62 +106,106 @@ class KitchenControllerTest {
         KitchenUseCase uc = mock(KitchenUseCase.class);
         KitchenPreferences prefs = mock(KitchenPreferences.class);
 
-        when(uc.loadPreferences("guest")).thenReturn(prefs);
+        when(uc.loadPreferences(anyString())).thenReturn(prefs);
         when(prefs.isSplitMixedCategoryOrders()).thenReturn(true);
         when(prefs.isIncludeOtherCategories()).thenReturn(true);
-        when(uc.loadFilteredOrders("guest")).thenReturn(Collections.emptyList());
+        when(prefs.getSelectedCategories()).thenReturn(new HashSet<>());
+        when(uc.loadFilteredOrders(anyString())).thenReturn(Collections.emptyList());
+        doNothing().when(uc).splitMixedOrdersIfNeeded();
 
-        KitchenController.setKitchenUseCase(uc); // [file:182]
+        KitchenController.setKitchenUseCase(uc);
 
-        KitchenController controller = new KitchenController();
-        setFxFields(controller);
+        runOnFxThreadAndWait(() -> {
+            KitchenController controller = new KitchenController();
+            setFxFields(controller);
+            controller.refreshData();
+        });
 
-        runOnFxThread(controller::refreshData);
-
-        verify(uc).splitMixedOrdersIfNeeded();
+        verify(uc, times(1)).splitMixedOrdersIfNeeded();
+        verify(uc, atLeastOnce()).loadPreferences("testKitchen");
+        verify(uc, atLeastOnce()).loadFilteredOrders("testKitchen");
     }
 
-    // ----- helpers -----
+    @Test
+    void refreshData_whenSplitDisabled_doesNotCallSplit() throws Exception {
+        KitchenUseCase uc = mock(KitchenUseCase.class);
+        KitchenPreferences prefs = mock(KitchenPreferences.class);
 
-    private static void runOnFxThread(Runnable r) throws Exception {
-        CountDownLatch latch = new CountDownLatch(1);
-        Platform.runLater(() -> {
-            try {
-                r.run();
-            } finally {
-                latch.countDown();
-            }
+        when(uc.loadPreferences(anyString())).thenReturn(prefs);
+        when(prefs.isSplitMixedCategoryOrders()).thenReturn(false);
+        when(prefs.isIncludeOtherCategories()).thenReturn(true);
+        when(prefs.getSelectedCategories()).thenReturn(new HashSet<>());
+        when(uc.loadFilteredOrders(anyString())).thenReturn(Collections.emptyList());
+
+        KitchenController.setKitchenUseCase(uc);
+
+        runOnFxThreadAndWait(() -> {
+            KitchenController controller = new KitchenController();
+            setFxFields(controller);
+            controller.refreshData();
         });
-        assertTrue(latch.await(3, TimeUnit.SECONDS), "Timeout JavaFX thread");
+
+        verify(uc, never()).splitMixedOrdersIfNeeded();
+        verify(uc, atLeastOnce()).loadPreferences("testKitchen");
+        verify(uc, atLeastOnce()).loadFilteredOrders("testKitchen");
+    }
+
+    // ============= METODI DI UTILITÀ =============
+
+    private static void runOnFxThreadAndWait(Runnable r) throws Exception {
+        if (Platform.isFxApplicationThread()) {
+            r.run();
+        } else {
+            CountDownLatch latch = new CountDownLatch(1);
+            AtomicReference<Throwable> exception = new AtomicReference<>();
+
+            Platform.runLater(() -> {
+                try {
+                    r.run();
+                } catch (Throwable t) {
+                    exception.set(t);
+                } finally {
+                    latch.countDown();
+                }
+            });
+
+            assertTrue(latch.await(5, TimeUnit.SECONDS),
+                    "Timeout nell'esecuzione dell'operazione JavaFX");
+
+            if (exception.get() != null) {
+                throw new RuntimeException("Errore nell'esecuzione JavaFX", exception.get());
+            }
+        }
     }
 
     private static void setFxFields(KitchenController controller) {
-        setField(controller, "ordersContainer", new VBox());      // [file:182]
-        setField(controller, "profileBtn", new StackPane());      // [file:182]
-        setField(controller, "profileCircle", new Circle());      // [file:182]
-        setField(controller, "lblHeaderName", new Label());       // [file:182]
-        setField(controller, "lblHeaderRole", new Label());       // [file:182]
-        setField(controller, "lblWelcomeMsg", new Label());       // [file:182]
-        setField(controller, "lblActiveFilters", new Label());    // [file:182]
+        setField(controller, "ordersContainer", new VBox());
+        setField(controller, "profileBtn", new StackPane());
+        setField(controller, "profileCircle", new Circle());
+        setField(controller, "lblHeaderName", new Label());
+        setField(controller, "lblHeaderRole", new Label());
+        setField(controller, "lblWelcomeMsg", new Label());
+        setField(controller, "lblActiveFilters", new Label());
     }
 
     private static void setField(Object target, String fieldName, Object value) {
         try {
-            var f = target.getClass().getDeclaredField(fieldName);
-            f.setAccessible(true);
-            f.set(target, value);
+            var field = target.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            field.set(target, value);
         } catch (Exception e) {
-            throw new RuntimeException("Cannot set field: " + fieldName, e);
+            fail("Errore impostando il campo " + fieldName + ": " + e.getMessage());
         }
     }
 
     private static Object getField(Object target, String fieldName) {
         try {
-            var f = target.getClass().getDeclaredField(fieldName);
-            f.setAccessible(true);
-            return f.get(target);
+            var field = target.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return field.get(target);
         } catch (Exception e) {
-            throw new RuntimeException("Cannot get field: " + fieldName, e);
+            fail("Errore recuperando il campo " + fieldName + ": " + e.getMessage());
+            return null;
         }
     }
 }

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+<BorderPane stylesheets="@/styleBN.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.EarningController">
+
+    <top>
+        <VBox spacing="10">
+            <padding>
+                <Insets bottom="10" left="20" right="20" top="20" />
+            </padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="15">
+
+                <StackPane fx:id="profileBtn" onMouseClicked="#handleProfileMenu" style="-fx-cursor: hand;">
+                    <Circle fx:id="profileCircle" fill="#c1c1c1" radius="25" stroke="#000000" strokeWidth="0" styleClass="profile-circle" />
+                </StackPane>
+
+                <VBox spacing="2">
+                    <Label fx:id="lblHeaderName" style="-fx-font-size: 16px;" styleClass="text-title" text="..." />
+                    <Label fx:id="lblHeaderRole" style="-fx-font-size: 14px;" styleClass="text-body" text="..." />
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS" />
+
+                <VBox alignment="CENTER_RIGHT" spacing="5">
+                    <Label prefHeight="32.0" prefWidth="135.0" style="-fx-font-size: 22px; -fx-font-weight: bold;" styleClass="text-header" text="Cash Desk" />
+                    <TextField fx:id="searchField" onKeyReleased="#onSearch" prefHeight="36.0" prefWidth="221.0" promptText="table" styleClass="input-standard" />
+                </VBox>
+            </HBox>
+
+            <Separator />
+        </VBox>
+    </top>
+
+    <center>
+        <SplitPane dividerPositions="0.6">
+            <VBox spacing="10">
+                <ScrollPane fitToWidth="true" stylesheets="@/styleBN.css" VBox.vgrow="ALWAYS">
+                    <VBox fx:id="ordersContainer" spacing="5">
+                        <padding>
+                            <Insets bottom="15" left="15" right="15" top="15" />
+                        </padding>
+                    </VBox>
+                </ScrollPane>
+            </VBox>
+
+            <VBox fx:id="detailsPane" spacing="15" style="-fx-background-color: #F9F9F9;">
+                <padding>
+                    <Insets bottom="20" left="20" right="20" top="20" />
+                </padding>
+                <Label fx:id="lblPlaceholder" styleClass="text-title" text="Select an order" />
+            </VBox>
+        </SplitPane>
+    </center>
+</BorderPane>

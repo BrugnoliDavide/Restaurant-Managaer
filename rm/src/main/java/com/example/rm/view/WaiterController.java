@@ -24,6 +24,11 @@ import javafx.stage.Stage;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.example.rm.preference.SimpleGraphicsManager;
+import com.example.rm.view.component.WaiterNotificationCardFactory;
+import com.example.rm.view.component.WaiterNotificationCardFactoryClassic;
+import com.example.rm.view.component.WaiterNotificationCardFactoryEink;
+import javafx.scene.Node;
 
 public class WaiterController {
 
@@ -40,10 +45,18 @@ public class WaiterController {
 
     private Timeline pollingTimeline;
     private static OrderUseCase orderUseCase = new OrderService();
+    private WaiterNotificationCardFactory cardFactory;
 
     @FXML
     public void initialize() {
         setupUserSession();
+
+        if (SimpleGraphicsManager.isEinkMode()) {
+            this.cardFactory = new WaiterNotificationCardFactoryEink(orderUseCase);
+        } else {
+            this.cardFactory = new WaiterNotificationCardFactoryClassic(orderUseCase);
+        }
+
         startPolling();
     }
 
@@ -69,7 +82,16 @@ public class WaiterController {
 
         for (Order order : readyOrders) {
             if (session.isTableManaged(order.getTavolo())) {
-                notificationsContainer.getChildren().add(createNotificationCard(order));
+                final Node[] cardRef = new Node[1];
+
+                cardRef[0] = cardFactory.createNotificationCard(order, () -> {
+                    boolean success = orderUseCase.markOrderAsDelivered(order.getId());
+                    if (success) {
+                        notificationsContainer.getChildren().remove(cardRef[0]);
+                        logger.info("Ordine " + order.getId() + " segnato come consegnato.");
+                    }
+                });
+                notificationsContainer.getChildren().add(cardRef[0]);
             }
         }
     }

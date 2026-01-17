@@ -1,6 +1,6 @@
 package com.example.rm.dao.impl;
 
-import com.example.rm.dao.OrderTierOneDAO;
+import com.example.rm.dao.OrderDAO;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * - orders.csv: dati principali ordini
  * - order_items/: directory contenente i file degli articoli per ciascun ordine
  */
-public class OrderDAOFile implements OrderTierOneDAO {
+public class OrderDAOFile implements OrderDAO {
 
     private static final Logger logger = Logger.getLogger(OrderDAOFile.class.getName());
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

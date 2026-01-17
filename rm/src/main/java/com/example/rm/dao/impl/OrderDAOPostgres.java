@@ -1,7 +1,6 @@
 package com.example.rm.dao.impl;
 
 import com.example.rm.dao.OrderDAO;
-import com.example.rm.dao.OrderTierOneDAO;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
@@ -20,7 +19,7 @@ import static com.example.rm.service.DBConstants.*;
  * Implementazione PostgreSQL del DAO per gli ordini.
  * Gestisce la persistenza degli ordini su database relazionale.
  */
-public class OrderDAOPostgres implements OrderTierOneDAO {
+public class OrderDAOPostgres implements OrderDAO {
 
     private static final Logger logger = Logger.getLogger(OrderDAOPostgres.class.getName());
     private static final String TODOSTRING = "to-do";

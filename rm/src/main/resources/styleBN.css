@@ -1,0 +1,217 @@
+
+.eink-card {
+    -fx-background-color: white;
+    -fx-border-color: black;
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+
+.eink-notification-card {
+
+}
+
+
+.eink-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: black;
+}
+
+
+.eink-items {
+    -fx-spacing: 6;
+}
+
+
+.eink-item {
+    -fx-font-size: 18px;
+    -fx-text-fill: black;
+}
+
+
+.eink-more {
+    -fx-font-size: 16px;
+    -fx-text-fill: black;
+    -fx-font-style: italic;
+}
+
+
+.eink-btn {
+    -fx-background-color: white;
+    -fx-border-color: black;
+    -fx-border-width: 3;
+    -fx-text-fill: black;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+
+.eink-btn-done {
+    -fx-background-color: white;
+    -fx-border-width: 4;
+}
+
+
+.eink-btn:pressed {
+    -fx-background-color: #e6e6e6;
+}
+.eink-btn:focused {
+    -fx-border-color: black;
+    -fx-border-width: 5;
+}
+
+.product-row {
+    -fx-background-color: white;
+    -fx-border-color: black;
+    -fx-border-width: 0 0 2 0;
+}
+.product-row:hover {
+    -fx-background-color: #eaeaea; /* oppure uguale a white se vuoi zero hover */
+}
+
+.product-row-title {
+    -fx-font-size: 24px;
+    -fx-text-fill: black;
+}
+.product-row-subtitle {
+    -fx-font-size: 18px;
+    -fx-text-fill: black;
+}
+.product-row-value {
+    -fx-font-size: 22px;
+    -fx-text-fill: black; /* niente verde in E-ink */
+}
+
+.product-row-minus {
+    -fx-background-color: white;
+    -fx-border-color: black;
+    -fx-border-width: 3;
+    -fx-text-fill: black;
+    -fx-font-size: 22px;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+}
+.product-row-qty {
+    -fx-font-size: 22px;
+    -fx-text-fill: black;
+}
+
+.table-card {
+    -fx-background-color: white;
+    -fx-border-color: black;
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.table-card.selected {
+    -fx-border-width: 4;           /* evidenzia selezione senza colori */
+    -fx-background-color: #f0f0f0; /* opzionale */
+}
+
+.table-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: black;
+}
+
+.table-subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: black;
+}
+
+.table-total {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: black;
+}
+
+.warning-pending {
+    -fx-font-size: 14px;
+    -fx-text-fill: black;
+}
+
+
+
+.table-card {
+    -fx-background-color: white;
+    -fx-border-color: black;
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.table-card.selected {
+    -fx-border-width: 4;
+    -fx-background-color: #f0f0f0;
+}
+
+.table-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: black;
+}
+
+.table-subtitle {
+    -fx-font-size: 16px;
+    -fx-text-fill: black;
+}
+
+.table-total {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: black;
+}
+
+.warning-pending {
+    -fx-font-size: 14px;
+    -fx-text-fill: black;
+}
+
+.details-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: black;
+}
+
+.btn-pay {
+    -fx-background-color: white;
+    -fx-border-color: black;
+    -fx-border-width: 3;
+    -fx-text-fill: black;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-padding: 18 20 18 20;
+}
+.btn-pay:pressed {
+    -fx-background-color: #e6e6e6;
+}
+
+.order-section {
+    -fx-background-color: white;
+    -fx-border-color: black;
+    -fx-border-width: 2;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 12;
+}
+
+.order-header-title,
+.order-row-total,
+.order-item-name,
+.order-item-price,
+.order-note,
+.order-status {
+    -fx-text-fill: black;
+}
+
+.order-header-title { -fx-font-size: 18px; -fx-font-weight: bold; }
+.order-row-total    { -fx-font-size: 18px; -fx-font-weight: bold; }
+.order-item-name    { -fx-font-size: 16px; }
+.order-item-price   { -fx-font-size: 16px; -fx-font-weight: bold; }
+.order-note         { -fx-font-size: 14px; }
+
