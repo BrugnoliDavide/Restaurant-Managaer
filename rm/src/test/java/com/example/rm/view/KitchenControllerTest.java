@@ -51,11 +51,9 @@ class KitchenControllerTest {
 
     @AfterEach
     void cleanup() {
-        // Pulisce la UserSession dopo ogni test
         UserSession.clearInstanceForTesting();
 
-        // Ripristina il KitchenUseCase di default
-        KitchenController.setKitchenUseCase(null);
+       KitchenController.setKitchenUseCase(null);
     }
 
     @Test
@@ -149,8 +147,6 @@ class KitchenControllerTest {
         verify(uc, atLeastOnce()).loadPreferences("testKitchen");
         verify(uc, atLeastOnce()).loadFilteredOrders("testKitchen");
     }
-
-    // ============= METODI DI UTILITÀ =============
 
     private static void runOnFxThreadAndWait(Runnable r) throws Exception {
         if (Platform.isFxApplicationThread()) {
