@@ -62,14 +62,7 @@ public class OrderDAOFile implements OrderDAO {
         try {
             List<String> lines = Files.readAllLines(ordersFilePath);
             for (int i = 1; i < lines.size(); i++) {
-                String[] parts = lines.get(i).split(CSV_SEPARATOR);
-                if (parts.length > 0) {
-                    try {
-                        supportCalculareNextOrder( maxId, parts);
-                    } catch (NumberFormatException e) {
-                        logger.log(Level.WARNING, "ID non valido alla riga {0}", i);
-                    }
-                }
+                maxId = updateMaxIdFromLine(maxId, lines.get(i), i);
             }
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Errore calcolo prossimo ID", e);
@@ -77,11 +70,21 @@ public class OrderDAOFile implements OrderDAO {
         return maxId + 1;
     }
 
-    private int supportCalculareNextOrder(int maxId, String[] parts){
-        int id = Integer.parseInt(parts[0].trim());
-        maxId = Math.max(maxId, id);
-        return maxId;
-    };
+    private int updateMaxIdFromLine(int currentMaxId, String line, int lineIndex) {
+        String[] parts = line.split(CSV_SEPARATOR);
+        if (parts.length == 0) {
+            return currentMaxId;
+        }
+
+        try {
+            int id = Integer.parseInt(parts[0].trim());
+            return Math.max(currentMaxId, id);
+        } catch (NumberFormatException e) {
+            logger.log(Level.WARNING, "ID non valido alla riga {0}", lineIndex);
+            return currentMaxId;
+        }
+    }
+
 
     @Override
     public synchronized boolean createOrder(List<OrderItem> items, Integer tavolo, String note, User utente) {

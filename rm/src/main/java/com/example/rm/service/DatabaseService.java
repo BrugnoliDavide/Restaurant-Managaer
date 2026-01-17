@@ -17,7 +17,7 @@ import static com.example.rm.service.DBConstants.*;
 import java.time.LocalDateTime;
 import com.example.rm.preference.PreferencesSerializer;
 import com.example.rm.preference.PreferencesConstants;
-import java.util.Map;
+
 
 
 public class DatabaseService {
@@ -576,43 +576,6 @@ public class DatabaseService {
         return orderDAO.decomposeOrderIfNeeded(orderId);
     }
 
-    private static int insertOrderAndGetId(PreparedStatement pstmtNewOrder, String username, Integer tavolo, String note) throws SQLException {
-        pstmtNewOrder.setString(1, username);
-        if (tavolo != null) {
-            pstmtNewOrder.setInt(2, tavolo);
-        } else {
-            pstmtNewOrder.setNull(2, Types.INTEGER);
-        }
-        pstmtNewOrder.setString(3, note);
-        pstmtNewOrder.setString(4, TODOSTRING);
-
-        pstmtNewOrder.executeUpdate();
-
-        try (ResultSet keys = pstmtNewOrder.getGeneratedKeys()) {
-            if (!keys.next()) {
-                throw new SQLException("ID non generato per il nuovo ordine");
-            }
-            return keys.getInt(1);
-        }
-    }
-
-    private static void rollbackQuietly(Connection conn, SQLException original) {
-        try {
-            conn.rollback();
-        } catch (SQLException rollbackEx) {
-            original.addSuppressed(rollbackEx);
-        }
-    }
-
-    private static void restoreAutoCommitQuietly(Connection conn, boolean previousAutoCommit) {
-        try {
-            conn.setAutoCommit(previousAutoCommit);
-        } catch (SQLException ex) {
-            Logger.getLogger(DatabaseService.class.getName())
-                    .log(Level.SEVERE, "Impossibile ripristinare autoCommit", ex);
-        }
-    }
-
     public static boolean hasPendingOrders(int tavolo) {
         if (orderDAO == null) {
             throw new IllegalStateException("DAO ordini non inizializzato. Chiamare setConnectionConfig o setFileSystemMode.");
@@ -636,7 +599,6 @@ public class DatabaseService {
             orderDAO = new OrderDAOFile(basePath);
             logger.log(Level.INFO, "Modalità file system attivata per ordini: {0}", basePath);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Errore inizializzazione file system per ordini", e);
             throw new IllegalStateException("Impossibile inizializzare file system", e);
         }
     }
