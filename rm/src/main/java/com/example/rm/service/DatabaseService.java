@@ -29,7 +29,6 @@ public class DatabaseService {
     private static String pass = null;
 
     private static final  String TIPOLOGIASTRING = "tipologia";
-    private static final  String TODOSTRING = "to-do";
 
     private static OrderDAO orderDAO = null;
 
