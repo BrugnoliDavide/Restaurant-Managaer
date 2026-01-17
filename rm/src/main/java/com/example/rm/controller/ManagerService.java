@@ -4,7 +4,6 @@ package com.example.rm.controller;
 import com.example.rm.model.User;
 import com.example.rm.service.DatabaseService;
 import java.util.List;
-import java.util.logging.Logger;
 
 public class ManagerService implements ManagerUseCase {
 

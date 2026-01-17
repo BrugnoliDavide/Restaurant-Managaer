@@ -37,6 +37,7 @@ public class KitchenController {
 
     private static KitchenUseCase kitchenUseCase = new KitchenService();
     public static final Logger logger = Logger.getLogger(KitchenController.class.getName());
+    private String ORDINESTRING = "Ordine #";
 
     public static void setKitchenUseCase(KitchenUseCase useCase) {
         kitchenUseCase = useCase;
@@ -142,7 +143,7 @@ public class KitchenController {
             final javafx.scene.Node[] cardRef = new javafx.scene.Node[1];
 
             cardRef[0] = cardFactory.createOrderCard(order, () -> {
-                logger.info("Ordine #" + order.getId() + " completato.");
+                logger.info(ORDINESTRING + order.getId() + " completato.");
                 kitchenUseCase.updateOrderStatus(order.getId(), "ready");
                 ordersContainer.getChildren().remove(cardRef[0]);
             });
@@ -151,56 +152,6 @@ public class KitchenController {
         }
     }
 
-    private HBox createOrderCard(Order order) {
-        HBox card = new HBox(20);
-        card.getStyleClass().add("order-card");
-        card.setPadding(new Insets(15));
-        card.setAlignment(Pos.CENTER_LEFT);
-
-        VBox leftInfo = new VBox(5);
-        HBox.setHgrow(leftInfo, Priority.ALWAYS);
-
-        String titleText = "Ordine #" + order.getId();
-        if (order.getTavolo() > 0) titleText += " (Tavolo " + order.getTavolo() + ")";
-
-        Label lblTitle = new Label(titleText);
-        lblTitle.getStyleClass().add("order-title");
-
-        Label lblTime = new Label("Arrivato alle: " + order.getDataOra().format(DateTimeFormatter.ofPattern("HH:mm")));
-        lblTime.getStyleClass().add("order-time");
-
-        VBox itemsBox = new VBox(2);
-        itemsBox.setPadding(new Insets(10, 0, 0, 0));
-
-        List<String> items = kitchenUseCase.getOrderItemsDisplay(order.getId());
-        for (String itemStr : items) {
-            Label itemLbl = new Label("• " + itemStr);
-            itemLbl.getStyleClass().add("order-item");
-            itemsBox.getChildren().add(itemLbl);
-        }
-
-        leftInfo.getChildren().addAll(lblTitle, lblTime, itemsBox);
-
-        if (order.getNote() != null && !order.getNote().isEmpty()) {
-            Label lblNote = new Label("NOTE: " + order.getNote());
-            lblNote.getStyleClass().add("order-note-kitchen");
-            leftInfo.getChildren().add(lblNote);
-        }
-
-        Button btnDone = new Button("PRONTO");
-        btnDone.getStyleClass().add("btn-ready");
-
-        btnDone.setOnAction(e -> {
-            logger.info("Ordine #" + order.getId() + " completato.");
-            kitchenUseCase.updateOrderStatus(order.getId(), "ready");
-
-            ordersContainer.getChildren().remove(card);
-        });
-
-        card.getChildren().addAll(leftInfo, btnDone);
-
-        return card;
-    }
 
     private void showPreferencesDialog() {
         UserSession session = UserSession.getInstance();

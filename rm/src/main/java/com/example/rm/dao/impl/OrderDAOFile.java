@@ -32,7 +32,9 @@ public class OrderDAOFile implements OrderDAO {
     private final Path ordersFilePath;
     private final Path orderItemsDir;
     private int nextOrderId;
-
+    private String ORDERSTRING = "order_";
+    private String DELIVEREDSTRING = "delivered";
+    
     /**
      * Costruttore con specifica del percorso base
      * @param basePath Percorso della directory base per i file
@@ -114,7 +116,7 @@ public class OrderDAOFile implements OrderDAO {
     }
 
     private void saveOrderItems(int orderId, List<OrderItem> items) throws IOException {
-        Path itemsFile = orderItemsDir.resolve("order_" + orderId + ".csv");
+        Path itemsFile = orderItemsDir.resolve(ORDERSTRING + orderId + ".csv");
         StringBuilder content = new StringBuilder("menu_item_id;quantita;prezzo_snapshot;costo_snapshot;nome_snapshot\n");
 
         for (OrderItem item : items) {
@@ -164,7 +166,7 @@ public class OrderDAOFile implements OrderDAO {
     }
 
     private double calculateOrderTotal(int orderId) {
-        Path itemsFile = orderItemsDir.resolve("order_" + orderId + ".csv");
+        Path itemsFile = orderItemsDir.resolve(ORDERSTRING + orderId + ".csv");
         if (!Files.exists(itemsFile)) {
             return 0.0;
         }
@@ -240,7 +242,7 @@ public class OrderDAOFile implements OrderDAO {
     @Override
     public List<String> getOrderItemsForDisplay(int orderId) {
         List<String> details = new ArrayList<>();
-        Path itemsFile = orderItemsDir.resolve("order_" + orderId + ".csv");
+        Path itemsFile = orderItemsDir.resolve(ORDERSTRING + orderId + ".csv");
 
         if (!Files.exists(itemsFile)) {
             return details;
@@ -268,7 +270,7 @@ public class OrderDAOFile implements OrderDAO {
     @Override
     public List<OrderItem> getOrderItemsDetailed(int orderId) {
         List<OrderItem> items = new ArrayList<>();
-        Path itemsFile = orderItemsDir.resolve("order_" + orderId + ".csv");
+        Path itemsFile = orderItemsDir.resolve(ORDERSTRING + orderId + ".csv");
 
         if (!Files.exists(itemsFile)) {
             return items;
@@ -316,12 +318,12 @@ public class OrderDAOFile implements OrderDAO {
 
     @Override
     public List<Order> getOrdersToPay() {
-        return getOrdersByStatus("delivered");
+        return getOrdersByStatus(DELIVEREDSTRING);
     }
 
     @Override
     public boolean markOrderAsDelivered(int orderId) {
-        return setOrderStatus(orderId, "delivered");
+        return setOrderStatus(orderId, DELIVEREDSTRING);
     }
 
     @Override
@@ -340,13 +342,13 @@ public class OrderDAOFile implements OrderDAO {
 
         return getAllOrdersWithTotal().stream()
                 .anyMatch(order -> order.getTavolo() == tavolo &&
-                        !order.getStatus().equals("delivered"));
+                        !order.getStatus().equals(DELIVEREDSTRING));
     }
     @Override
     public List<Integer> getPendingOrderIds(int tavolo) {
         return getAllOrdersWithTotal().stream()
                 .filter(order -> order.getTavolo() == tavolo &&
-                        !order.getStatus().equals("delivered") &&
+                        !order.getStatus().equals(DELIVEREDSTRING) &&
                         !order.getStatus().equals("canceled"))
                 .map(Order::getId)
                 .collect(Collectors.toList());
