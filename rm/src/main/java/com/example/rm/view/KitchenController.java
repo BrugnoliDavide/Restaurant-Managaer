@@ -7,18 +7,16 @@ import com.example.rm.preference.KitchenPreferences;
 import com.example.rm.preference.SimpleGraphicsManager;
 import com.example.rm.view.component.*;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+
 import javafx.geometry.Side;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
+
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
-import java.time.format.DateTimeFormatter;
+
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,7 +35,7 @@ public class KitchenController {
 
     private static KitchenUseCase kitchenUseCase = new KitchenService();
     public static final Logger logger = Logger.getLogger(KitchenController.class.getName());
-    private String ORDINESTRING = "Ordine #";
+    private String ordineString = "Ordine #";
 
     public static void setKitchenUseCase(KitchenUseCase useCase) {
         kitchenUseCase = useCase;
@@ -143,7 +141,7 @@ public class KitchenController {
             final javafx.scene.Node[] cardRef = new javafx.scene.Node[1];
 
             cardRef[0] = cardFactory.createOrderCard(order, () -> {
-                logger.info(ORDINESTRING + order.getId() + " completato.");
+                logger.info(ordineString + order.getId() + " completato.");
                 kitchenUseCase.updateOrderStatus(order.getId(), "ready");
                 ordersContainer.getChildren().remove(cardRef[0]);
             });

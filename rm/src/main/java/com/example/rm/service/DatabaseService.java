@@ -518,7 +518,7 @@ public class DatabaseService {
     }
 
     /**
-     * Recupera gli ordini attivi della cucina FILTRATI per categoria.
+     * recupera gli ordini attivi della cucina FILTRATI per categoria.
      * @param username Username dell'utente cucina
      * @return Lista di ordini che rientrano nelle preferenze dell'utente
      */
@@ -563,8 +563,8 @@ public class DatabaseService {
     }
 
     /**
-     * Scompone un ordine in più ordini per categoria se necessario.
-     * Mantiene tutti gli snapshot dei dati originali.
+     * scompone un ordine in più ordini per categoria
+     * mantiene tutti gli snapshot dei dati originali
      *
      * @param orderId ID dell'ordine da scomporre
      * @return true se l'operazione è riuscita
@@ -574,65 +574,6 @@ public class DatabaseService {
             throw new IllegalStateException("DAO ordini non inizializzato. Chiamare setConnectionConfig o setFileSystemMode.");
         }
         return orderDAO.decomposeOrderIfNeeded(orderId);
-    }
-
-
-    private static void createCategoryOrders(Connection conn,
-                                             Map<String, List<OrderItem>> itemsByCategory,
-                                             String username,
-                                             Integer tavolo,
-                                             String note) throws SQLException {
-
-        final String sqlNewOrder =
-                "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
-
-        final String sqlNewItem =
-                "INSERT INTO order_items (order_id, menu_item_id, quantita, prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
-                        "VALUES (?, ?, ?, ?, ?, ?)";
-
-        boolean previousAutoCommit = conn.getAutoCommit();
-
-        try (PreparedStatement pstmtNewOrder =
-                     conn.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
-             PreparedStatement pstmtNewItem =
-                     conn.prepareStatement(sqlNewItem)) {
-
-            conn.setAutoCommit(false);
-
-            for (List<OrderItem> categoryItems : itemsByCategory.values()) {
-
-                if (categoryItems == null || categoryItems.isEmpty()) {
-                    continue;
-                }
-
-                int newOrderId = insertOrderAndGetId(
-                        pstmtNewOrder, username, tavolo, note
-                );
-
-                pstmtNewItem.setInt(1, newOrderId);
-
-                for (OrderItem item : categoryItems) {
-                    pstmtNewItem.setInt(2, item.getProduct().getId());
-                    pstmtNewItem.setInt(3, item.getQuantita());
-                    pstmtNewItem.setDouble(4, item.getPrezzoSnapshot());
-                    pstmtNewItem.setDouble(5, item.getCostoSnapshot());
-                    pstmtNewItem.setString(6, item.getNomeSnapshot());
-                    pstmtNewItem.addBatch();
-                }
-
-                pstmtNewItem.executeBatch();
-                pstmtNewItem.clearBatch();
-            }
-
-            conn.commit();
-
-        } catch (SQLException e) {
-            rollbackQuietly(conn, e);
-            throw e;
-
-        } finally {
-            restoreAutoCommitQuietly(conn, previousAutoCommit);
-        }
     }
 
     private static int insertOrderAndGetId(PreparedStatement pstmtNewOrder, String username, Integer tavolo, String note) throws SQLException {
