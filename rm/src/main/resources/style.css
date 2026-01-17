@@ -83,7 +83,10 @@
       -fx-text-fill: white;
       -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 5, 0, 0, 1);
    }
-
+context-menu-item-danger{
+    -fx-text-fill: #ff0000;
+    -fx-font-weight: bold;
+}
 
 /* da qui in poi ci sono scassi grafiche specifiche */
 

@@ -114,7 +114,6 @@ public final class DBConfigStore {
 
         if (DemoModeManager.isDemoMode()) {
             logger.log(Level.INFO,"modalità DEMO attiva: i dati inseririti saranno eliminati alla chiusura del sistema");
-            return;
         }
         else{
 

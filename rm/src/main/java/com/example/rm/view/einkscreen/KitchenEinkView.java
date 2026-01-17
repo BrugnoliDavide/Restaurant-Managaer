@@ -1,4 +1,4 @@
-package com.example.rm.view.EinkScreen;
+package com.example.rm.view.einkscreen;
 
 import com.example.rm.view.AbstractView;
 

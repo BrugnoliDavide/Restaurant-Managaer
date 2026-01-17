@@ -5,7 +5,6 @@ import com.example.rm.model.MenuProduct;
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
-import com.example.rm.service.DBConstants;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -23,7 +22,6 @@ public class OrderDAOPostgres implements OrderDAO {
 
     private static final Logger logger = Logger.getLogger(OrderDAOPostgres.class.getName());
     private static final String TODOSTRING = "to-do";
-    private static final String TIPOLOGIASTRING = "tipologia";
 
     private final String url;
     private final String user;

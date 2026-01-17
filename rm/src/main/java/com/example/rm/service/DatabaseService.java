@@ -3,26 +3,20 @@ package com.example.rm.service;
 import com.example.rm.dao.OrderDAO;
 import com.example.rm.dao.impl.OrderDAOPostgres;
 import com.example.rm.dao.impl.OrderDAOFile;
-
-import com.example.rm.exception.DatabaseNotConfiguredException;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
 import com.example.rm.preference.KitchenPreferences;
-
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import static com.example.rm.service.DBConstants.*;
 import java.time.LocalDateTime;
-
 import com.example.rm.preference.PreferencesSerializer;
 import com.example.rm.preference.PreferencesConstants;
-import java.util.HashMap;
 import java.util.Map;
 
 

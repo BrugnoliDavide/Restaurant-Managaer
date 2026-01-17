@@ -71,10 +71,6 @@ public class UsersController {
         if (selected != null) {
 
 
-            if (selected.getUsername().equals("admin")) {
-                showAlert("Azione Negata", "Non puoi cancellare l'utente admin principale.");
-                return;
-            }
 
 
 

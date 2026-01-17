@@ -2,10 +2,10 @@ package com.example.rm.view;
 
 import com.example.rm.exception.ViewNotFoundException;
 import com.example.rm.preference.SimpleGraphicsManager;
-import com.example.rm.view.EinkScreen.EarningEinkView;
-import com.example.rm.view.EinkScreen.KitchenEinkView;
-import com.example.rm.view.EinkScreen.TakeOrderEinkView;
-import com.example.rm.view.EinkScreen.WaiterEinkView;
+import com.example.rm.view.einkscreen.EarningEinkView;
+import com.example.rm.view.einkscreen.KitchenEinkView;
+import com.example.rm.view.einkscreen.TakeOrderEinkView;
+import com.example.rm.view.einkscreen.WaiterEinkView;
 import com.example.rm.view.screens.*;
 
 public final class ViewFactory {
