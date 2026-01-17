@@ -60,7 +60,7 @@
 
             <TextField fx:id="txtUser" prefWidth="150" promptText="Username" styleClass="input-standard" stylesheets="@style.css" />
             <TextField fx:id="txtPass" prefWidth="150" promptText="Password" styleClass="input-standard" stylesheets="@style.css" />
-            <ComboBox fx:id="comboRole" prefWidth="150" promptText="Seleziona Ruolo" styleClass="btn-primary" stylesheets="@style.css" />
+            <ComboBox fx:id="comboRole" prefWidth="150" promptText="Ruolo" style="-fx-background-color: #bdbdbdff;" styleClass="btn-primary" stylesheets="@style.css" />
 
             <Button onAction="#handleAdd" styleClass="btn-save" stylesheets="@style.css" text="Aggiungi" />
 

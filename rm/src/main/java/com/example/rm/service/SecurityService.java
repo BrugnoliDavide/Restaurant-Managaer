@@ -1,5 +1,6 @@
 package com.example.rm.service;
 
+import com.example.rm.exception.AuthenticationException;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.sql.Connection;
@@ -27,6 +28,11 @@ public final class SecurityService {
      */
     public static String authenticate(String username, String candidatePassword) {
 
+        if (username == null || username.isBlank()
+                || candidatePassword == null || candidatePassword.isBlank()) {
+            throw new IllegalArgumentException("Username o password non validi");
+        }
+
         final String sql =
                 "SELECT password, role FROM users WHERE username = ?";
 
@@ -38,25 +44,28 @@ public final class SecurityService {
             try (ResultSet rs = pstmt.executeQuery()) {
 
                 if (!rs.next()) {
-                    return null;
+                    throw new AuthenticationException("Credenziali non valide");
                 }
 
                 String storedHash = rs.getString("password");
                 String role       = rs.getString("role");
 
-                if (BCrypt.checkpw(candidatePassword, storedHash)) {
-                    return role;
+                if (!BCrypt.checkpw(candidatePassword, storedHash)) {
+                    throw new AuthenticationException("Credenziali non valide");
                 }
+
+                return role;
             }
 
         } catch (SQLException e) {
             logger.log(
                     Level.SEVERE,
-                    "Errore imprevisto durante il login per utente: {0}, {1}", new Object[]{username, e}
+                    "Errore durante il login per utente: {0}", username
+            );
+            throw new AuthenticationException(
+                    "Errore di accesso al database durante l'autenticazione", e
             );
         }
-
-        return null;
     }
 
 

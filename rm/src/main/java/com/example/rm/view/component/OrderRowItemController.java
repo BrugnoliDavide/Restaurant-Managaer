@@ -21,17 +21,11 @@ import java.util.logging.Logger;
  */
 public class OrderRowItemController {
 
-    // ========================================
-    // FXML BINDINGS
-    // ========================================
 
     @FXML private HBox root;
     @FXML private Label lblTitle;
     @FXML private Label lblSubtitle;
 
-    // ========================================
-    // STATE
-    // ========================================
 
     private Order order;
     private Consumer<Order> onSelectCallback;
@@ -40,9 +34,6 @@ public class OrderRowItemController {
     private static final Logger logger =
             Logger.getLogger(OrderRowItemController.class.getName());
 
-    // ========================================
-    // STILI CSS
-    // ========================================
 
     private static final String STYLE_NORMAL =
             "-fx-border-color: #EEE; -fx-border-width: 0 0 1 0; " +
@@ -56,9 +47,6 @@ public class OrderRowItemController {
             "-fx-border-color: #2ecc71; -fx-border-width: 0 0 3 0; " +
                     "-fx-background-color: #E8F8F5; -fx-cursor: hand; -fx-padding: 12;";
 
-    // ========================================
-    // PUBLIC METHODS
-    // ========================================
 
     /**
      * Imposta l'ordine da visualizzare nella riga.

@@ -6,7 +6,7 @@ package com.example.rm.controller;
 public interface DBConfigUseCase {
 
     /**
-     * DTO per i dati di configurazione DB.
+     * DTO (Data Transfer Object) per i dati di configurazione DB.
      */
     class DBConfig {
         public final String host;

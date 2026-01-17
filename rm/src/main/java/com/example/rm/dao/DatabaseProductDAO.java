@@ -23,7 +23,7 @@ public class DatabaseProductDAO implements ProductDAO {
         if (productId == null || productId <= 0) {
             return false;
         }
-        // DatabaseService.deleteProduct richiede un int
+        // DatabaseService.deleteProduct richiede un int perchiò "l'asserzione"
         return DatabaseService.deleteProduct(productId.intValue());
     }
 }

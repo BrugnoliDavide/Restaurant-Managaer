@@ -61,8 +61,8 @@
 
 /* 4. TESTI */
 .text-title { -fx-text-fill: -fx-text-primary; -fx-font-weight: bold; }
-.text-subtitle { -fx-text-fill: #777777; fx-font-weight: italic; }
-.text-link { -fx-text-fill: #777777; fx-font-weight: italic;  }
+.text-subtitle { -fx-text-fill: #777777; -fx-font-weight: italic; }
+.text-link { -fx-text-fill: #777777; -fx-font-weight: italic;  }
 .text-link:hover { -fx-text-fill: #777777; -fx-font-weight: bold; -fx-underline: true}
 
 .text-body { -fx-text-fill: -fx-text-primary; }

@@ -23,7 +23,6 @@ public class MainApp extends Application {
         Parent root = LoginController.getFXMLView();
         SceneManager.init(primaryStage);
         primaryStage.setScene(new Scene(root));
-        SceneManager.setCurrentScene(primaryStage.getScene());
 
         primaryStage.setTitle("Restaurant Manager");
         primaryStage.setMinWidth(400);

@@ -7,15 +7,6 @@ import java.util.List;
 
 public interface ManagerUseCase {
 
-
-    List<Order> loadAllOrders();
-
-    boolean updateOrderStatus(int orderId, String newStatus);
-
-    boolean deleteOrder(int orderId);
-
-    Order findOrderById(int orderId);
-
     List<User> loadAllUsers();
 
     boolean deleteUser(String userId);

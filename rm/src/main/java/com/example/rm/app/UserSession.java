@@ -1,6 +1,8 @@
 package com.example.rm.app;
 
+import com.example.rm.exception.InvalidUserSessionException;
 import com.example.rm.model.User;
+import javafx.scene.Scene;
 
 public class UserSession {
 
@@ -19,16 +21,18 @@ public class UserSession {
         return instance;
     }
 
-
+    // Singleton già esistente
     public static UserSession getInstance() {
+        if (instance == null) {
+            throw new InvalidUserSessionException();
+        }
         return instance;
     }
 
-
     public static void cleanUserSession() {
         instance = null;
+        SceneManager.clearViewCache();
     }
-
 
     public User getUser() {
         return user;
@@ -36,13 +40,11 @@ public class UserSession {
 
     private java.util.Set<Integer> managedTables = null;
 
-
     public void setManagedTables(java.util.Set<Integer> tables) {
         this.managedTables = tables;
     }
 
     public boolean isTableManaged(int tableNumber) {
-        // Se è null, significa che non c'è filtro: gestisce TUTTI i tavoli
         if (managedTables == null || managedTables.isEmpty()) {
             return true;
         }

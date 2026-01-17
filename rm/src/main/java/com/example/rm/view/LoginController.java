@@ -48,8 +48,7 @@ public class LoginController {
 
     @FXML
     private void handleLogin() {
-        // Rimuove il rosso nei campi ca compilare se precedentemente era presente
-        resetStyle();
+       resetStyle();
 
         boolean ok = DatabaseService.testConnection();
         AppStatus.setDbConnectionOk(ok);
@@ -95,19 +94,19 @@ public class LoginController {
             navigateToRole(role.toLowerCase());
 
         } else {
-            showError(); // Mette i bordi rossi
+            showError();
         }
     }
 
 
     private void showError() {
-        // bordo rosso
+
         String errorStyle = "-fx-border-color: #E02E2E; -fx-border-width: 2px; -fx-border-radius: 5px; -fx-background-radius: 5px;";
 
         userField.setStyle(errorStyle);
         passField.setStyle(errorStyle);
 
-        //  Animazione scossa (shake) da aggiungere qui in futuro
+
     }
 
     private void resetStyle() {

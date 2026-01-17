@@ -6,8 +6,7 @@ public class UsersFactory {
 
     private UsersFactory() {
         throw new IllegalStateException("Utility class");
-        //trattandosi di un eccezione standard non è necessario "scriverla"
-    }
+   }
     
     // Factory Method
     public static User createUser(String username, String role) {

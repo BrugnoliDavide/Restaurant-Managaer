@@ -5,9 +5,6 @@ import java.util.List;
 
 public interface OrderUseCase {
 
-    List<Order> loadAllOrders();
-
-    List<Order> loadOpenOrders();
 
     List<Order> loadReadyOrdersForWaiter();
 
@@ -15,11 +12,6 @@ public interface OrderUseCase {
 
     boolean markOrderAsDelivered(int orderId);
 
-    void markAsReady(int orderId);
-
-    void closeOrder(int orderId);
-
-    void cancelOrder(int orderId);
 
     boolean createOrder(
             List<com.example.rm.model.OrderItem> items,

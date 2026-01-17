@@ -32,8 +32,6 @@ public class ProductDetailController {
     @FXML private Button btnDelete;
     @FXML private VBox contentBox;
 
-
-
     private MenuProduct product;
 
 

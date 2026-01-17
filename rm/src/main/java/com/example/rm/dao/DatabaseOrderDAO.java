@@ -9,8 +9,7 @@ public class DatabaseOrderDAO implements OrderDAO {
 
     public List<Order> loadAllOrdersWithDisplayItems() {
         // Usa getAllOrdersWithTotal() + batch getOrderItemsForDisplay
-        //volendo si potrebbe fare un JOIN SQL in 1 query o cache Map<Integer, List<String>> per migliorare le prestazioni
-
+        //volendo si potrebbe fare un JOIN SQL in 1 query o cache per migliorare le prestazioni
         return DatabaseService.getAllOrdersWithTotal();
     }
 

@@ -7,8 +7,7 @@ public class OrderItem {
     private int quantita;
     private double prezzoSnapshot;
     private double costoSnapshot;
-    private String nomeSnapshot;  // ✅ NUOVO: Nome del prodotto al momento dell'ordine
-
+    private String nomeSnapshot;
 
 
     public OrderItem() {
@@ -67,32 +66,12 @@ public class OrderItem {
 
 
 
-    /**
-     * @return Nome del prodotto
-     */
+
     public String getDisplayName() {
         if (nomeSnapshot != null && !nomeSnapshot.isEmpty()) {
             return nomeSnapshot;
         }
         return product != null ? product.getNome() : "Prodotto sconosciuto";
-    }
-
-    /**
- .
-     * @return Prezzo snapshot * quantità
-     */
-    public double getTotale() {
-        return prezzoSnapshot * quantita;
-    }
-
-
-    public double getCostoTotale() {
-        return costoSnapshot * quantita;
-    }
-
-
-    public double getMargine() {
-        return (prezzoSnapshot - costoSnapshot) * quantita;
     }
 
     @Override

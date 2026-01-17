@@ -12,7 +12,6 @@ public class DatabaseKitchenPreferencesDAO implements KitchenPreferencesDAO {
 
     @Override
     public KitchenPreferences loadByUsername(String username) {
-        // Usa i metodi esistenti del tuo DatabaseService
         return DatabaseService.getKitchenPreferences(username);
     }
 

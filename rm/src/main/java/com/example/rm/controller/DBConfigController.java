@@ -24,12 +24,13 @@ public class DBConfigController implements DBConfigUseCase {
             return false;
         }
 
-        // Se password vuota, recupera quella esistente dal DBConfigStore
+        // Se password è vuota, recupera quella esistente dal DBConfigStore di
+        // modo che per non cambiare la password basti non inserirla
         String finalPassword;
         if (password == null || password.isBlank()) {
             finalPassword = DBConfigStore.getPassword();
             if (finalPassword == null || finalPassword.isBlank()) {
-                // Non c'è password salvata e l'utente non ne ha inserita una
+                // finalPassword == null significa che non c'è password salvata
                 return false;
             }
         } else {

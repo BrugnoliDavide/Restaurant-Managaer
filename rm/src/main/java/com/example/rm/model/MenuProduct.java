@@ -83,20 +83,13 @@ public class MenuProduct implements Serializable {
     public StringProperty tipologiaProperty() { return tipologia; }
 
     public double getPrezzoVendita() { return prezzoVendita.get(); }
-    public void setPrezzoVendita(double prezzo) { this.prezzoVendita.set(prezzo); }
-    public DoubleProperty prezzoVenditaProperty() { return prezzoVendita; }
 
     public double getCostoRealizzazione() { return costoRealizzazione.get(); }
-    public void setCostoRealizzazione(double costo) { this.costoRealizzazione.set(costo); }
-    public DoubleProperty costoRealizzazioneProperty() { return costoRealizzazione; }
 
     public String getAllergeni() { return allergeni.get(); }
     public void setAllergeni(String allergeni) {
         this.allergeni.set(allergeni != null ? allergeni : "");
     }
-    public StringProperty allergeniProperty() { return allergeni; }
-
-
 
     public double getMargine() {
         return getPrezzoVendita() - getCostoRealizzazione();

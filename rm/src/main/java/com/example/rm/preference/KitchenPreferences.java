@@ -144,20 +144,4 @@ public class KitchenPreferences {
         return Objects.hash(username, splitMixedCategoryOrders, selectedCategories, includeOtherCategories);
     }
 
-    public static Set<String> extractCategoriesFromItems(List<OrderItem> items) {
-        Set<String> categories = new HashSet<>();
-        if (items != null) {
-            for (OrderItem item : items) {
-                if (item.getProduct() != null && item.getProduct().getTipologia() != null) {
-                    categories.add(item.getProduct().getTipologia());
-                }
-            }
-        }
-        return categories;
-    }
-
-
-
-
-
 }

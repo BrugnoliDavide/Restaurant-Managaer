@@ -11,7 +11,6 @@ public abstract class AbstractView implements View {
     private final Parent root;
 
     protected AbstractView(String fxmlPath) {
-        // CORRETTO: Gestione esplicita del caso null prima di requireNonNull
         URL resource = getClass().getResource(fxmlPath);
 
         if (resource == null) {
