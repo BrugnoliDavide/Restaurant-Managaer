@@ -29,7 +29,7 @@
                 <Label fx:id="lblHeaderRole" styleClass="text-subtitle" text="..." />
             </VBox>
 
-            <Label fx:id="lblWelcomeTop" style="-fx-font-size: 21;" styleClass="text-subtitle" text="..." />
+            <Label fx:id="lblWelcomeTop" style="-fx-font-size: 13;" styleClass="text-subtitle" text="..." />
 
             <Region HBox.hgrow="ALWAYS" />
         </HBox>

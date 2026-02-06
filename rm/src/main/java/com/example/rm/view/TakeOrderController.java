@@ -7,7 +7,12 @@ import com.example.rm.model.User;
 import com.example.rm.service.ProductLoadingService;
 import com.example.rm.view.component.OrderReviewDialog;
 import com.example.rm.view.component.ProductRowFactory;
+import javafx.animation.FadeTransition;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -19,10 +24,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -32,9 +39,10 @@ import com.example.rm.controller.OrderUseCase;
 import com.example.rm.controller.MenuService;
 import com.example.rm.controller.OrderService;
 import com.example.rm.app.SceneManager;
+import javafx.util.Duration;
 
 
-  //Gestisce il carrello e l'invio degli ordini al database.
+//Gestisce il carrello e l'invio degli ordini al database.
 public class TakeOrderController {
 
     private static final Logger logger = Logger.getLogger(TakeOrderController.class.getName());
@@ -56,13 +64,57 @@ public class TakeOrderController {
       private ProgressIndicator loadingIndicator;
       private VBox loadingOverlay;
 
+    @FXML
+    private TextField searchField;
+    private final ObjectProperty<String> searchText = new SimpleObjectProperty<>("");
+    private PauseTransition searchDebounce;
+    private ScheduledExecutorService searchExecutor;
+    private List<MenuProduct> allProductsCache = new CopyOnWriteArrayList<>();
+
+
     public void init(int numeroTavolo) {
         this.numeroTavolo = numeroTavolo;
         updateTitle();
         initLoadingIndicator();
+        initProductLoadingService();
+        setupSearch();
         loadProducts();
         updateSendButton();
 
+    }
+
+    private void initProductLoadingService() {
+        if (productLoadingService == null) {
+            productLoadingService = new ProductLoadingService(menuUseCase);
+
+            // Configura handler per successo
+            productLoadingService.setOnSucceeded(event -> {
+                List<MenuProduct> products = productLoadingService.getValue();
+                Platform.runLater(() -> {
+                    updateProductList(products);
+                    showLoadingIndicator(false);
+                    logger.info("Prodotti caricati: " + products.size());
+                });
+            });
+
+            // Configura handler per errore
+            productLoadingService.setOnFailed(event -> {
+                Throwable ex = productLoadingService.getException();
+                Platform.runLater(() -> {
+                    showLoadingIndicator(false);
+                    showErrorAlert("Errore", "Impossibile caricare i prodotti: " +
+                            (ex != null ? ex.getMessage() : "Errore sconosciuto"));
+                    logger.log(Level.SEVERE, "Caricamento prodotti fallito", ex);
+                });
+            });
+
+            // Reset al completamento
+            productLoadingService.setOnCancelled(event -> {
+                Platform.runLater(() -> showLoadingIndicator(false));
+            });
+
+            logger.info("ProductLoadingService inizializzato");
+        }
     }
 
       private void initLoadingIndicator() {
@@ -110,6 +162,61 @@ public class TakeOrderController {
               }
           });
       }
+
+    private void setupSearch() {
+        // Configura debouncing (300ms)
+        searchDebounce = new PauseTransition(Duration.millis(300));
+        searchDebounce.setOnFinished(event -> performSearch());
+
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            searchText.set(newVal);
+            searchDebounce.playFromStart();
+        });
+
+        // Inizializza executor per ricerca
+        searchExecutor = Executors.newSingleThreadScheduledExecutor(
+                new ThreadFactory() {
+                    private final AtomicInteger count = new AtomicInteger(0);
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread thread = new Thread(r);
+                        thread.setName("Search-Thread-" + count.incrementAndGet());
+                        thread.setDaemon(true);
+                        return thread;
+                    }
+                }
+        );
+
+        // Salva cache dei prodotti quando vengono caricati
+        // VERIFICA CHE productLoadingService NON SIA NULL
+        if (productLoadingService != null) {
+            productLoadingService.valueProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null) {
+                    allProductsCache.clear();
+                    allProductsCache.addAll(newVal);
+                    logger.info("Cache prodotti aggiornata: " + newVal.size() + " prodotti");
+                }
+            });
+        } else {
+            // Log di avvertimento e programma il listener per più tardi
+            logger.warning("productLoadingService è null durante setupSearch");
+            Platform.runLater(() -> {
+                if (productLoadingService != null) {
+                    productLoadingService.valueProperty().addListener((obs, oldVal, newVal) -> {
+                        if (newVal != null) {
+                            allProductsCache.clear();
+                            allProductsCache.addAll(newVal);
+                            logger.info("Cache prodotti aggiornata (ritardata): " + newVal.size());
+                        }
+                    });
+                } else {
+                    logger.severe("productLoadingService ancora null dopo Platform.runLater");
+                }
+            });
+        }
+    }
+
+
 
     private void updateTitle() {
         if (lblTitle != null) {
@@ -367,58 +474,35 @@ public class TakeOrderController {
 
 
     private void loadProductsAsync() {
-          // Mostra l'indicatore di caricamento
-
+        // Controlla che l'indicatore sia inizializzato
         if (loadingIndicator == null) {
             logger.warning("Loading indicator non inizializzato, caricamento sincrono");
             loadProductsSync();
             return;
         }
 
-          showLoadingIndicator(true);
+        // Controlla che il service sia stato inizializzato
+        if (productLoadingService == null) {
+            logger.severe("ProductLoadingService non inizializzato!");
+            loadProductsSync();
+            return;
+        }
 
-          // Inizializza il service se non esiste
-          if (productLoadingService == null) {
-              productLoadingService = new ProductLoadingService(menuUseCase);
+        // Mostra l'indicatore di caricamento
+        showLoadingIndicator(true);
 
-              // Configura handler per successo
-              productLoadingService.setOnSucceeded(event -> {
-                  List<MenuProduct> products = productLoadingService.getValue();
-                  Platform.runLater(() -> {
-                      updateProductList(products);
-                      showLoadingIndicator(false);
-                      logger.info("Prodotti caricati: " + products.size());
-                  });
-              });
+        // Riavvia se già completato
+        if (productLoadingService.getState() == Worker.State.READY ||
+                productLoadingService.getState() == Worker.State.SUCCEEDED ||
+                productLoadingService.getState() == Worker.State.FAILED) {
+            productLoadingService.reset();
+        }
 
-              // Configura handler per errore
-              productLoadingService.setOnFailed(event -> {
-                  Throwable ex = productLoadingService.getException();
-                  Platform.runLater(() -> {
-                      showLoadingIndicator(false);
-                      showErrorAlert("Errore", "Impossibile caricare i prodotti: " +
-                              (ex != null ? ex.getMessage() : "Errore sconosciuto"));
-                      logger.log(Level.SEVERE, "Caricamento prodotti fallito", ex);
-                  });
-              });
+        // Avvia il caricamento
+        productLoadingService.start();
+    }
 
-              // Reset al completamento
-              productLoadingService.setOnCancelled(event -> {
-                  Platform.runLater(() -> showLoadingIndicator(false));
-              });
-          }
-
-          // Riavvia se già completato
-          if (productLoadingService.getState() == Worker.State.READY ||
-                  productLoadingService.getState() == Worker.State.SUCCEEDED ||
-                  productLoadingService.getState() == Worker.State.FAILED) {
-              productLoadingService.reset();
-          }
-
-          productLoadingService.start();
-      }
-
-      private void showLoadingIndicator(boolean show) {
+    private void showLoadingIndicator(boolean show) {
           if (loadingIndicator == null || loadingOverlay == null) {
               logger.warning("Tentativo di mostrare loading indicator non inizializzato");
               return;
@@ -469,9 +553,12 @@ public class TakeOrderController {
           }
     }
 
-      private void loadProductsSync() {
+    private void loadProductsSync() {
           try {
               List<MenuProduct> prodotti = menuUseCase.loadAllProducts();
+
+              allProductsCache.clear();
+              allProductsCache.addAll(prodotti);
               renderProducts(prodotti);
           } catch (Exception e) {
               logger.log(Level.SEVERE, "Errore caricamento prodotti", e);
@@ -479,5 +566,104 @@ public class TakeOrderController {
           }
       }
 
+    private void performSearch() {
+        String query = searchText.get();
 
+        if (query == null || query.trim().isEmpty()) {
+            Platform.runLater(() -> {
+                if (!allProductsCache.isEmpty()) {
+                    updateProductList(allProductsCache);
+                    searchField.setStyle("");
+                    searchField.setTooltip(null);
+                }
+            });
+            return;
+        }
+
+        final String finalQuery = query.trim().toLowerCase();
+
+        Task<List<MenuProduct>> searchTask = new Task<>() {
+            @Override
+            protected List<MenuProduct> call() {
+                try {
+                    return allProductsCache.stream()
+                            .filter(product -> matchesSearch(product, finalQuery))
+                            .collect(Collectors.toList());
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "Errore durante la ricerca", e);
+                    throw e; // Rilancia per gestione nel setOnFailed
+                }
+            }
+        };
+
+        searchTask.setOnSucceeded(event -> {
+            List<MenuProduct> results = searchTask.getValue();
+            Platform.runLater(() -> {
+                updateProductList(results);
+                showSearchStatus(results.size(), finalQuery);
+
+                // Animazione opzionale
+                if (!results.isEmpty()) {
+                    FadeTransition fade = new FadeTransition(Duration.millis(200), productsContainer);
+                    fade.setFromValue(0.5);
+                    fade.setToValue(1.0);
+                    fade.play();
+                }
+            });
+        });
+
+        searchTask.setOnFailed(event -> {
+            Platform.runLater(() -> {
+                searchField.setStyle("-fx-border-color: #e74c3c;");
+                searchField.setTooltip(new Tooltip("Errore durante la ricerca"));
+                logger.log(Level.SEVERE, "Task ricerca fallito", searchTask.getException());
+            });
+        });
+
+        searchExecutor.execute(searchTask);
+    }
+
+
+    private boolean matchesSearch(MenuProduct product, String query) {
+        if (query.isEmpty()) return true;
+
+        // Cerca nel nome
+        if (product.getNome().toLowerCase().contains(query)) {
+            return true;
+        }
+
+        // Cerca nella categoria
+        if (product.getTipologia().toLowerCase().contains(query)) {
+            return true;
+        }
+
+        // Cerca negli allergeni
+        if (product.getAllergeni() != null &&
+                product.getAllergeni().toLowerCase().contains(query)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private void showSearchStatus(int resultCount, String query) {
+        // Mostra badge con numero risultati
+        if (resultCount == 0) {
+            searchField.setStyle("-fx-border-color: #e74c3c; -fx-border-width: 1;");
+            searchField.setTooltip(new Tooltip("Nessun prodotto trovato per: " + query));
+        } else {
+            searchField.setStyle("-fx-border-color: #2ecc71; -fx-border-width: 1;");
+            searchField.setTooltip(new Tooltip(resultCount + " prodotti trovati"));
+        }
+    }
+
+    // Metodo per pulire le risorse
+    public void cleanup() {
+        if (searchExecutor != null && !searchExecutor.isShutdown()) {
+            searchExecutor.shutdownNow();
+        }
+        if (productLoadingService != null) {
+            productLoadingService.cancel();
+        }
+    }
   }
