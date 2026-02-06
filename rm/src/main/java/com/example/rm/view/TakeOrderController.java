@@ -4,13 +4,18 @@ import com.example.rm.app.UserSession;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
+import com.example.rm.service.ProductLoadingService;
 import com.example.rm.view.component.OrderReviewDialog;
 import com.example.rm.view.component.ProductRowFactory;
+import javafx.application.Platform;
+import javafx.concurrent.Worker;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -20,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
 import com.example.rm.controller.MenuUseCase;
 import com.example.rm.controller.OrderUseCase;
 import com.example.rm.controller.MenuService;
@@ -44,13 +51,65 @@ public class TakeOrderController {
     private static final User currentUser = UserSession.getInstance().getUser();
 
     private static final String ERRORESTRING = "ERRORE: ";
-    
+
+      private ProductLoadingService productLoadingService;
+      private ProgressIndicator loadingIndicator;
+      private VBox loadingOverlay;
+
     public void init(int numeroTavolo) {
         this.numeroTavolo = numeroTavolo;
         updateTitle();
+        initLoadingIndicator();
         loadProducts();
         updateSendButton();
+
     }
+
+      private void initLoadingIndicator() {
+          // 1. Crea l'indicatore
+          loadingIndicator = new ProgressIndicator();
+          loadingIndicator.setProgress(-1); // Indeterminato
+          loadingIndicator.setMaxSize(50, 50);
+          loadingIndicator.setVisible(false);
+          loadingIndicator.setManaged(false); // Non occupa spazio quando nascosto
+
+          // 2. Crea l'overlay
+          loadingOverlay = new VBox(loadingIndicator);
+          loadingOverlay.setAlignment(Pos.CENTER);
+          loadingOverlay.setStyle("-fx-background-color: rgba(255, 255, 255, 0.7);");
+          loadingOverlay.setVisible(false);
+          loadingOverlay.setManaged(false);
+
+          // 3. Aggiungi al layout principale in modo robusto
+          Platform.runLater(() -> {
+              if (productsContainer != null) {
+                  // Trova il parent corretto in modo sicuro
+                  Parent parent = productsContainer.getParent();
+                  while (parent != null && !(parent instanceof StackPane)) {
+                      parent = parent.getParent();
+                  }
+
+                  if (parent instanceof StackPane stackPane) {
+                      stackPane.getChildren().add(loadingOverlay);
+                      StackPane.setAlignment(loadingOverlay, Pos.CENTER);
+                      logger.info("Loading indicator aggiunto correttamente");
+                  } else {
+                      // Fallback: aggiungi direttamente alla scena
+                      if (productsContainer.getScene() != null) {
+                          StackPane fallbackPane = new StackPane();
+                          fallbackPane.getChildren().addAll(productsContainer, loadingOverlay);
+
+                          if (productsContainer.getParent() instanceof Pane currentParent) {
+                              currentParent.getChildren().set(
+                                      currentParent.getChildren().indexOf(productsContainer),
+                                      fallbackPane
+                              );
+                          }
+                      }
+                  }
+              }
+          });
+      }
 
     private void updateTitle() {
         if (lblTitle != null) {
@@ -59,6 +118,10 @@ public class TakeOrderController {
     }
 
     private void loadProducts() {
+
+        loadProductsAsync();
+
+        /* !! testare ed eliminare quant segue
         if (productsContainer == null) {
             logger.log(Level.SEVERE, "productsContainer non inizializzato");
             showErrorAlert(ERRORESTRING, "Sessione utente scaduta. Rilogga.");
@@ -71,7 +134,7 @@ public class TakeOrderController {
             renderProducts(prodotti);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore caricamento prodotti", e);
-        }
+        }*/
     }
 
     private void renderProducts(List<MenuProduct> prodotti) {
@@ -300,4 +363,121 @@ public class TakeOrderController {
         alert.setContentText(content);
         alert.showAndWait();
     }
-}
+
+
+
+    private void loadProductsAsync() {
+          // Mostra l'indicatore di caricamento
+
+        if (loadingIndicator == null) {
+            logger.warning("Loading indicator non inizializzato, caricamento sincrono");
+            loadProductsSync();
+            return;
+        }
+
+          showLoadingIndicator(true);
+
+          // Inizializza il service se non esiste
+          if (productLoadingService == null) {
+              productLoadingService = new ProductLoadingService(menuUseCase);
+
+              // Configura handler per successo
+              productLoadingService.setOnSucceeded(event -> {
+                  List<MenuProduct> products = productLoadingService.getValue();
+                  Platform.runLater(() -> {
+                      updateProductList(products);
+                      showLoadingIndicator(false);
+                      logger.info("Prodotti caricati: " + products.size());
+                  });
+              });
+
+              // Configura handler per errore
+              productLoadingService.setOnFailed(event -> {
+                  Throwable ex = productLoadingService.getException();
+                  Platform.runLater(() -> {
+                      showLoadingIndicator(false);
+                      showErrorAlert("Errore", "Impossibile caricare i prodotti: " +
+                              (ex != null ? ex.getMessage() : "Errore sconosciuto"));
+                      logger.log(Level.SEVERE, "Caricamento prodotti fallito", ex);
+                  });
+              });
+
+              // Reset al completamento
+              productLoadingService.setOnCancelled(event -> {
+                  Platform.runLater(() -> showLoadingIndicator(false));
+              });
+          }
+
+          // Riavvia se già completato
+          if (productLoadingService.getState() == Worker.State.READY ||
+                  productLoadingService.getState() == Worker.State.SUCCEEDED ||
+                  productLoadingService.getState() == Worker.State.FAILED) {
+              productLoadingService.reset();
+          }
+
+          productLoadingService.start();
+      }
+
+      private void showLoadingIndicator(boolean show) {
+          if (loadingIndicator == null || loadingOverlay == null) {
+              logger.warning("Tentativo di mostrare loading indicator non inizializzato");
+              return;
+          }
+
+          loadingIndicator.setVisible(show);
+          loadingOverlay.setVisible(show);
+
+          // Gestisci lo spazio solo quando visibile
+          if (show) {
+              loadingIndicator.setManaged(true);
+              loadingOverlay.setManaged(true);
+              loadingIndicator.setProgress(-1);
+          } else {
+              loadingIndicator.setManaged(false);
+              loadingOverlay.setManaged(false);
+          }
+      }
+
+    private void updateProductList(List<MenuProduct> products) {
+          productsContainer.getChildren().clear();
+
+          if (products.isEmpty()) {
+              Label emptyLabel = new Label("Nessun prodotto disponibile");
+              emptyLabel.getStyleClass().add("empty-state");
+              productsContainer.getChildren().add(emptyLabel);
+              return;
+          }
+
+          // Raggruppa prodotti per categoria
+          Map<String, List<MenuProduct>> productsByCategory = products.stream()
+                  .collect(Collectors.groupingBy(MenuProduct::getTipologia));
+
+          for (Map.Entry<String, List<MenuProduct>> entry : productsByCategory.entrySet()) {
+              // Aggiungi header categoria
+              Label categoryLabel = new Label(entry.getKey().toUpperCase());
+              categoryLabel.getStyleClass().add("category-header");
+              productsContainer.getChildren().add(categoryLabel);
+
+              // Aggiungi prodotti
+              for (MenuProduct product : entry.getValue()) {
+                  HBox productRow = createProductRow(product);
+                  productsContainer.getChildren().add(productRow);
+              }
+
+              // Aggiungi separatore
+              productsContainer.getChildren().add(new Separator());
+          }
+    }
+
+      private void loadProductsSync() {
+          try {
+              List<MenuProduct> prodotti = menuUseCase.loadAllProducts();
+              renderProducts(prodotti);
+          } catch (Exception e) {
+              logger.log(Level.SEVERE, "Errore caricamento prodotti", e);
+              showErrorAlert("Errore", "Impossibile caricare i prodotti");
+          }
+      }
+
+
+  }

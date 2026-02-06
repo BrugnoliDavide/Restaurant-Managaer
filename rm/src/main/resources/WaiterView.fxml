@@ -12,7 +12,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 
-<BorderPane fx:id="root" styleClass="waiter-root" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/21.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.WaiterController">
+<BorderPane fx:id="root" styleClass="waiter-root" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.WaiterController">
 
     <padding>
         <Insets bottom="20" left="20" right="20" top="20" />
@@ -29,7 +29,7 @@
                 <Label fx:id="lblHeaderRole" styleClass="text-subtitle" text="..." />
             </VBox>
 
-            <Label fx:id="lblWelcomeTop" styleClass="text-muted" text="..." />
+            <Label fx:id="lblWelcomeTop" style="-fx-font-size: 21;" styleClass="text-subtitle" text="..." />
 
             <Region HBox.hgrow="ALWAYS" />
         </HBox>
