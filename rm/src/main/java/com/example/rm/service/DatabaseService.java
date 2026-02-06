@@ -70,6 +70,7 @@ public class DatabaseService {
         return prodotti;
     }
 
+    //!! da deprecare
     public static boolean addProduct(MenuProduct p) {
         String sql = "INSERT INTO menu_items (nome, tipologia, prezzo_vendita, costo_realizzazione, allergeni) " +
                 "VALUES (?, ?, ?, ?, ?)";
@@ -91,6 +92,7 @@ public class DatabaseService {
         }
     }
 
+    //!! da deprecare
     public static boolean updateProduct(MenuProduct p) {
         String sql = "UPDATE menu_items SET nome = ?, tipologia = ?, prezzo_vendita = ?, costo_realizzazione = ?, allergeni = ? WHERE id = ?";
 
@@ -112,6 +114,7 @@ public class DatabaseService {
         }
     }
 
+    //!! da deprecare
     public static boolean deleteProduct(int id) {
         logger.log(Level.INFO, "Tentativo eliminazione prodotto ID: {0}", id);
 
@@ -142,6 +145,7 @@ public class DatabaseService {
         }
     }
 
+    //!! da deprecare
     public static List<String> getAllCategories() {
         List<String> categories = new ArrayList<>();
         String sql = "SELECT DISTINCT tipologia FROM menu_items ORDER BY tipologia";
@@ -373,8 +377,8 @@ public class DatabaseService {
     }
 
     public static MenuProduct getProductById(int productId) {
-        String sql = "SELECT id, nome, tipologia, prezzovendita, costorealizzazione, allergeni " +
-                "FROM menuitems WHERE id = ?";
+        String sql = "SELECT id, nome, tipologia, prezzo_vendita, costo_realizzazione, allergeni " +
+                "FROM menu_items WHERE id = ?";
 
         try (Connection conn = DriverManager.getConnection(url, user, pass);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -422,6 +426,7 @@ public class DatabaseService {
         return orderDAO.getQuantitySoldInDateRange(productId, start, end);
     }
 
+    // !! spostato nel DAO !! da deprecare (o trasformare in un richiamo al DAO)
     /**
      * Carica le preferenze di un utente cucina dalla tabella users.
      * Se non esistono, ritorna preferenze di default.
@@ -453,6 +458,7 @@ public class DatabaseService {
                 PreferencesConstants.DEFAULT_INCLUDE_OTHER);
     }
 
+    // !! spostato nel DAO !! da deprecare (o trasformare in un richiamo al DAO)
     /**
      * Salva le preferenze di un utente cucina nella colonna kitchen_preferences della tabella users.
      * @param preferences Preferenze da salvare
@@ -491,6 +497,7 @@ public class DatabaseService {
         return false;
     }
 
+    // !! spostato nel DAO !! da deprecare (o trasformare in un richiamo al DAO)
     /**
      * Elimina le preferenze di un utente cucina (cioè le setta a NULL).
      * @param username Username della cucina
@@ -600,6 +607,10 @@ public class DatabaseService {
         } catch (IOException e) {
             throw new IllegalStateException("Impossibile inizializzare file system", e);
         }
+    }
+
+    public static String returnTIPOLOGIASTRING(){
+        return returnTIPOLOGIASTRING();
     }
 
 

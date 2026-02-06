@@ -104,7 +104,6 @@ class KitchenPreferencesDialogTest {
         verify(mockStage, never()).close();
     }
 
-    // --- Helpers ---
 
     private void runOnFxThread(Runnable action) throws Exception {
         CountDownLatch latch = new CountDownLatch(1);

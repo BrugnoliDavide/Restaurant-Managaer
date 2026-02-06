@@ -11,9 +11,8 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.TakeOrderController">
+<BorderPane stylesheets="@/style.css" xmlns="http://javafx.com/javafx/21.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.TakeOrderController">
 
-    <!-- HEADER -->
     <top>
         <HBox alignment="CENTER_LEFT" spacing="10">
             <padding>
@@ -45,7 +44,7 @@
         </ScrollPane>
     </center>
 
-    <!-- BOTTOM -->
+
     <bottom>
         <StackPane alignment="CENTER" stylesheets="@style.css">
             <padding>

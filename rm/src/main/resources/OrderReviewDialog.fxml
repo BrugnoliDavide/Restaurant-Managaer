@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.component.OrderReviewDialog">
+<VBox spacing="15" style="-fx-background-color: white; -fx-padding: 20;" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.component.OrderReviewDialog">
 
     <Label styleClass="text-header" stylesheets="@style.css" text="Revisione Ordine" />
 

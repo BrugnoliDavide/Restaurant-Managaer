@@ -100,6 +100,10 @@ public class MenuProduct implements Serializable {
         return (getMargine() / getPrezzoVendita()) * 100;
     }
 
+    public void setPrezzoVendita(double prezzo) {  this.prezzoVendita.set(prezzo); }
+    public void setCostoRealizzazione(double costo){this.costoRealizzazione.set(costo);}
+
+
     @Override
     public String toString() {
         return getNome() + " (" + getTipologia() + ")";

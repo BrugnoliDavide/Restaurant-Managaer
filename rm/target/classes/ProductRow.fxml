@@ -29,6 +29,6 @@
 
     <Label fx:id="dots"
            text="..."
-           styleClass="row-dots"
+           styleClass="text-subtitle"
            onMouseClicked="#onDotsClick"/>
 </HBox>

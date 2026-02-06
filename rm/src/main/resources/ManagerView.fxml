@@ -10,7 +10,7 @@
 <?import javafx.scene.shape.Circle?>
 
 <?import javafx.scene.layout.StackPane?>
-<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.ManagerController">
+<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/21.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.ManagerController">
 
     <padding>
         <Insets bottom="20" left="20" right="20" top="20" />
@@ -19,13 +19,13 @@
     <top>
         <HBox alignment="CENTER_LEFT" spacing="15" stylesheets="@style.css">
 
-        <StackPane fx:id="profileBtn" styleClass="profile-stack" />
+        <StackPane fx:id="profileBtn" styleClass="profile-circle" />
          <Circle fx:id="profileCircle" fill="LIGHTBLUE" onMouseClicked="#handleProfileMenu" radius="25" stroke="TOMATO" strokeWidth="0" styleClass="profile-circle" />
 
 
             <VBox spacing="2">
-                <Label fx:id="lblHeaderName" styleClass="text-title header-name" />
-                <Label fx:id="lblHeaderRole" styleClass="text-body header-role" />
+                <Label fx:id="lblHeaderName" styleClass="text-header" />
+                <Label fx:id="lblHeaderRole" styleClass="text-subtitle" />
             </VBox>
 
             <Region HBox.hgrow="ALWAYS" />
