@@ -39,6 +39,9 @@ public final class DBConfigStore {
         throw new AssertionError("Utility class");
     }
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+
     private static SecretKeySpec getKey() {
         try {
             MessageDigest sha = MessageDigest.getInstance("SHA-256");
@@ -56,8 +59,7 @@ public final class DBConfigStore {
 
         try {
             byte[] iv = new byte[GCM_IV_LENGTH];
-            SecureRandom secureRandom = new SecureRandom();
-            secureRandom.nextBytes(iv);
+            SECURE_RANDOM.nextBytes(iv);
 
             Cipher cipher = Cipher.getInstance(ALGORITHM);
             GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);

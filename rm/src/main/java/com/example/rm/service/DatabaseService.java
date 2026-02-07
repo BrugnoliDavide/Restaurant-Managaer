@@ -28,7 +28,7 @@ public class DatabaseService {
     private static String user = null;
     private static String pass = null;
 
-    private static final  String TIPOLOGIASTRING = "tipologia";
+    private static final String TIPOLOGIASTRING = "tipologia";
 
     private static OrderDAO orderDAO = null;
 
@@ -610,7 +610,7 @@ public class DatabaseService {
     }
 
     public static String returnTIPOLOGIASTRING(){
-        return returnTIPOLOGIASTRING();
+        return TIPOLOGIASTRING;
     }
 
 

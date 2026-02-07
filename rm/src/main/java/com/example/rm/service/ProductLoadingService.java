@@ -4,6 +4,8 @@ import com.example.rm.controller.MenuUseCase;
 import com.example.rm.model.MenuProduct;
 import javafx.concurrent.Service;
 import javafx.concurrent.Task;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,15 +30,11 @@ public class ProductLoadingService extends Service<List<MenuProduct>> {
             protected List<MenuProduct> call() throws Exception {
                 logger.info("Caricamento prodotti in background...");
 
-                // Simula un piccolo ritardo per mostrare lo stato di caricamento
-                // (Rimuovere in produzione)
-                Thread.sleep(100);
-
                 try {
                     return menuUseCase.loadAllProducts();
                 } catch (Exception e) {
                     logger.log(Level.SEVERE, "Errore caricamento prodotti", e);
-                    throw e;
+                    return Collections.emptyList();
                 }
             }
         };

@@ -13,12 +13,6 @@ public class DatabaseCategoryDAO implements CategoryDAO {
 
     private static final Logger logger = Logger.getLogger(DatabaseCategoryDAO.class.getName());
 
-    // !! da eliminare
-    /*@Override
-    public List<String> getAllCategories() {
-        return DatabaseService.getAllCategories();
-    }/*/
-
     @Override
     public List<String> getAllCategories() {
         List<String> categories = new ArrayList<>();
