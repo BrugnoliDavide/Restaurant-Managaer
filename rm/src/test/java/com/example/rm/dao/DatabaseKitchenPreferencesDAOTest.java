@@ -338,13 +338,12 @@ class DatabaseKitchenPreferencesDAOTest {
                         PreferencesSerializer.deserialize("invalid_data", testUsername))
                 .thenReturn(null);
 
-        // Act & Assert
-        // Verifica solo che il metodo non lanci eccezioni
-        assertDoesNotThrow(() -> {
+        // Act
+        KitchenPreferences result = DatabaseKitchenPreferencesDAO.getKitchenPreferences(testUsername);
 
-        });
-
-        // Verifica che il metodo sia stato chiamato correttamente
+        // Assert
+        // Accetta che restituisca null quando la deserializzazione fallisce
+        assertNull(result, "Il metodo dovrebbe restituire null quando la deserializzazione fallisce");
         verify(mockPreparedStatement).setString(1, testUsername);
     }
 }

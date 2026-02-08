@@ -25,7 +25,7 @@
                 <Label fx:id="lblTitle" style="-fx-font-size: 22px; -fx-font-weight: bold;" />
             </VBox>
 
-            <TextField fx:id="searchField" promptText="Cerca prodotto...">
+            <TextField fx:id="searchField" promptText="Cerca prodotto..." styleClass="input-standard" stylesheets="@style.css">
                 <padding>
                     <Insets bottom="10" left="10" right="10" top="10" />
                 </padding>
