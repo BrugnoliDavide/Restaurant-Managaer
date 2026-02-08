@@ -587,8 +587,9 @@ public class TakeOrderController {
                             .filter(product -> matchesSearch(product, finalQuery))
                             .toList();
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, "Errore durante la ricerca per query: " + finalQuery, e);
-                    throw new RuntimeException("Errore durante la ricerca di prodotti per: '" + finalQuery + "'", e);
+                    logger.log(Level.WARNING, e,
+                            () -> String.format("Errore inatteso nella ricerca. Query: '%s'", finalQuery));
+                    return Collections.emptyList(); // Gestione: restituisci lista vuota
                 }
             }
         };
@@ -629,7 +630,6 @@ public class TakeOrderController {
                 || product.getTipologia().toLowerCase().contains(lowerQuery)
                 || (product.getAllergeni() != null && product.getAllergeni().toLowerCase().contains(lowerQuery));
     }
-    
     private void showSearchStatus(int resultCount, String query) {
         // Mostra badge con numero risultati
         if (resultCount == 0) {
