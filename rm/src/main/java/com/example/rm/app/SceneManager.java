@@ -14,18 +14,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Gestore centralizzato delle scene dell'applicazione.
  * Gestisce la navigazione tra le diverse view mantenendo le dimensioni della finestra.
  */
 public final class SceneManager {
 
     private static final Logger logger = Logger.getLogger(SceneManager.class.getName());
 
-    // Dimensioni predefinite iniziali
+
     private static final double DEFAULT_WIDTH = 1100.0;
     private static final double DEFAULT_HEIGHT = 720.0;
 
-    // Dimensioni minime
+
     private static final double MIN_WIDTH = 800.0;
     private static final double MIN_HEIGHT = 600.0;
 
@@ -60,7 +59,7 @@ public final class SceneManager {
         primaryStage.setHeight(DEFAULT_HEIGHT);
         primaryStage.setMinWidth(MIN_WIDTH);
         primaryStage.setMinHeight(MIN_HEIGHT);
-        primaryStage.setResizable(true); // Finestra ridimensionabile
+        primaryStage.setResizable(true);
     }
 
     /**
@@ -178,11 +177,10 @@ public final class SceneManager {
     private static void setScene(Parent root) {
         Objects.requireNonNull(root, "Il root non può essere null");
 
-        // Salva le dimensioni correnti se esiste già una scena
         double currentWidth = (currentScene != null) ? currentScene.getWidth() : DEFAULT_WIDTH;
         double currentHeight = (currentScene != null) ? currentScene.getHeight() : DEFAULT_HEIGHT;
 
-        // Crea la nuova scena con le dimensioni salvate
+
         currentScene = new Scene(root, currentWidth, currentHeight);
         primaryStage.setScene(currentScene);
 
@@ -243,8 +241,6 @@ public final class SceneManager {
     }
 
     /**
-     * Restituisce la larghezza corrente della finestra.
-     *
      * @return la larghezza corrente in pixel, o la larghezza predefinita se non inizializzato
      */
     public static double getCurrentWidth() {
@@ -252,8 +248,6 @@ public final class SceneManager {
     }
 
     /**
-     * Restituisce l'altezza corrente della finestra.
-     *
      * @return l'altezza corrente in pixel, o l'altezza predefinita se non inizializzato
      */
     public static double getCurrentHeight() {
