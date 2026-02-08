@@ -67,7 +67,6 @@ public class TakeOrderController {
     @FXML
     private TextField searchField;
     private final ObjectProperty<String> searchText = new SimpleObjectProperty<>("");
-    //private PauseTransition searchDebounce;
     private ScheduledExecutorService searchExecutor;
     private List<MenuProduct> allProductsCache = new CopyOnWriteArrayList<>();
 
@@ -586,10 +585,10 @@ public class TakeOrderController {
                 try {
                     return allProductsCache.stream()
                             .filter(product -> matchesSearch(product, finalQuery))
-                            .collect(Collectors.toList());
+                            .toList();
                 } catch (Exception e) {
-                    logger.log(Level.WARNING, "Errore durante la ricerca", e);
-                    throw e; // Rilancia per gestione nel setOnFailed
+                    logger.log(Level.WARNING, "Errore durante la ricerca per query: " + finalQuery, e);
+                    throw new RuntimeException("Errore durante la ricerca di prodotti per: '" + finalQuery + "'", e);
                 }
             }
         };
@@ -600,7 +599,7 @@ public class TakeOrderController {
                 updateProductList(results);
                 showSearchStatus(results.size(), finalQuery);
 
-                // Animazione opzionale
+
                 if (!results.isEmpty()) {
                     FadeTransition fade = new FadeTransition(Duration.millis(200), productsContainer);
                     fade.setFromValue(0.5);
@@ -610,13 +609,13 @@ public class TakeOrderController {
             });
         });
 
-        searchTask.setOnFailed(event -> {
+        searchTask.setOnFailed(event ->
             Platform.runLater(() -> {
                 searchField.setStyle("-fx-border-color: #e74c3c;");
                 searchField.setTooltip(new Tooltip("Errore durante la ricerca"));
                 logger.log(Level.SEVERE, "Task ricerca fallito", searchTask.getException());
-            });
-        });
+            })
+        );
 
         searchExecutor.execute(searchTask);
     }
@@ -625,25 +624,12 @@ public class TakeOrderController {
     private boolean matchesSearch(MenuProduct product, String query) {
         if (query.isEmpty()) return true;
 
-        // Cerca nel nome
-        if (product.getNome().toLowerCase().contains(query)) {
-            return true;
-        }
-
-        // Cerca nella categoria
-        if (product.getTipologia().toLowerCase().contains(query)) {
-            return true;
-        }
-
-        // Cerca negli allergeni
-        if (product.getAllergeni() != null &&
-                product.getAllergeni().toLowerCase().contains(query)) {
-            return true;
-        }
-
-        return false;
+        String lowerQuery = query.toLowerCase();
+        return product.getNome().toLowerCase().contains(lowerQuery)
+                || product.getTipologia().toLowerCase().contains(lowerQuery)
+                || (product.getAllergeni() != null && product.getAllergeni().toLowerCase().contains(lowerQuery));
     }
-
+    
     private void showSearchStatus(int resultCount, String query) {
         // Mostra badge con numero risultati
         if (resultCount == 0) {
