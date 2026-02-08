@@ -50,7 +50,7 @@ public class TableSelectionUtils {
                 }
             } catch (NumberFormatException e) {
 
-                logger.log(Level.WARNING, "errore paring tavoli:  {0}", part);
+                logger.log(Level.WARNING, "errore parsing tavoli:  {0}", part);
             }
         }
         return tables;

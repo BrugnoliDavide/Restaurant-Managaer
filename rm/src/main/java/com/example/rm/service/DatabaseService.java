@@ -1,5 +1,7 @@
 package com.example.rm.service;
 
+import com.example.rm.dao.DatabaseKitchenPreferencesDAO;
+import com.example.rm.dao.DatabaseProductDAO;
 import com.example.rm.dao.OrderDAO;
 import com.example.rm.dao.impl.OrderDAOPostgres;
 import com.example.rm.dao.impl.OrderDAOFile;
@@ -70,97 +72,10 @@ public class DatabaseService {
         return prodotti;
     }
 
-    //!! da deprecare
-    public static boolean addProduct(MenuProduct p) {
-        String sql = "INSERT INTO menu_items (nome, tipologia, prezzo_vendita, costo_realizzazione, allergeni) " +
-                "VALUES (?, ?, ?, ?, ?)";
 
-        try (Connection conn = DriverManager.getConnection(url, user, pass);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            pstmt.setString(1, p.getNome());
-            pstmt.setString(2, p.getTipologia());
-            pstmt.setDouble(3, p.getPrezzoVendita());
-            pstmt.setDouble(4, p.getCostoRealizzazione());
-            pstmt.setString(5, p.getAllergeni());
-
-            return pstmt.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "ERRORE INSERIMENTO PRODOTTO", e);
-            return false;
-        }
-    }
-
-    //!! da deprecare
-    public static boolean updateProduct(MenuProduct p) {
-        String sql = "UPDATE menu_items SET nome = ?, tipologia = ?, prezzo_vendita = ?, costo_realizzazione = ?, allergeni = ? WHERE id = ?";
-
-        try (Connection conn = DriverManager.getConnection(url, user, pass);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, p.getNome());
-            pstmt.setString(2, p.getTipologia());
-            pstmt.setDouble(3, p.getPrezzoVendita());
-            pstmt.setDouble(4, p.getCostoRealizzazione());
-            pstmt.setString(5, p.getAllergeni());
-            pstmt.setInt(6, p.getId());
-
-            return pstmt.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "ERRORE UPDATE PRODOTTO", e);
-            return false;
-        }
-    }
-
-    //!! da deprecare
     public static boolean deleteProduct(int id) {
-        logger.log(Level.INFO, "Tentativo eliminazione prodotto ID: {0}", id);
-
-        if (id <= 0) {
-            logger.log(Level.WARNING, "ID non valido per eliminazione: {0}", id);
-            return false;
-        }
-
-        String sql = "DELETE FROM menu_items WHERE id = ?";
-
-        try (Connection conn = DriverManager.getConnection(url, user, pass);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, id);
-            int rowsAffected = pstmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                logger.info("SUCCESSO: Prodotto eliminato.");
-                return true;
-            } else {
-                logger.log(Level.WARNING, "FALLIMENTO: Nessuna riga trovata con ID: {0}", id);
-                return false;
-            }
-
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "ERRORE SQL durante eliminazione: {0}, {1}", new Object[]{e.getMessage(), e});
-            return false;
-        }
-    }
-
-    //!! da deprecare
-    public static List<String> getAllCategories() {
-        List<String> categories = new ArrayList<>();
-        String sql = "SELECT DISTINCT tipologia FROM menu_items ORDER BY tipologia";
-
-        try (Connection conn = DriverManager.getConnection(url, user, pass);
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                categories.add(rs.getString(TIPOLOGIASTRING));
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore recupero categorie", e);
-        }
-        return categories;
+        return DatabaseProductDAO.deleteProduct(id);
     }
 
     /**
@@ -201,12 +116,6 @@ public class DatabaseService {
         return orderDAO.setOrderStatus(orderId, newStatus);
     }
 
-    public static List<Order> getOrdersByStatus(String statusTarget) {
-        if (orderDAO == null) {
-            throw new IllegalStateException("DAO ordini non inizializzato. Chiamare setConnectionConfig o setFileSystemMode.");
-        }
-        return orderDAO.getOrdersByStatus(statusTarget);
-    }
 
     public static List<Order> getAllOrdersWithTotal() {
         if (orderDAO == null) {
@@ -434,94 +343,9 @@ public class DatabaseService {
      * @return KitchenPreferences dell'utente
      */
     public static KitchenPreferences getKitchenPreferences(String username) {
-        String sql = "SELECT kitchen_preferences FROM users WHERE username = ?";
-
-        try (Connection conn = DriverManager.getConnection(url, user, pass);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, username);
-
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    String preferencesStr = rs.getString("kitchen_preferences");
-                    return PreferencesSerializer.deserialize(preferencesStr, username);
-                }
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore caricamento preferenze cucina per {0}, {1}", new Object[]{ username, e});
-        }
-
-        // Fallback: preferenze di default
-        return new KitchenPreferences(username,
-                PreferencesConstants.DEFAULT_SPLIT_ORDERS,
-                new HashSet<>(),
-                PreferencesConstants.DEFAULT_INCLUDE_OTHER);
+        return DatabaseKitchenPreferencesDAO.getKitchenPreferences(username);
     }
 
-    // !! spostato nel DAO !! da deprecare (o trasformare in un richiamo al DAO)
-    /**
-     * Salva le preferenze di un utente cucina nella colonna kitchen_preferences della tabella users.
-     * @param preferences Preferenze da salvare
-     * @return true se salvataggio riuscito
-     */
-    public static boolean saveKitchenPreferences(KitchenPreferences preferences) {
-        if (preferences == null || preferences.getUsername() == null) {
-            logger.warning("Impossibile salvare preferenze: username mancante");
-            return false;
-        }
-
-        String sql = "UPDATE users SET kitchen_preferences = ? WHERE username = ?";
-
-        String serialized = PreferencesSerializer.serialize(preferences);
-
-        try (Connection conn = DriverManager.getConnection(url, user, pass);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            if (serialized != null) {
-                pstmt.setString(1, serialized);
-            } else {
-                pstmt.setNull(1, java.sql.Types.VARCHAR);
-            }
-
-            pstmt.setString(2, preferences.getUsername());
-
-            int affectedRows = pstmt.executeUpdate();
-            if (affectedRows > 0) {
-                logger.log(Level.INFO, "Preferenze cucina salvate per {0}", preferences.getUsername());
-                return true;
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore salvataggio preferenze cucina", e);
-        }
-
-        return false;
-    }
-
-    // !! spostato nel DAO !! da deprecare (o trasformare in un richiamo al DAO)
-    /**
-     * Elimina le preferenze di un utente cucina (cioè le setta a NULL).
-     * @param username Username della cucina
-     * @return true se eliminazione riuscita
-     */
-    public static boolean deleteKitchenPreferences(String username) {
-        String sql = "UPDATE users SET kitchen_preferences = NULL WHERE username = ?";
-
-        try (Connection conn = DriverManager.getConnection(url, user, pass);
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setString(1, username);
-            int affectedRows = pstmt.executeUpdate();
-
-            if (affectedRows > 0) {
-                logger.log(Level.INFO, "Preferenze cucina eliminate per {0}", username);
-                return true;
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore eliminazione preferenze cucina", e);
-        }
-
-        return false;
-    }
 
     /**
      * recupera gli ordini attivi della cucina FILTRATI per categoria.
@@ -538,7 +362,6 @@ public class DatabaseService {
             return allOrders;
         }
 
-        // Altrimenti, filtra per categorie selezionate
         List<Order> filteredOrders = new ArrayList<>();
         Set<String> selectedCategories = prefs.getSelectedCategories();
 
@@ -612,6 +435,4 @@ public class DatabaseService {
     public static String returnTIPOLOGIASTRING(){
         return TIPOLOGIASTRING;
     }
-
-
 }

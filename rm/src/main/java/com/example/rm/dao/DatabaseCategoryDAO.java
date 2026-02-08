@@ -21,7 +21,7 @@ public class DatabaseCategoryDAO implements CategoryDAO {
         try (
             PreparedStatement pstmt =
                     DatabaseConnection.getConnection().prepareStatement(sql);
-         ResultSet rs = pstmt.executeQuery(sql)) {
+         ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
                 categories.add(rs.getString(DatabaseService.returnTIPOLOGIASTRING()));
