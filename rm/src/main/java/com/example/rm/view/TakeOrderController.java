@@ -67,7 +67,7 @@ public class TakeOrderController {
     @FXML
     private TextField searchField;
     private final ObjectProperty<String> searchText = new SimpleObjectProperty<>("");
-    private PauseTransition searchDebounce;
+    //private PauseTransition searchDebounce;
     private ScheduledExecutorService searchExecutor;
     private List<MenuProduct> allProductsCache = new CopyOnWriteArrayList<>();
 
@@ -109,63 +109,76 @@ public class TakeOrderController {
             });
 
             // Reset al completamento
-            productLoadingService.setOnCancelled(event -> {
-                Platform.runLater(() -> showLoadingIndicator(false));
-            });
+            productLoadingService.setOnCancelled(event -> Platform.runLater(() -> showLoadingIndicator(false)));
+
 
             logger.info("ProductLoadingService inizializzato");
         }
     }
 
-      private void initLoadingIndicator() {
-          // 1. Crea l'indicatore
-          loadingIndicator = new ProgressIndicator();
-          loadingIndicator.setProgress(-1); // Indeterminato
-          loadingIndicator.setMaxSize(50, 50);
-          loadingIndicator.setVisible(false);
-          loadingIndicator.setManaged(false); // Non occupa spazio quando nascosto
+    private void initLoadingIndicator() {
+        createLoadingIndicator();
+        createLoadingOverlay();
+        addLoadingIndicatorToLayout();
+    }
 
-          // 2. Crea l'overlay
-          loadingOverlay = new VBox(loadingIndicator);
-          loadingOverlay.setAlignment(Pos.CENTER);
-          loadingOverlay.setStyle("-fx-background-color: rgba(255, 255, 255, 0.7);");
-          loadingOverlay.setVisible(false);
-          loadingOverlay.setManaged(false);
+    private void createLoadingIndicator() {
+        loadingIndicator = new ProgressIndicator();
+        loadingIndicator.setProgress(-1); // Indeterminato
+        loadingIndicator.setMaxSize(50, 50);
+        loadingIndicator.setVisible(false);
+        loadingIndicator.setManaged(false);
+    }
 
-          // 3. Aggiungi al layout principale in modo robusto
-          Platform.runLater(() -> {
-              if (productsContainer != null) {
-                  // Trova il parent corretto in modo sicuro
-                  Parent parent = productsContainer.getParent();
-                  while (parent != null && !(parent instanceof StackPane)) {
-                      parent = parent.getParent();
-                  }
+    private void createLoadingOverlay() {
+        loadingOverlay = new VBox(loadingIndicator);
+        loadingOverlay.setAlignment(Pos.CENTER);
+        loadingOverlay.setStyle("-fx-background-color: rgba(255, 255, 255, 0.7);");
+        loadingOverlay.setVisible(false);
+        loadingOverlay.setManaged(false);
+    }
 
-                  if (parent instanceof StackPane stackPane) {
-                      stackPane.getChildren().add(loadingOverlay);
-                      StackPane.setAlignment(loadingOverlay, Pos.CENTER);
-                      logger.info("Loading indicator aggiunto correttamente");
-                  } else {
-                      // Fallback: aggiungi direttamente alla scena
-                      if (productsContainer.getScene() != null) {
-                          StackPane fallbackPane = new StackPane();
-                          fallbackPane.getChildren().addAll(productsContainer, loadingOverlay);
+    private void addLoadingIndicatorToLayout() {
+        Platform.runLater(() -> {
+            if (productsContainer != null) {
+                Parent parent = findStackPaneParent(productsContainer);
 
-                          if (productsContainer.getParent() instanceof Pane currentParent) {
-                              currentParent.getChildren().set(
-                                      currentParent.getChildren().indexOf(productsContainer),
-                                      fallbackPane
-                              );
-                          }
-                      }
-                  }
-              }
-          });
-      }
+                if (parent instanceof StackPane stackPane) {
+                    addToStackPane(stackPane);
+                } else {
+                    addFallbackOverlay();
+                }
+            }
+        });
+    }
 
+    private Parent findStackPaneParent(Parent node) {
+        Parent parent = node.getParent();
+        while (parent != null && !(parent instanceof StackPane)) {
+            parent = parent.getParent();
+        }
+        return parent;
+    }
+
+    private void addToStackPane(StackPane stackPane) {
+        stackPane.getChildren().add(loadingOverlay);
+        StackPane.setAlignment(loadingOverlay, Pos.CENTER);
+        logger.info("Loading indicator aggiunto correttamente");
+    }
+
+    private void addFallbackOverlay() {
+        if (productsContainer.getScene() != null) {
+            StackPane fallbackPane = new StackPane();
+            fallbackPane.getChildren().addAll(productsContainer, loadingOverlay);
+
+            if (productsContainer.getParent() instanceof Pane currentParent) {
+                int index = currentParent.getChildren().indexOf(productsContainer);
+                currentParent.getChildren().set(index, fallbackPane);
+            }
+        }
+    }
     private void setupSearch() {
-        // Configura debouncing (300ms)
-        searchDebounce = new PauseTransition(Duration.millis(300));
+        PauseTransition searchDebounce = new PauseTransition(Duration.millis(300));
         searchDebounce.setOnFinished(event -> performSearch());
 
         searchField.textProperty().addListener((obs, oldVal, newVal) -> {
@@ -227,21 +240,6 @@ public class TakeOrderController {
     private void loadProducts() {
 
         loadProductsAsync();
-
-        /* !! testare ed eliminare quant segue
-        if (productsContainer == null) {
-            logger.log(Level.SEVERE, "productsContainer non inizializzato");
-            showErrorAlert(ERRORESTRING, "Sessione utente scaduta. Rilogga.");
-            return;
-        }
-
-        try {
-            List<MenuProduct> prodotti = menuUseCase.loadAllProducts();
-
-            renderProducts(prodotti);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Errore caricamento prodotti", e);
-        }*/
     }
 
     private void renderProducts(List<MenuProduct> prodotti) {
