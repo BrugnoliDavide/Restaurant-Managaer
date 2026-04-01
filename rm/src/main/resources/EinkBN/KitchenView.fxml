@@ -44,7 +44,7 @@
     <center>
         <ScrollPane fitToWidth="true">
             <content>
-                <VBox fx:id="ordersContainer" spacing="10" style="-fx-background-color: trasparent">
+                <VBox fx:id="ordersContainer" spacing="10" style="-fx-background-color: transparent">
                 </VBox>
             </content>
         </ScrollPane>

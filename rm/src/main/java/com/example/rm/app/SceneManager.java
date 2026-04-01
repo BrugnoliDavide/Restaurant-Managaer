@@ -222,6 +222,7 @@ public final class SceneManager {
         }
     }
 
+    // !! i metodi che seguono possono anche essere deprecati
     /**
      * Restituisce la larghezza predefinita dell'applicazione.
      *

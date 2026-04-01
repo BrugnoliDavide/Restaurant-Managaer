@@ -17,8 +17,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import static com.example.rm.service.DBConstants.*;
 import java.time.LocalDateTime;
-import com.example.rm.preference.PreferencesSerializer;
-import com.example.rm.preference.PreferencesConstants;
 
 
 

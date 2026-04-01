@@ -11,7 +11,11 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/21.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.MenuController">
+<BorderPane styleClass="view-background"
+            stylesheets="@/style.css"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.rm.view.MenuController">
 
 
     <top>

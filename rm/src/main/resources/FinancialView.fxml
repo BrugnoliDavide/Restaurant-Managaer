@@ -8,7 +8,11 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane styleClass="view-background" stylesheets="@style.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.FinancialController">
+<BorderPane styleClass="view-background"
+            stylesheets="@style.css"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.rm.view.FinancialController">
 
     <top>
         <VBox spacing="10">

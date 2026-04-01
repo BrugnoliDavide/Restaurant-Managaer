@@ -10,7 +10,11 @@
 <?import javafx.scene.shape.Circle?>
 
 <?import javafx.scene.layout.StackPane?>
-<BorderPane styleClass="view-background" stylesheets="@/style.css" xmlns="http://javafx.com/javafx/21.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.rm.view.ManagerController">
+<BorderPane styleClass="view-background"
+            stylesheets="@/style.css"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.rm.view.ManagerController">
 
     <padding>
         <Insets bottom="20" left="20" right="20" top="20" />
