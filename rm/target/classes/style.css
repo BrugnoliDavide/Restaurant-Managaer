@@ -49,6 +49,7 @@
     -fx-padding: 12px;
     -fx-cursor: hand;
 }
+
 .login-btn-fixed:hover { -fx-background-color: #444444 !important; }
 
 /* 3. LAYOUT BASE  */

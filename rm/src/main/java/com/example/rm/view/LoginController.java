@@ -74,8 +74,9 @@ public class LoginController {
         }
 
 
-        String role = SecurityService.authenticate(user, pass);
+
         try{
+            String role = SecurityService.authenticate(user, pass);
             if (role != null) {
 
                 logger.log(
@@ -89,7 +90,6 @@ public class LoginController {
 
             }
         }catch (AuthenticationException e) {
-
             logger.log(Level.WARNING, "Login fallito: {0}", e.getUserMessage());
             showError();
         }catch (Exception e) {
