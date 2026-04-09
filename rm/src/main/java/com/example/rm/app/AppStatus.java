@@ -1,8 +1,16 @@
 package com.example.rm.app;
 
+/**
+ * Stato globale dell'applicazione.
+ * Il campo è dichiarato volatile per garantire la visibilità delle scritture
+ * tra thread distinti senza ricorrere a sincronizazione esplicita:
+ * il flag viene scritto una sola volta all'avvio e letto
+ * succesivamente da altri thread, quindi volatile è sufficiente per evitare race condition
+ */
 public final class AppStatus {
 
-    private static boolean dbConnectionOk = false;
+    // volatile garantisce che non vi siano race-condition.
+    private static volatile boolean dbConnectionOk = false;
 
     private AppStatus() {}
 
