@@ -2,7 +2,7 @@ package com.example.rm.controller;
 
 import com.example.rm.model.Order;
 import com.example.rm.preference.KitchenPreferences;
-import com.example.rm.service.DatabaseService;
+import com.example.rm.service.OrderService;
 
 import java.util.List;
 
@@ -10,45 +10,44 @@ public class KitchenService implements KitchenUseCase {
 
     @Override
     public KitchenPreferences loadPreferences(String username) {
-        return DatabaseService.getKitchenPreferences(username);
+        return com.example.rm.service.KitchenService.getPreferences(username);
     }
 
     @Override
     public List<Order> loadFilteredOrders(String username) {
-        return DatabaseService.getKitchenActiveOrdersFiltered(username);
+        return com.example.rm.service.KitchenService.getActiveOrdersFiltered(username);
     }
 
     @Override
     public List<Order> loadActiveOrders() {
-        return DatabaseService.getKitchenActiveOrders();
+        return OrderService.getKitchenActive();
     }
 
     @Override
     public void decomposeOrder(int orderId) {
-        DatabaseService.decomposeOrderIfNeeded(orderId);
+        OrderService.decomposeIfNeeded(orderId);
     }
 
     @Override
     public void markOrderAsReady(int orderId) {
-        DatabaseService.setOrderStatus(orderId, "ready");
+        OrderService.setStatus(orderId, "ready");
     }
 
     @Override
     public void splitMixedOrdersIfNeeded() {
-        List<Order> allOrders = DatabaseService.getKitchenActiveOrders();
+        List<Order> allOrders = OrderService.getKitchenActive();
         for (Order order : allOrders) {
-            DatabaseService.decomposeOrderIfNeeded(order.getId());
+            OrderService.decomposeIfNeeded(order.getId());
         }
     }
 
     @Override
     public List<String> getOrderItemsDisplay(int orderId) {
-        return DatabaseService.getOrderItemsForDisplay(orderId);
+        return OrderService.getItemsForDisplay(orderId);
     }
 
     @Override
     public boolean updateOrderStatus(int orderId, String status) {
-        return DatabaseService.setOrderStatus(orderId, status);
+        return OrderService.setStatus(orderId, status);
     }
-
 }

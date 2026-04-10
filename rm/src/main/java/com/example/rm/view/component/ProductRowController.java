@@ -1,7 +1,6 @@
 package com.example.rm.view.component;
 
 import com.example.rm.model.MenuProduct;
-import com.example.rm.service.DatabaseService;
 import javafx.fxml.FXML;
 
 import javafx.scene.control.ContextMenu;
@@ -10,6 +9,9 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import java.util.function.Consumer;
+import com.example.rm.dao.DatabaseProductDAO;
+import com.example.rm.dao.ProductDAO;
+
 
 
 public class ProductRowController {
@@ -18,6 +20,8 @@ public class ProductRowController {
     @FXML private Label lblName;
     @FXML private Label lblDetails;
     @FXML private Label dots;
+
+    private final ProductDAO productDAO = new DatabaseProductDAO();
 
     private Consumer<MenuProduct> onSelect;
 
@@ -32,7 +36,7 @@ public class ProductRowController {
         lblName.setText(product.getNome());
 
         long quantitySold =
-                DatabaseService.getQuantitySold(product.getNome());
+                productDAO.getQuantitySold(product.getNome());
 
         lblDetails.setText(
                 String.format("%.2f€ | Q.ta: %d",
@@ -71,8 +75,7 @@ public class ProductRowController {
 
         MenuItem delete = new MenuItem("Elimina prodotto");
         delete.setOnAction(e -> {
-            boolean success =
-                    DatabaseService.deleteProduct(product.getId());
+            boolean success = productDAO.delete((long) product.getId());
 
             if (success && reloadCallback != null) {
                 reloadCallback.run();
@@ -94,7 +97,7 @@ public class ProductRowController {
         lblName.setText(product.getNome());
 
         long quantitySold =
-                DatabaseService.getQuantitySold(product.getNome());
+                productDAO.getQuantitySold(product.getNome());
 
         lblDetails.setText(
                 String.format("%.2f€ | Q.ta: %d",

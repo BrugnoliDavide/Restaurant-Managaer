@@ -2,8 +2,8 @@ package com.example.rm.controller;
 
 
 import com.example.rm.model.Order;
-import com.example.rm.service.DatabaseService;
 import com.example.rm.service.LoggerService;
+import com.example.rm.service.OrderService;
 
 import java.util.List;
 import java.util.logging.Level;
@@ -16,12 +16,12 @@ public class FinancialService implements FinancialUseCase {
 
     @Override
     public List<Order> loadAllOrdersWithTotal() {
-        return DatabaseService.getAllOrdersWithTotal();
+        return OrderService.getAllWithTotal();
     }
 
     @Override
     public List<Order> loadAllOrdersWithDisplayItems() {
-        List<Order> orders = DatabaseService.getAllOrdersWithTotal();
+        List<Order> orders = OrderService.getAllWithTotal();
         for (Order order : orders) {
             order.getDisplayItems();
         }

@@ -1,7 +1,8 @@
+// !! deprecata, smembrata in varie funzioni più piccole
+/*
 package com.example.rm.service;
 
 import com.example.rm.dao.DatabaseKitchenPreferencesDAO;
-import com.example.rm.dao.DatabaseProductDAO;
 import com.example.rm.dao.OrderDAO;
 import com.example.rm.dao.impl.OrderDAOPostgres;
 import com.example.rm.dao.impl.OrderDAOFile;
@@ -20,9 +21,6 @@ import java.util.logging.Logger;
 import static com.example.rm.service.DBConstants.*;
 
 import java.time.LocalDateTime;
-import com.example.rm.preference.PreferencesSerializer;
-import com.example.rm.preference.PreferencesConstants;
-
 
 public class DatabaseService {
 
@@ -38,7 +36,7 @@ public class DatabaseService {
      * vengano sempre letti come un'unità coerente. Senza questo accorgimento,
      * tra la scrittura di {@code url} e quella di {@code pass} un thread
      * concorrente potrebbe leggere uno stato parzialmente aggiornato.</p>
-     */
+     *//**
     private record ConnectionConfig(String url, String user, String pass) {}
 
     // volatile garantisce che ogni thread veda sempre l'ultima versione
@@ -62,19 +60,22 @@ public class DatabaseService {
      * aggiornino contemporaneamente {@code config} e {@code orderDAO},
      * creando uno stato in cui il DAO usa credenziali diverse da quelle
      * appena salvate in {@code config}.</p>
-     */
+     *//*
     public static synchronized void setConnectionConfig(String ip, String port, String dbName,
                                                         String username, String password) {
         String url = POSTGRES_PREFIX + ip + ":" + port + "/" + dbName;
-
+*/
         // Scrittura atomica: config e orderDAO vengono aggiornati
         // nell'ordine corretto prima che qualsiasi altro thread possa leggerli.
+        // /*
+
+        /*
         config   = new ConnectionConfig(url, username, password);
-        orderDAO = new OrderDAOPostgres(url, username, password);
+        orderDAO = new OrderDAOPostgres();
 
         logger.log(Level.INFO, "Configurazione DB aggiornata: {0}", url);
     }
-
+*/
     /**
      * Configura il sistema per utilizzare il file system per gli ordini.
      *
@@ -82,7 +83,7 @@ public class DatabaseService {
      * i due metodi non possono essere eseguiti concorrentemente.</p>
      *
      * @param basePath Percorso base per i file degli ordini
-     */
+     *//*
     public static synchronized void setFileSystemMode(String basePath) {
         try {
             orderDAO = new OrderDAOFile(basePath);
@@ -90,7 +91,7 @@ public class DatabaseService {
         } catch (IOException e) {
             throw new IllegalStateException("Impossibile inizializzare file system", e);
         }
-    }
+    }*/
 
     // -------------------------------------------------------------------------
     // Metodi di accesso alla connessione
@@ -105,6 +106,8 @@ public class DatabaseService {
      * due versioni diverse se un altro thread chiama {@code setConnectionConfig}
      * nel mezzo. La lettura singola in {@code current} evita questa race.</p>
      */
+
+    /**
     public static Connection getConnection() throws SQLException {
         ConnectionConfig current = config; // lettura volatile una sola volta
         if (current == null) {
@@ -222,9 +225,6 @@ public class DatabaseService {
         return prodotti;
     }
 
-    public static boolean deleteProduct(int id) {
-        return DatabaseProductDAO.deleteProduct(id);
-    }
 
     public static MenuProduct getProductById(int productId) {
         String sql = "SELECT id, nome, tipologia, prezzo_vendita, costo_realizzazione, allergeni " +
@@ -415,9 +415,10 @@ public class DatabaseService {
     // Costanti esposte (usate da altri layer — da migrare in DBConstants)
     // -------------------------------------------------------------------------
 
-    /** @deprecated Usare DBConstants.TIPOLOGIA_COLUMN direttamente */
+    /** @deprecated Usare DBConstants.TIPOLOGIA_COLUMN direttamente *//*
     @Deprecated(since = "refactoring-2026", forRemoval = true)
     public static String returnTIPOLOGIASTRING() {
         return TIPOLOGIASTRING;
     }
 }
+*/

@@ -5,7 +5,6 @@ import com.example.rm.dao.DatabaseProductDAO;
 import com.example.rm.dao.CategoryDAO;
 import com.example.rm.dao.DatabaseCategoryDAO;
 import com.example.rm.model.MenuProduct;
-import com.example.rm.service.DatabaseService;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +26,7 @@ public class MenuService implements MenuUseCase {
     @Override
     public List<MenuProduct> loadAllProducts() {
         try {
-            return DatabaseService.getAllProducts();
+            return productDAO.findAll();
         } catch (Exception e) {
             return Collections.emptyList();
         }
@@ -50,6 +49,6 @@ public class MenuService implements MenuUseCase {
 
     @Override
     public MenuProduct getProductById(int id) {
-        return DatabaseService.getProductById(id);
+        return productDAO.findById(id);
     }
 }

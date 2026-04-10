@@ -1,18 +1,18 @@
 package com.example.rm.controller;
 
+import com.example.rm.service.ConnectionManager;
 import com.example.rm.service.DBConfigStore;
-import com.example.rm.service.DatabaseService;
 
 public class DBConfigController implements DBConfigUseCase {
 
     @Override
     public DBConfig loadConfig() {
-        // Usa API esistenti di DatabaseService
-        String host = DatabaseService.getDBHost();
-        String port = DatabaseService.getDBPort();
-        String dbName = DatabaseService.getDBName();
-        String user = DatabaseService.getDBUser();
-        boolean hasPassword = DatabaseService.hasPassword(); // esiste nel tuo codice
+
+        String host =           ConnectionManager.getHost();
+        String port =           ConnectionManager.getPort();
+        String dbName =         ConnectionManager.getDbName();
+        String user =           ConnectionManager.getUser();
+        boolean hasPassword =   ConnectionManager.hasPassword();
 
         return new DBConfig(host, port, dbName, user, hasPassword);
     }
@@ -46,8 +46,7 @@ public class DBConfigController implements DBConfigUseCase {
                 finalPassword
         );
 
-        // Aggiorna la configurazione runtime di DatabaseService
-        DatabaseService.setConnectionConfig(
+        ConnectionManager.configure(
                 host.trim(),
                 port.trim(),
                 dbName.trim(),

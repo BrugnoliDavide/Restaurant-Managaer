@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mindrot.jbcrypt.BCrypt;
 
+import com.example.rm.dao.DatabaseConnection;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -18,7 +20,7 @@ import static org.mockito.Mockito.mockStatic;
 class SecurityServiceTest {
 
     private static Connection h2Connection;
-    private static MockedStatic<DatabaseService> mockedDatabaseService;
+    private static MockedStatic<DatabaseConnection> mockedDatabaseConnection;
 
     @BeforeAll
     static void setupDB() throws Exception {
@@ -48,16 +50,16 @@ class SecurityServiceTest {
             ps.executeUpdate();
         }
 
-        mockedDatabaseService = mockStatic(DatabaseService.class);
+        mockedDatabaseConnection = mockStatic(DatabaseConnection.class);
 
-        mockedDatabaseService.when(DatabaseService::getConnection).thenAnswer(invocation ->
+        mockedDatabaseConnection.when(DatabaseConnection::getConnection).thenAnswer(invocation ->
                 DriverManager.getConnection("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1", "sa", "")
         );
     }
 
     @AfterAll
     static void tearDown() throws Exception {
-        if (mockedDatabaseService != null) mockedDatabaseService.close();
+        if (mockedDatabaseConnection != null) mockedDatabaseConnection.close();
         if (h2Connection != null && !h2Connection.isClosed()) h2Connection.close();
     }
 
@@ -67,7 +69,6 @@ class SecurityServiceTest {
                 AuthenticationException.class,
                 () -> SecurityService.authenticate("testUser", "wrongPassword")
         );
-
         assertEquals("Credenziali non valide", exception.getUserMessage());
     }
 
@@ -77,7 +78,6 @@ class SecurityServiceTest {
                 AuthenticationException.class,
                 () -> SecurityService.authenticate("unknownUser", "whatever")
         );
-
         assertEquals("Credenziali non valide", exception.getUserMessage());
     }
 
@@ -87,7 +87,6 @@ class SecurityServiceTest {
                 IllegalArgumentException.class,
                 () -> SecurityService.authenticate(null, "password")
         );
-
         assertEquals("Username o password non validi", exception.getMessage());
     }
 
@@ -99,6 +98,4 @@ class SecurityServiceTest {
         );
         assertEquals("Username o password non validi", exception.getMessage());
     }
-
-
 }

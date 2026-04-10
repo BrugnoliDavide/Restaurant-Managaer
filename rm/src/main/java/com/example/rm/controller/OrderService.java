@@ -2,7 +2,6 @@ package com.example.rm.controller;
 
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
-import com.example.rm.service.DatabaseService;
 
 import java.util.List;
 import java.util.logging.Level;
@@ -10,11 +9,7 @@ import java.util.logging.Logger;
 
 public class OrderService implements OrderUseCase {
 
-
     public static final Logger logger = Logger.getLogger(OrderService.class.getName());
-
-
-
 
     @Override
     public boolean createOrder(
@@ -23,22 +18,22 @@ public class OrderService implements OrderUseCase {
             String note,
             com.example.rm.model.User user
     ) {
-        return DatabaseService.createOrder(items, numeroTavolo, note, user);
+        return com.example.rm.service.OrderService.create(items, numeroTavolo, note, user);
     }
 
     @Override
     public List<Order> loadReadyOrdersForWaiter() {
-        return DatabaseService.getReadyOrdersForWaiter();
+        return com.example.rm.service.OrderService.getReadyForWaiter();
     }
 
     @Override
     public List<String> loadOrderItemsForDisplay(int orderId) {
-        return DatabaseService.getOrderItemsForDisplay(orderId);
+        return com.example.rm.service.OrderService.getItemsForDisplay(orderId);
     }
 
     @Override
     public boolean markOrderAsDelivered(int orderId) {
-        return DatabaseService.markOrderAsDelivered(orderId);
+        return com.example.rm.service.OrderService.markDelivered(orderId);
     }
 
     @Override
@@ -49,18 +44,15 @@ public class OrderService implements OrderUseCase {
         }
 
         try {
-            // Recupera tutti gli ordini e filtra per ID
-            List<Order> allOrders = DatabaseService.getAllOrdersWithTotal();
+            List<Order> allOrders = com.example.rm.service.OrderService.getAllWithTotal();
 
             return allOrders.stream()
                     .filter(order -> order.getId() == orderId)
                     .findFirst()
                     .orElse(null);
-
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore recupero ordine ID: {0}", orderId);
             return null;
         }
     }
-
-    }
+}

@@ -1,7 +1,7 @@
 package com.example.rm.controller;
 
+import com.example.rm.service.ConnectionManager;
 import com.example.rm.service.DBConfigStore;
-import com.example.rm.service.DatabaseService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,30 +12,30 @@ import static org.mockito.Mockito.*;
 
 class DBConfigControllerTest {
 
-    private MockedStatic<DatabaseService> mockedDbService;
+    private MockedStatic<ConnectionManager> mockedConnManager;
     private MockedStatic<DBConfigStore> mockedConfigStore;
     private DBConfigController controller;
 
     @BeforeEach
     void setUp() {
-        mockedDbService = mockStatic(DatabaseService.class);
+        mockedConnManager = mockStatic(ConnectionManager.class);
         mockedConfigStore = mockStatic(DBConfigStore.class);
         controller = new DBConfigController();
     }
 
     @AfterEach
     void tearDown() {
-        mockedDbService.close();
+        mockedConnManager.close();
         mockedConfigStore.close();
     }
 
     @Test
     void loadConfig_ReturnsCurrentConfiguration() {
-        mockedDbService.when(DatabaseService::getDBHost).thenReturn("localhost");
-        mockedDbService.when(DatabaseService::getDBPort).thenReturn("5432");
-        mockedDbService.when(DatabaseService::getDBName).thenReturn("testdb");
-        mockedDbService.when(DatabaseService::getDBUser).thenReturn("user");
-        mockedDbService.when(DatabaseService::hasPassword).thenReturn(true);
+        mockedConnManager.when(ConnectionManager::getHost).thenReturn("localhost");
+        mockedConnManager.when(ConnectionManager::getPort).thenReturn("5432");
+        mockedConnManager.when(ConnectionManager::getDbName).thenReturn("testdb");
+        mockedConnManager.when(ConnectionManager::getUser).thenReturn("user");
+        mockedConnManager.when(ConnectionManager::hasPassword).thenReturn(true);
 
         DBConfigUseCase.DBConfig config = controller.loadConfig();
 
@@ -52,15 +52,15 @@ class DBConfigControllerTest {
 
         assertFalse(result);
         mockedConfigStore.verifyNoInteractions();
-        mockedDbService.verify(
-                () -> DatabaseService.setConnectionConfig(any(), any(), any(), any(), any()),
+        mockedConnManager.verify(
+                () -> ConnectionManager.configure(any(), any(), any(), any(), any()),
                 never()
         );
     }
 
     @Test
     void saveConfig_SavesSuccessfully_WithValidInput() {
-         boolean result = controller.saveConfig("localhost", "5432", "testdb", "user", "pass123");
+        boolean result = controller.saveConfig("localhost", "5432", "testdb", "user", "pass123");
 
         assertTrue(result);
 
@@ -68,8 +68,8 @@ class DBConfigControllerTest {
                         DBConfigStore.save("localhost", "5432", "testdb", "user", "pass123"),
                 times(1)
         );
-        mockedDbService.verify(() ->
-                        DatabaseService.setConnectionConfig("localhost", "5432", "testdb", "user", "pass123"),
+        mockedConnManager.verify(() ->
+                        ConnectionManager.configure("localhost", "5432", "testdb", "user", "pass123"),
                 times(1)
         );
     }
@@ -87,8 +87,8 @@ class DBConfigControllerTest {
                         DBConfigStore.save("localhost", "5432", "db", "user", "oldpass"),
                 times(1)
         );
-        mockedDbService.verify(() ->
-                        DatabaseService.setConnectionConfig("localhost", "5432", "db", "user", "oldpass"),
+        mockedConnManager.verify(() ->
+                        ConnectionManager.configure("localhost", "5432", "db", "user", "oldpass"),
                 times(1)
         );
     }

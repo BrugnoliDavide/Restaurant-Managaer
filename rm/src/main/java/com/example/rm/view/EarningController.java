@@ -7,7 +7,7 @@ import com.example.rm.controller.EarningUseCase;
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
-import com.example.rm.service.DatabaseService;
+import com.example.rm.service.OrderService;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.fxml.FXML;
@@ -320,7 +320,7 @@ public class EarningController {
             } else if (result.get() == deliveredPaga) {
                 pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, "delivered"));
                 logger.log(Level.INFO,"Segnati come delivered pendenti tavolo {0}",  tavolo);
-                List<Order> allDeliveredForTable = DatabaseService.getOrdersToPay().stream()
+                List<Order> allDeliveredForTable = OrderService.getToPay().stream()
                         .filter(o -> o.getTavolo() == tavolo)
                         .toList();
                 deliveredOrdersShown = allDeliveredForTable;
@@ -398,7 +398,7 @@ public class EarningController {
         VBox itemsList = new VBox(4);
         itemsList.setPadding(new Insets(8, 0, 0, 10));
 
-        List<OrderItem> items = DatabaseService.getOrderItemsDetailed(order.getId());
+        List<OrderItem> items = OrderService.getItemsDetailed(order.getId());
 
         for (OrderItem item : items) {
             double rowTotal = item.getQuantita() * item.getPrezzoSnapshot();

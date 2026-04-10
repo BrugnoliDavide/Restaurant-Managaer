@@ -1,7 +1,7 @@
 package com.example.rm.view.component;
 
 import com.example.rm.model.Order;
-import com.example.rm.service.DatabaseService;
+import com.example.rm.service.OrderService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -145,7 +145,7 @@ public class OrderRowItemController {
             }
 
             // Aggiungi articoli dell'ordine
-            List<String> items = DatabaseService.getOrderItemsForDisplay(order.getId());
+            List<String> items = OrderService.getItemsForDisplay(order.getId());
             if (!items.isEmpty()) {
                 subtitle.append(" - ");
 

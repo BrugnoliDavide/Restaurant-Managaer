@@ -1,6 +1,6 @@
 package com.example.rm.model;
 
-import com.example.rm.service.DatabaseService;
+import com.example.rm.service.OrderService;
 import javafx.beans.property.*;
 
 import java.io.*;
@@ -98,7 +98,7 @@ public class Order implements Serializable {
     private transient List<String> displayItems;  // Lazy
     public List<String> getDisplayItems() {
         if (displayItems == null) {
-            displayItems = DatabaseService.getOrderItemsForDisplay(getId());
+            displayItems = OrderService.getItemsForDisplay(getId());
         }
         return displayItems;
     }

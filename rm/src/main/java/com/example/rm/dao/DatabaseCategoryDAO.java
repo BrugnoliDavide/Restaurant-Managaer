@@ -1,7 +1,5 @@
 package com.example.rm.dao;
 
-import com.example.rm.service.DatabaseService;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +22,7 @@ public class DatabaseCategoryDAO implements CategoryDAO {
          ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
-                categories.add(rs.getString(DatabaseService.returnTIPOLOGIASTRING()));
+                categories.add(rs.getString("tipologia"));
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero categorie", e);

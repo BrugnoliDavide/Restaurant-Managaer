@@ -4,7 +4,7 @@ import com.example.rm.app.AppStatus;
 import com.example.rm.app.SceneManager;
 import com.example.rm.app.UsersFactory;
 import com.example.rm.app.UserSession;
-import com.example.rm.service.DatabaseService;
+import com.example.rm.service.ConnectionManager;
 import com.example.rm.service.SecurityService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -48,7 +48,7 @@ public class LoginController {
     private void handleLogin() {
        resetStyle();
 
-        boolean ok = DatabaseService.testConnection();
+        boolean ok = ConnectionManager.testConnection();
         AppStatus.setDbConnectionOk(ok);
         updateDbStatusIndicator();
 
@@ -138,7 +138,7 @@ public class LoginController {
 
             popupStage.showAndWait();
 
-            boolean ok = DatabaseService.testConnection();
+            boolean ok = ConnectionManager.testConnection();
             AppStatus.setDbConnectionOk(ok);
             updateDbStatusIndicator();
 
@@ -151,7 +151,7 @@ public class LoginController {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Errore apertura popup configurazione DB", ex);
 
-            boolean ok = DatabaseService.testConnection();
+            boolean ok = ConnectionManager.testConnection();
             AppStatus.setDbConnectionOk(ok);
 
         }
@@ -159,7 +159,7 @@ public class LoginController {
 
     private void updateDbStatusIndicator() {
 
-        if (!DatabaseService.isConfigured()) {
+        if (!ConnectionManager.isConfigured()) {
             dbStatusCircle.setFill(Color.GOLD);   // giallo → non configurato
             return;
         }

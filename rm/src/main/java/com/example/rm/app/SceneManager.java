@@ -221,37 +221,4 @@ public final class SceneManager {
             throw new IllegalStateException("SceneManager.init(Stage) deve essere chiamato prima di utilizzare il manager");
         }
     }
-
-    // !! i metodi che seguono possono anche essere deprecati
-    /**
-     * Restituisce la larghezza predefinita dell'applicazione.
-     *
-     * @return la larghezza predefinita in pixel
-     */
-    public static double getDefaultWidth() {
-        return DEFAULT_WIDTH;
-    }
-
-    /**
-     * Restituisce l'altezza predefinita dell'applicazione.
-     *
-     * @return l'altezza predefinita in pixel
-     */
-    public static double getDefaultHeight() {
-        return DEFAULT_HEIGHT;
-    }
-
-    /**
-     * @return la larghezza corrente in pixel, o la larghezza predefinita se non inizializzato
-     */
-    public static double getCurrentWidth() {
-        return (currentScene != null) ? currentScene.getWidth() : DEFAULT_WIDTH;
-    }
-
-    /**
-     * @return l'altezza corrente in pixel, o l'altezza predefinita se non inizializzato
-     */
-    public static double getCurrentHeight() {
-        return (currentScene != null) ? currentScene.getHeight() : DEFAULT_HEIGHT;
-    }
 }

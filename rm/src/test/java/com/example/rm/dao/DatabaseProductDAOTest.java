@@ -9,10 +9,11 @@ import org.mockito.Mockito;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class DatabaseProductDAOMockStaticTest {
@@ -20,48 +21,36 @@ class DatabaseProductDAOMockStaticTest {
     private MockedStatic<DatabaseConnection> mockedDatabaseConnection;
     private Connection mockConnection;
     private PreparedStatement mockPreparedStatement;
+    private DatabaseProductDAO dao;
 
     @BeforeEach
     void setUp() throws SQLException {
-        // Crea mock per DatabaseConnection
         mockedDatabaseConnection = Mockito.mockStatic(DatabaseConnection.class);
-
-        // Crea mock per Connection e PreparedStatement
         mockConnection = mock(Connection.class);
         mockPreparedStatement = mock(PreparedStatement.class);
-
-        // Configura il mock di DatabaseConnection.getConnection()
         mockedDatabaseConnection.when(DatabaseConnection::getConnection).thenReturn(mockConnection);
-
-        // Configura il mock della Connection
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
+
+        dao = new DatabaseProductDAO();
     }
 
     @AfterEach
     void tearDown() {
-        // Chiudi il mock statico
         if (mockedDatabaseConnection != null) {
             mockedDatabaseConnection.close();
         }
     }
 
+    // --- INSERT (tramite save con id <= 0) ---
+
     @Test
-    void testAddProduct_Success() throws SQLException {
-        // Arrange
-        MenuProduct product = new MenuProduct();
-        product.setNome("Pizza Margherita");
-        product.setTipologia("Piatto principale");
-        product.setPrezzoVendita(12.5);
-        product.setCostoRealizzazione(4.5);
-        product.setAllergeni("Glutine");
+    void testSave_NewProduct_Success() throws SQLException {
+        MenuProduct product = createProduct(0, "Pizza Margherita",
+                "Piatto principale", 12.5, 4.5, "Glutine");
 
         when(mockPreparedStatement.executeUpdate()).thenReturn(1);
 
-        // Act
-        boolean result = DatabaseProductDAO.addProduct(product);
-
-        // Assert
-        assertTrue(result);
+        assertTrue(dao.save(product));
         verify(mockPreparedStatement).setString(1, "Pizza Margherita");
         verify(mockPreparedStatement).setString(2, "Piatto principale");
         verify(mockPreparedStatement).setDouble(3, 12.5);
@@ -71,53 +60,35 @@ class DatabaseProductDAOMockStaticTest {
     }
 
     @Test
-    void testAddProduct_Failure() throws SQLException {
-        // Arrange
+    void testSave_NewProduct_Failure() throws SQLException {
         MenuProduct product = new MenuProduct();
         product.setNome("Pizza");
 
         when(mockPreparedStatement.executeUpdate()).thenReturn(0);
 
-        // Act
-        boolean result = DatabaseProductDAO.addProduct(product);
-
-        // Assert
-        assertFalse(result);
+        assertFalse(dao.save(product));
     }
 
     @Test
-    void testAddProduct_SQLException() throws SQLException {
-        // Arrange
+    void testSave_NewProduct_SQLException() throws SQLException {
         MenuProduct product = new MenuProduct();
         product.setNome("Pizza");
 
         when(mockPreparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
 
-        // Act
-        boolean result = DatabaseProductDAO.addProduct(product);
-
-        // Assert
-        assertFalse(result);
+        assertFalse(dao.save(product));
     }
 
+    // --- UPDATE (tramite save con id > 0) ---
+
     @Test
-    void testUpdateProduct_Success() throws SQLException {
-        // Arrange
-        MenuProduct product = new MenuProduct();
-        product.setId(1);
-        product.setNome("Pizza Margherita");
-        product.setTipologia("Piatto principale");
-        product.setPrezzoVendita(12.5);
-        product.setCostoRealizzazione(4.5);
-        product.setAllergeni("Glutine");
+    void testSave_ExistingProduct_Success() throws SQLException {
+        MenuProduct product = createProduct(1, "Pizza Margherita",
+                "Piatto principale", 12.5, 4.5, "Glutine");
 
         when(mockPreparedStatement.executeUpdate()).thenReturn(1);
 
-        // Act
-        boolean result = DatabaseProductDAO.updateProduct(product);
-
-        // Assert
-        assertTrue(result);
+        assertTrue(dao.save(product));
         verify(mockPreparedStatement).setString(1, "Pizza Margherita");
         verify(mockPreparedStatement).setString(2, "Piatto principale");
         verify(mockPreparedStatement).setDouble(3, 12.5);
@@ -128,90 +99,72 @@ class DatabaseProductDAOMockStaticTest {
     }
 
     @Test
-    void testDeleteProduct_Success() throws SQLException {
-        // Arrange
-        when(mockPreparedStatement.executeUpdate()).thenReturn(1);
-
-        // Act
-        boolean result = DatabaseProductDAO.deleteProduct(1);
-
-        // Assert
-        assertTrue(result);
-        verify(mockPreparedStatement).setInt(1, 1);
-        verify(mockPreparedStatement).executeUpdate();
-    }
-
-    @Test
-    void testDeleteProduct_NoRowsAffected() throws SQLException {
-        // Arrange
-        when(mockPreparedStatement.executeUpdate()).thenReturn(0);
-
-        // Act
-        boolean result = DatabaseProductDAO.deleteProduct(1);
-
-        // Assert
-        assertFalse(result);
-    }
-
-    @Test
-    void testDeleteProduct_SQLException() throws SQLException {
-        // Arrange
-        when(mockPreparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
-
-        // Act
-        boolean result = DatabaseProductDAO.deleteProduct(1);
-
-        // Assert
-        assertFalse(result);
-    }
-
-    @Test
-    void testSave_NewProduct() throws SQLException {
-        // Arrange
-        DatabaseProductDAO dao = new DatabaseProductDAO();
-        MenuProduct product = new MenuProduct();
-        product.setId(0);
-        product.setNome("Pizza Margherita");
-        product.setTipologia("Piatto principale");
-        product.setPrezzoVendita(12.5);
-        product.setCostoRealizzazione(4.5);
-        product.setAllergeni("Glutine");
-
-        when(mockPreparedStatement.executeUpdate()).thenReturn(1);
-
-        // Act
-        boolean result = dao.save(product);
-
-        // Assert
-        assertTrue(result);
-        // CORREZIONE: Verifica il numero corretto di chiamate
-        // 3 stringhe: nome, tipologia, allergeni
-        verify(mockPreparedStatement, times(3)).setString(anyInt(), anyString());
-        // 2 double: prezzo, costo
-        verify(mockPreparedStatement, times(2)).setDouble(anyInt(), anyDouble());
-        // Verifica i parametri specifici
-        verify(mockPreparedStatement).setString(1, "Pizza Margherita");
-        verify(mockPreparedStatement).setString(2, "Piatto principale");
-        verify(mockPreparedStatement).setDouble(3, 12.5);
-        verify(mockPreparedStatement).setDouble(4, 4.5);
-        verify(mockPreparedStatement).setString(5, "Glutine");
-    }
-    @Test
-    void testSave_ExistingProduct() throws SQLException {
-        // Arrange
-        DatabaseProductDAO dao = new DatabaseProductDAO();
+    void testSave_ExistingProduct_VerifyId() throws SQLException {
         MenuProduct product = new MenuProduct();
         product.setId(1);
         product.setNome("Pizza");
 
         when(mockPreparedStatement.executeUpdate()).thenReturn(1);
 
-        // Act
-        boolean result = dao.save(product);
-
-        // Assert
-        assertTrue(result);
-        // Verifica che sia stata chiamata updateProduct (incluso l'ID)
+        assertTrue(dao.save(product));
         verify(mockPreparedStatement).setInt(6, 1);
+    }
+
+    // --- DELETE (tramite interfaccia) ---
+
+    @Test
+    void testDelete_Success() throws SQLException {
+        when(mockPreparedStatement.executeUpdate()).thenReturn(1);
+
+        assertTrue(dao.delete(1L));
+        verify(mockPreparedStatement).setLong(1, 1L);
+        verify(mockPreparedStatement).executeUpdate();
+    }
+
+    @Test
+    void testDelete_NoRowsAffected() throws SQLException {
+        when(mockPreparedStatement.executeUpdate()).thenReturn(0);
+
+        assertFalse(dao.delete(1L));
+    }
+
+    @Test
+    void testDelete_SQLException() throws SQLException {
+        when(mockPreparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
+
+        assertFalse(dao.delete(1L));
+    }
+
+    // --- SAVE null ---
+
+    @Test
+    void testSave_NullProduct() {
+        assertFalse(dao.save(null));
+    }
+
+    // --- DELETE invalidi ---
+
+    @Test
+    void testDelete_NullId() {
+        assertFalse(dao.delete(null));
+    }
+
+    @Test
+    void testDelete_InvalidId() {
+        assertFalse(dao.delete(0L));
+    }
+
+    // --- Helper ---
+
+    private MenuProduct createProduct(int id, String nome, String tipologia,
+                                      double prezzo, double costo, String allergeni) {
+        MenuProduct p = new MenuProduct();
+        p.setId(id);
+        p.setNome(nome);
+        p.setTipologia(tipologia);
+        p.setPrezzoVendita(prezzo);
+        p.setCostoRealizzazione(costo);
+        p.setAllergeni(allergeni);
+        return p;
     }
 }

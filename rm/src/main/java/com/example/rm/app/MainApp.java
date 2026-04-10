@@ -1,6 +1,6 @@
 package com.example.rm.app;
 
-import com.example.rm.service.DatabaseService;
+import com.example.rm.service.ConnectionManager;
 import com.example.rm.view.LoginController;
 import javafx.application.Application;
 import javafx.scene.Parent;
@@ -16,8 +16,8 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        DatabaseService.loadFromPreferences();
-        boolean dbOk = DatabaseService.testConnection();
+        ConnectionManager.loadFromPreferences();
+        boolean dbOk = ConnectionManager.testConnection();
         AppStatus.setDbConnectionOk(dbOk);
 
         Parent root = LoginController.getFXMLView();

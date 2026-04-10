@@ -1,7 +1,7 @@
 package com.example.rm.view;
 
 import com.example.rm.model.MenuProduct;
-import com.example.rm.service.DatabaseService;
+import com.example.rm.service.OrderService;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.example.rm.dao.DatabaseProductDAO;
 
 /**
  * Controller per la vista di dettaglio del prodotto.
@@ -34,6 +35,7 @@ public class ProductDetailController {
 
     private MenuProduct product;
 
+    private final DatabaseProductDAO productDAO = new DatabaseProductDAO();
 
 
     @FXML
@@ -86,7 +88,7 @@ public class ProductDetailController {
 
         logger.log(Level.INFO, "Eliminazione prodotto ID: {0}", product.getId());
 
-        boolean success = DatabaseService.deleteProduct(product.getId());
+        boolean success = productDAO.delete((long) product.getId());
 
         if (success) {
             logger.log(Level.INFO, "Prodotto eliminato con successo");
@@ -107,7 +109,7 @@ public class ProductDetailController {
 
         try {
             // Ricarica il prodotto aggiornato dal database
-            List<MenuProduct> allProducts = DatabaseService.getAllProducts();
+            List<MenuProduct> allProducts = productDAO.findAll();
             MenuProduct updatedProduct = allProducts.stream()
                     .filter(p -> p.getId() == product.getId())
                     .findFirst()
@@ -138,6 +140,9 @@ public class ProductDetailController {
     }
 
     /**
+     *
+     * !! eliminabile
+     *
      * Restituisce il contenitore principale per i dettagli.
      * @return VBox contenitore
      */
@@ -206,13 +211,13 @@ public class ProductDetailController {
         LocalDateTime startPrev30 = now.minusDays(60);
         LocalDateTime endPrev30 = now.minusDays(30);
 
-        long salesLast30 = DatabaseService.getQuantitySoldInDateRange(
+        long salesLast30 = OrderService.getQuantitySoldInRange(
                 product.getId(),
                 startLast30,
                 now
         );
 
-        long salesPrevious30 = DatabaseService.getQuantitySoldInDateRange(
+        long salesPrevious30 = OrderService.getQuantitySoldInRange(
                 product.getId(),
                 startPrev30,
                 endPrev30

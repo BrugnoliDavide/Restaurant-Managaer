@@ -1,5 +1,6 @@
 package com.example.rm.dao.impl;
 
+import com.example.rm.dao.DatabaseConnection;
 import com.example.rm.dao.OrderDAO;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.model.Order;
@@ -14,33 +15,13 @@ import java.util.logging.Logger;
 
 import static com.example.rm.service.DBConstants.*;
 
-/**
- * Implementazione PostgreSQL del DAO per gli ordini.
- * Gestisce la persistenza degli ordini su database relazionale.
- */
 public class OrderDAOPostgres implements OrderDAO {
 
     private static final Logger logger = Logger.getLogger(OrderDAOPostgres.class.getName());
     private static final String TODOSTRING = "to-do";
 
-    private final String url;
-    private final String user;
-    private final String password;
-
-    /**
-     * Costruttore con parametri di connessione
-     * @param url URL di connessione PostgreSQL
-     * @param user Username database
-     * @param password Password database
-     */
-    public OrderDAOPostgres(String url, String user, String password) {
-        this.url = url;
-        this.user = user;
-        this.password = password;
-    }
-
     private Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(url, user, password);
+        return DatabaseConnection.getConnection();
     }
 
     @Override

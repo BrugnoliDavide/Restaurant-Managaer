@@ -2,7 +2,7 @@ package com.example.rm.controller;
 
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
-import com.example.rm.service.DatabaseService;
+import com.example.rm.service.OrderService;
 
 import java.util.List;
 
@@ -10,31 +10,31 @@ public class EarningService implements EarningUseCase {
 
     @Override
     public List<Order> loadOrdersToPay() {
-        return DatabaseService.getOrdersToPay();
+        return OrderService.getToPay();
     }
 
     @Override
     public List<OrderItem> getOrderItemsDetailed(int orderId) {
-        return DatabaseService.getOrderItemsDetailed(orderId);
+        return OrderService.getItemsDetailed(orderId);
     }
 
     @Override
     public List<Integer> getPendingOrderIds(int tavolo) {
-        return DatabaseService.getPendingOrderIds(tavolo);
+        return OrderService.getPendingOrderIds(tavolo);
     }
 
     @Override
     public boolean hasPendingOrders(int tableNumber) {
-        return DatabaseService.hasPendingOrders(tableNumber);
+        return OrderService.hasPendingOrders(tableNumber);
     }
 
     @Override
     public boolean markOrderAsPaid(int orderId) {
-        return DatabaseService.markOrderAsPaid(orderId);
+        return OrderService.markPaid(orderId);
     }
 
     @Override
     public void setOrderStatus(int orderId, String status) {
-        DatabaseService.setOrderStatus(orderId, status);
+        OrderService.setStatus(orderId, status);
     }
 }
