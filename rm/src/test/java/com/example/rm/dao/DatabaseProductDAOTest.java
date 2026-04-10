@@ -1,6 +1,7 @@
 package com.example.rm.dao;
 
 import com.example.rm.model.MenuProduct;
+import com.example.rm.service.ConnectionManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,7 +10,6 @@ import org.mockito.Mockito;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,17 +18,17 @@ import static org.mockito.Mockito.*;
 
 class DatabaseProductDAOMockStaticTest {
 
-    private MockedStatic<DatabaseConnection> mockedDatabaseConnection;
+    private MockedStatic<ConnectionManager> mockedConnectionManager;
     private Connection mockConnection;
     private PreparedStatement mockPreparedStatement;
     private DatabaseProductDAO dao;
 
     @BeforeEach
     void setUp() throws SQLException {
-        mockedDatabaseConnection = Mockito.mockStatic(DatabaseConnection.class);
+        mockedConnectionManager = Mockito.mockStatic(ConnectionManager.class);
         mockConnection = mock(Connection.class);
         mockPreparedStatement = mock(PreparedStatement.class);
-        mockedDatabaseConnection.when(DatabaseConnection::getConnection).thenReturn(mockConnection);
+        mockedConnectionManager.when(ConnectionManager::getConnection).thenReturn(mockConnection);
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
 
         dao = new DatabaseProductDAO();
@@ -36,8 +36,8 @@ class DatabaseProductDAOMockStaticTest {
 
     @AfterEach
     void tearDown() {
-        if (mockedDatabaseConnection != null) {
-            mockedDatabaseConnection.close();
+        if (mockedConnectionManager != null) {
+            mockedConnectionManager.close();
         }
     }
 

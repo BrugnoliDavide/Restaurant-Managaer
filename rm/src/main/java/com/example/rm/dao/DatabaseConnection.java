@@ -1,4 +1,4 @@
-package com.example.rm.dao;
+/*package com.example.rm.dao;
 
 import com.example.rm.service.ConnectionManager;
 import java.sql.Connection;
@@ -16,4 +16,4 @@ public final class DatabaseConnection {
         }
         return connection;
     }
-}
+}*/

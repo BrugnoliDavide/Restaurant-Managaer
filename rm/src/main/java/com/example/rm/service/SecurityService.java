@@ -55,9 +55,9 @@ public final class SecurityService {
     public static boolean changePassword(String username,
                                          String currentPassword,
                                          String newPassword) {
-        // verifica password corrente
-        String currentRole = authenticate(username, currentPassword);
-        if (currentRole == null) {
+        try {
+            authenticate(username, currentPassword);
+        } catch (AuthenticationException e) {
             logger.log(Level.WARNING,
                     "Cambio password fallito per {0}: password corrente errata", username);
             return false;

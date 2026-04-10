@@ -2,7 +2,6 @@ package com.example.rm.bean;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Objects;
 
 /**
  * Java Bean che rappresenta un prodotto del menù.

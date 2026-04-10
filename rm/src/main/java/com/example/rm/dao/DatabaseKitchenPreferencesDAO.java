@@ -4,6 +4,7 @@ import com.example.rm.preference.DemoModeManager;
 import com.example.rm.preference.KitchenPreferences;
 import com.example.rm.preference.PreferencesConstants;
 import com.example.rm.preference.PreferencesSerializer;
+import com.example.rm.service.ConnectionManager;
 
 import java.sql.*;
 import java.util.HashSet;
@@ -43,8 +44,8 @@ public class DatabaseKitchenPreferencesDAO implements KitchenPreferencesDAO {
     public static KitchenPreferences getKitchenPreferences(String username) {
         String sql = "SELECT kitchen_preferences FROM users WHERE username = ?";
 
-        try (PreparedStatement pstmt =
-                     DatabaseConnection.getConnection().prepareStatement(sql)) {
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, username);
 
@@ -55,9 +56,9 @@ public class DatabaseKitchenPreferencesDAO implements KitchenPreferencesDAO {
                 }
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore caricamento preferenze cucina per {0}, {1}", new Object[]{ username, e});
+            logger.log(Level.SEVERE, "Errore caricamento preferenze cucina per {0}, {1}",
+                    new Object[]{username, e});
         }
-
         // Fallback: preferenze di default
         return new KitchenPreferences(username,
                 PreferencesConstants.DEFAULT_SPLIT_ORDERS,
@@ -80,8 +81,8 @@ public class DatabaseKitchenPreferencesDAO implements KitchenPreferencesDAO {
 
         String serialized = PreferencesSerializer.serialize(preferences);
 
-        try (PreparedStatement pstmt =
-                     DatabaseConnection.getConnection().prepareStatement(sql)) {
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             if (serialized != null) {
                 pstmt.setString(1, serialized);
@@ -111,8 +112,8 @@ public class DatabaseKitchenPreferencesDAO implements KitchenPreferencesDAO {
     public static boolean deleteKitchenPreferences(String username) {
         String sql = "UPDATE users SET kitchen_preferences = NULL WHERE username = ?";
 
-        try (PreparedStatement pstmt =
-                     DatabaseConnection.getConnection().prepareStatement(sql)) {
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, username);
             int affectedRows = pstmt.executeUpdate();

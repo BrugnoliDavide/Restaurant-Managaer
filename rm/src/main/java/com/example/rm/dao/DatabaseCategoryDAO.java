@@ -1,5 +1,7 @@
 package com.example.rm.dao;
 
+import com.example.rm.service.ConnectionManager;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,10 +18,9 @@ public class DatabaseCategoryDAO implements CategoryDAO {
         List<String> categories = new ArrayList<>();
         String sql = "SELECT DISTINCT tipologia FROM menu_items ORDER BY tipologia";
 
-        try (
-            PreparedStatement pstmt =
-                    DatabaseConnection.getConnection().prepareStatement(sql);
-         ResultSet rs = pstmt.executeQuery()) {
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);
+             ResultSet rs = pstmt.executeQuery()) {
 
             while (rs.next()) {
                 categories.add(rs.getString("tipologia"));

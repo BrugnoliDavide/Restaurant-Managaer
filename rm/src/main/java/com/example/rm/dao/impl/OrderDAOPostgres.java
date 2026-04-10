@@ -1,11 +1,11 @@
 package com.example.rm.dao.impl;
 
-import com.example.rm.dao.DatabaseConnection;
 import com.example.rm.dao.OrderDAO;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
+import com.example.rm.service.ConnectionManager;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -21,7 +21,7 @@ public class OrderDAOPostgres implements OrderDAO {
     private static final String TODOSTRING = "to-do";
 
     private Connection getConnection() throws SQLException {
-        return DatabaseConnection.getConnection();
+        return ConnectionManager.getConnection();
     }
 
     @Override

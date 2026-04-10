@@ -2,6 +2,7 @@ package com.example.rm.dao;
 
 import com.example.rm.app.UsersFactory;
 import com.example.rm.model.User;
+import com.example.rm.service.ConnectionManager;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ public class DatabaseUserDAO implements UserDAO {
         List<User> list = new ArrayList<>();
         String sql = "SELECT username, role FROM users ORDER BY role, username";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -37,7 +38,7 @@ public class DatabaseUserDAO implements UserDAO {
     public boolean delete(String username) {
         String sql = "DELETE FROM users WHERE username = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, username);
@@ -60,7 +61,7 @@ public class DatabaseUserDAO implements UserDAO {
     public boolean insert(String username, String hashedPassword, String role) {
         String sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, username);
@@ -77,7 +78,7 @@ public class DatabaseUserDAO implements UserDAO {
     public UserCredentials findCredentials(String username) {
         String sql = "SELECT password, role FROM users WHERE username = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, username);
@@ -99,7 +100,7 @@ public class DatabaseUserDAO implements UserDAO {
     public boolean updatePassword(String username, String newHashedPassword) {
         String sql = "UPDATE users SET password = ? WHERE username = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, newHashedPassword);

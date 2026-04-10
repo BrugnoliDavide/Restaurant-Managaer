@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mindrot.jbcrypt.BCrypt;
 
-import com.example.rm.dao.DatabaseConnection;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -20,7 +18,7 @@ import static org.mockito.Mockito.mockStatic;
 class SecurityServiceTest {
 
     private static Connection h2Connection;
-    private static MockedStatic<DatabaseConnection> mockedDatabaseConnection;
+    private static MockedStatic<ConnectionManager> mockedDatabaseConnection;
 
     @BeforeAll
     static void setupDB() throws Exception {
@@ -50,9 +48,9 @@ class SecurityServiceTest {
             ps.executeUpdate();
         }
 
-        mockedDatabaseConnection = mockStatic(DatabaseConnection.class);
+        mockedDatabaseConnection = mockStatic(ConnectionManager.class);
 
-        mockedDatabaseConnection.when(DatabaseConnection::getConnection).thenAnswer(invocation ->
+        mockedDatabaseConnection.when(ConnectionManager::getConnection).thenAnswer(invocation ->
                 DriverManager.getConnection("jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1", "sa", "")
         );
     }

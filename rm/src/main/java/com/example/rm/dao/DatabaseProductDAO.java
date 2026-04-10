@@ -1,6 +1,7 @@
 package com.example.rm.dao;
 
 import com.example.rm.model.MenuProduct;
+import com.example.rm.service.ConnectionManager;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ public class DatabaseProductDAO implements ProductDAO {
         String sql = "SELECT id, nome, tipologia, prezzo_vendita, "
                 + "costo_realizzazione, allergeni FROM menu_items";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
@@ -40,7 +41,7 @@ public class DatabaseProductDAO implements ProductDAO {
         String sql = "SELECT id, nome, tipologia, prezzo_vendita, "
                 + "costo_realizzazione, allergeni FROM menu_items WHERE id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, id);
@@ -58,7 +59,7 @@ public class DatabaseProductDAO implements ProductDAO {
         String sql = "SELECT SUM(oi.quantita) FROM order_items oi "
                 + "JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE mi.nome = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, nomeProdotto);
@@ -88,7 +89,7 @@ public class DatabaseProductDAO implements ProductDAO {
 
         String sql = "DELETE FROM menu_items WHERE id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setLong(1, productId);
@@ -115,7 +116,7 @@ public class DatabaseProductDAO implements ProductDAO {
         String sql = "INSERT INTO menu_items (nome, tipologia, prezzo_vendita, "
                 + "costo_realizzazione, allergeni) VALUES (?, ?, ?, ?, ?)";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             bindProduct(pstmt, p);
@@ -130,7 +131,7 @@ public class DatabaseProductDAO implements ProductDAO {
         String sql = "UPDATE menu_items SET nome = ?, tipologia = ?, prezzo_vendita = ?, "
                 + "costo_realizzazione = ?, allergeni = ? WHERE id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
+        try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             bindProduct(pstmt, p);

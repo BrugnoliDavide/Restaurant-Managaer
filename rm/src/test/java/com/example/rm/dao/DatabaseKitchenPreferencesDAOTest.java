@@ -4,6 +4,7 @@ import com.example.rm.preference.DemoModeManager;
 import com.example.rm.preference.KitchenPreferences;
 import com.example.rm.preference.PreferencesConstants;
 import com.example.rm.preference.PreferencesSerializer;
+import com.example.rm.service.ConnectionManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,7 @@ import static org.mockito.Mockito.*;
 
 class DatabaseKitchenPreferencesDAOTest {
 
-    private MockedStatic<DatabaseConnection> mockedDatabaseConnection;
+    private MockedStatic<ConnectionManager> mockedConnectionManager;
     private MockedStatic<PreferencesSerializer> mockedPreferencesSerializer;
     private MockedStatic<DemoModeManager> mockedDemoModeManager;
 
@@ -34,7 +35,7 @@ class DatabaseKitchenPreferencesDAOTest {
     @BeforeEach
     void setUp() throws SQLException {
         // Mock delle classi statiche
-        mockedDatabaseConnection = Mockito.mockStatic(DatabaseConnection.class);
+        mockedConnectionManager = Mockito.mockStatic(ConnectionManager.class);
         mockedPreferencesSerializer = Mockito.mockStatic(PreferencesSerializer.class);
         mockedDemoModeManager = Mockito.mockStatic(DemoModeManager.class);
 
@@ -44,7 +45,7 @@ class DatabaseKitchenPreferencesDAOTest {
         mockResultSet = mock(ResultSet.class);
 
         // Configura i mock statici
-        mockedDatabaseConnection.when(DatabaseConnection::getConnection).thenReturn(mockConnection);
+        mockedConnectionManager.when(ConnectionManager::getConnection).thenReturn(mockConnection);
         when(mockConnection.prepareStatement(anyString())).thenReturn(mockPreparedStatement);
 
         // Crea oggetti di test
@@ -72,8 +73,8 @@ class DatabaseKitchenPreferencesDAOTest {
     @AfterEach
     void tearDown() {
         // Chiudi tutti i mock statici
-        if (mockedDatabaseConnection != null) {
-            mockedDatabaseConnection.close();
+        if (mockedConnectionManager != null) {
+            mockedConnectionManager.close();
         }
         if (mockedPreferencesSerializer != null) {
             mockedPreferencesSerializer.close();
