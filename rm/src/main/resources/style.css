@@ -548,3 +548,17 @@ context-menu-item-danger{
     -fx-min-width: 20;
     -fx-alignment: center;
 }
+
+.financial-list {
+    -fx-background-color: -fx-bg-primary;
+    -fx-padding: 10px;
+}
+
+.financial-list .list-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.financial-list .list-cell:empty {
+    -fx-background-color: transparent;
+}

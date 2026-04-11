@@ -102,4 +102,8 @@ public class Order implements Serializable {
         }
         return displayItems;
     }
+
+    public void setDisplayItems(List<String> displayItems) {
+        this.displayItems = displayItems;
+    }
 }

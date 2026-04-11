@@ -94,7 +94,7 @@ public final class PreferencesSerializer {
             case "splitOrders" -> prefs.setSplitMixedCategoryOrders(parseBoolean(value));
             case "categories"  -> prefs.setSelectedCategories(parseCategories(value));
             case "includeOther" -> prefs.setIncludeOtherCategories(parseBoolean(value));
-            default -> logger.log(Level.WARNING, "chaive sconoscita: {0}", key);
+            default -> logger.log(Level.WARNING, "chiave sconoscita: {0}", key);
         }
 
     }

@@ -10,6 +10,7 @@ import com.example.rm.model.User;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,6 +28,8 @@ public final class OrderService {
     private static final Logger logger = Logger.getLogger(OrderService.class.getName());
 
     private static volatile OrderDAO dao = null;
+
+
 
     private OrderService() {
         throw new IllegalStateException("Utility class");
@@ -138,5 +141,9 @@ public final class OrderService {
                                               LocalDateTime start,
                                               LocalDateTime end) {
         return dao().getQuantitySoldInDateRange(productId, start, end);
+    }
+
+    public static Map<Integer, List<String>> getAllItemsForDisplay() {
+        return dao().getAllOrderItemsForDisplay();
     }
 }

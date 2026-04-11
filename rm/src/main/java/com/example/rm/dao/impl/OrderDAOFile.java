@@ -381,4 +381,16 @@ public class OrderDAOFile implements OrderDAO {
 
         return total;
     }
+
+
+    @Override
+    public Map<Integer, List<String>> getAllOrderItemsForDisplay() {
+        Map<Integer, List<String>> result = new HashMap<>();
+        List<Order> orders = getAllOrdersWithTotal();
+        for (Order order : orders) {
+            result.put(order.getId(), getOrderItemsForDisplay(order.getId()));
+        }
+        return result;
+    }
+
 }

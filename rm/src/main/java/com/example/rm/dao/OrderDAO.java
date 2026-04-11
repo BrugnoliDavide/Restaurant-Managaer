@@ -6,6 +6,7 @@ import com.example.rm.model.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Data Access Object per la gestione degli ordini.
@@ -119,4 +120,10 @@ public interface OrderDAO {
      * @return Quantità totale venduta
      */
     long getQuantitySoldInDateRange(int productId, LocalDateTime start, LocalDateTime end);
+
+
+    Map<Integer, List<String>> getAllOrderItemsForDisplay();
+
+
+
 }

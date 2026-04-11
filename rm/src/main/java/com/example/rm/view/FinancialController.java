@@ -1,32 +1,26 @@
 package com.example.rm.view;
 
 import com.example.rm.app.SceneManager;
-import com.example.rm.model.Order;
-import com.example.rm.service.LoggerService;
-import com.example.rm.view.component.DateHeaderController;
-import com.example.rm.view.component.OrderRowController;
-import com.example.rm.view.screens.OrderDetailView;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.VBox;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
 import com.example.rm.controller.FinancialService;
 import com.example.rm.controller.FinancialUseCase;
+import com.example.rm.model.Order;
+import com.example.rm.service.LoggerService;
+import com.example.rm.view.screens.OrderDetailView;
+import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Controller per la vista Financial.
@@ -34,17 +28,11 @@ import com.example.rm.controller.FinancialUseCase;
  */
 public class FinancialController {
 
-
-    @FXML private VBox ordersContainer;
+    @FXML private ListView<Order> ordersListView;
     @FXML private Label lblManage;
     @FXML private TextField txtSearch;
 
     private static final Logger logger = LoggerService.getLogger(FinancialController.class);
-
-
-    private static final String EMPTY_MESSAGE = "Nessun ordine trovato.";
-    private static final String ERROR_LOAD_ORDER_MESSAGE = "Errore caricamento ordine";
-    private static final String DATE_PATTERN = "EEEE d MMMM yyyy";
 
     private static FinancialUseCase financialUseCase = new FinancialService();
 
@@ -52,64 +40,25 @@ public class FinancialController {
         financialUseCase = useCase;
     }
 
-
-
-
-
-
     private List<Order> allOrdersMaster = new ArrayList<>();
-
 
     @FXML
     public void initialize() {
-        validateFXMLInjections();
-        setupEventHandlers();
+        setupSearchListener();
+        ordersListView.setCellFactory(listView -> new OrderCell());
         loadDataFromDB();
     }
 
-    /**
-     * Valida che tutti i componenti FXML siano stati iniettati correttamente.
-     */
-    private void validateFXMLInjections() {
-        if (ordersContainer == null) {
-            logger.log(Level.SEVERE, "ordersContainer non iniettato da FXML");
-        }
-        if (lblManage == null) {
-            logger.log(Level.WARNING, "lblManage non iniettato da FXML");
-        }
-        if (txtSearch == null) {
-            logger.log(Level.WARNING, "txtSearch non iniettato da FXML");
-        }
-    }
-
-    /**
-     * Configura tutti gli event handlers dell'interfaccia.
-     */
-    private void setupEventHandlers() {
-        setupSearchListener();
-    }
-
-
     private void loadDataFromDB() {
         try {
-            logger.log(Level.INFO, "Caricamento ordini con items...");
-            allOrdersMaster = financialUseCase.loadAllOrdersWithDisplayItems();  // ← QUESTO!
-            logger.log(Level.INFO, "Caricati {0} ordini", allOrdersMaster.size());
-            renderOrders(allOrdersMaster);
+            allOrdersMaster = financialUseCase.loadAllOrdersWithDisplayItems();
+            ordersListView.getItems().setAll(allOrdersMaster);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore loadDataFromDB", e);
             allOrdersMaster = new ArrayList<>();
-            renderOrders(allOrdersMaster);
         }
     }
 
-
-
-
-
-    /**
-     * Configura il listener per la ricerca in tempo reale.
-     */
     private void setupSearchListener() {
         if (txtSearch == null) {
             logger.log(Level.WARNING, "txtSearch non disponibile per il listener");
@@ -125,47 +74,25 @@ public class FinancialController {
         });
     }
 
-    /**
-     * Filtra e renderizza gli ordini in base alla query di ricerca.
-     * @param query Stringa di ricerca
-     */
     private void filterAndRender(String query) {
-        String normalizedQuery = normalizeSearchQuery(query);
-
-        if (normalizedQuery.isEmpty()) {
-            renderOrders(allOrdersMaster);
-            return;
+        String normalized = normalizeSearchQuery(query);
+        if (normalized.isEmpty()) {
+            ordersListView.getItems().setAll(allOrdersMaster);
+        } else {
+            ordersListView.getItems().setAll(filterOrders(normalized));
         }
-
-        List<Order> filteredOrders = filterOrders(normalizedQuery);
-        renderOrders(filteredOrders);
     }
 
-    /**
-     * @param query Query originale
-     * @return Query normalizzata (lowercase, trimmed)
-     */
     private String normalizeSearchQuery(String query) {
         return query == null ? "" : query.toLowerCase().trim();
     }
 
-    /**
-     * Filtra gli ordini in base alla query.
-     * @param query Query normalizzata
-     * @return Lista di ordini filtrati
-     */
     private List<Order> filterOrders(String query) {
         return allOrdersMaster.stream()
                 .filter(order -> matchesSearchQuery(order, query))
                 .toList();
     }
 
-    /**
-     * Verifica se un ordine corrisponde alla query di ricerca.
-     * @param order Ordine da verificare
-     * @param query Query di ricerca
-     * @return true se l'ordine corrisponde
-     */
     private boolean matchesSearchQuery(Order order, String query) {
         return matchesOrderId(order, query)
                 || matchesTable(order, query)
@@ -173,230 +100,78 @@ public class FinancialController {
                 || matchesDate(order, query);
     }
 
-    /**
-     * Verifica se l'ID dell'ordine corrisponde alla query.
-     */
     private boolean matchesOrderId(Order order, String query) {
         return String.valueOf(order.getId()).contains(query);
     }
 
-    /**
-     * Verifica se il numero tavolo corrisponde alla query.
-     */
     private boolean matchesTable(Order order, String query) {
         return String.valueOf(order.getTavolo()).contains(query);
     }
 
-
     private boolean matchesTotal(Order order, String query) {
         return String.valueOf(order.getTotale()).contains(query);
     }
-
 
     private boolean matchesDate(Order order, String query) {
         return order.getDataOra() != null &&
                 order.getDataOra().toString().toLowerCase().contains(query);
     }
 
-
-    private void renderOrders(List<Order> ordersToRender) {
-        if (ordersContainer == null) {
-            logger.log(Level.SEVERE, "Impossibile renderizzare: ordersContainer è null");
-            return;
-        }
-
-        ordersContainer.getChildren().clear();
-
-        if (ordersToRender.isEmpty()) {
-            renderEmptyState();
-            return;
-        }
-
-        Map<LocalDate, List<Order>> ordersByDate = groupOrdersByDate(ordersToRender);
-        renderOrderGroups(ordersByDate);
-    }
-
-    /**
-     * Raggruppa gli ordini per data in ordine decrescente.
-     * @param orders Lista di ordini
-     * @return Map con data come chiave e lista di ordini come valore
-     */
-    private Map<LocalDate, List<Order>> groupOrdersByDate(List<Order> orders) {
-        return orders.stream()
-                .collect(Collectors.groupingBy(
-                        order -> order.getDataOra().toLocalDate(),
-                        () -> new TreeMap<>(Collections.reverseOrder()),
-                        Collectors.toList()
-                ));
-    }
-
-    /**
-     * Renderizza i gruppi di ordini per data.
-     * @param ordersByDate Map data -> ordini
-     */
-    private void renderOrderGroups(Map<LocalDate, List<Order>> ordersByDate) {
-        DateTimeFormatter headerFormatter = createDateFormatter();
-
-        for (Map.Entry<LocalDate, List<Order>> entry : ordersByDate.entrySet()) {
-            String formattedDate = formatDate(entry.getKey(), headerFormatter);
-            renderDateSection(formattedDate, entry.getValue());
-        }
-    }
-
-    /**
-     * Crea il formatter per le date.
-     * @return DateTimeFormatter configurato
-     */
-    private DateTimeFormatter createDateFormatter() {
-        return DateTimeFormatter.ofPattern(DATE_PATTERN, Locale.ITALY);
-    }
-
-    /**
-     * Formatta una data.
-     * @param date Data da formattare
-     * @param formatter Formatter da utilizzare
-     * @return Data formattata in maiuscolo
-     */
-    private String formatDate(LocalDate date, DateTimeFormatter formatter) {
-        return date.format(formatter).toUpperCase();
-    }
-
-    /**
-     * Renderizza una sezione con header data e ordini.
-     * @param formattedDate Data formattata
-     * @param orders Lista di ordini per quella data
-     */
-    private void renderDateSection(String formattedDate, List<Order> orders) {
-        Parent dateHeader = loadDateHeader(formattedDate);
-        if (dateHeader != null) {
-            ordersContainer.getChildren().add(dateHeader);
-        }
-
-        for (Order order : orders) {
-            Parent orderRow = loadOrderRow(order);
-            if (orderRow != null) {
-                ordersContainer.getChildren().add(orderRow);
-            }
-        }
-    }
-
-    /**
-     * Renderizza lo stato vuoto quando non ci sono ordini.
-     */
-    private void renderEmptyState() {
-        Label emptyLabel = new Label(EMPTY_MESSAGE);
-        emptyLabel.getStyleClass().add("empty-state-label");
-        ordersContainer.getChildren().add(emptyLabel);
-    }
-
-
-    /**
-     * Carica un header di data da FXML.
-     * @param dateText Testo della data da visualizzare
-     * @return Parent contenente l'header
-     */
-    private Parent loadDateHeader(String dateText) {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/DateHeader.fxml")
-            );
-            Parent root = loader.load();
-
-            DateHeaderController controller = loader.getController();
-            if (controller != null) {
-                controller.setDateText(dateText);
-            }
-
-            return root;
-
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Errore caricamento DateHeader.fxml", e);
-            return createFallbackDateHeader(dateText);
-        }
-    }
-
-    /**
-     * Crea un header di data di fallback in caso di errore.
-     * @param dateText Testo della data
-     * @return Label con la data
-     */
-    private Label createFallbackDateHeader(String dateText) {
-        Label label = new Label(dateText);
-        label.getStyleClass().add("date-header");
-        return label;
-    }
-
-    /**
-     * Carica una riga ordine da FXML.
-     * @param order Ordine da visualizzare
-     * @return Parent contenente la riga ordine
-     */
-    private Parent loadOrderRow(Order order) {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/OrderRow.fxml")
-            );
-            Parent root = loader.load();
-
-            OrderRowController controller = loader.getController();
-            if (controller != null) {
-                controller.setOrder(order, this::navigateToOrderDetail);
-            }
-
-            return root;
-
-        } catch (IOException e) {
-            logger.log(Level.SEVERE, "Errore caricamento OrderRow.fxml per ordine #{0} , {1}", new Object[]{order.getId(), e});
-            return createErrorLabel();
-        }
-    }
-
-    /**
-     * Crea una label di errore per ordini non caricabili.
-     * @return Label con messaggio di errore
-     */
-    private Label createErrorLabel() {
-        Label errorLabel = new Label(ERROR_LOAD_ORDER_MESSAGE);
-        errorLabel.getStyleClass().add("error-label");
-        return errorLabel;
-    }
-
-
-
-    /**
-     * Naviga alla vista di dettaglio di un ordine.
-     * @param order Ordine da visualizzare
-     */
     private void navigateToOrderDetail(Order order) {
-        if (order == null) {
-            logger.log(Level.WARNING, "Tentativo di navigare a dettaglio con ordine null");
-            return;
-        }
-
+        if (order == null) return;
         try {
-            logger.log(Level.INFO, "Navigazione a dettaglio ordine #{0}", order.getId());
-
             OrderDetailView detailView = new OrderDetailView(order);
-
-            if (ordersContainer != null && ordersContainer.getScene() != null) {
-                ordersContainer.getScene().setRoot(detailView.getRoot());
-            } else {
-                logger.log(Level.WARNING, "Scene non disponibile per la navigazione");
+            if (ordersListView.getScene() != null) {
+                ordersListView.getScene().setRoot(detailView.getRoot());
             }
-
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Errore durante la navigazione al dettaglio ordine #{0}, {1}", new Object[]{ order.getId(), e});
+            logger.log(Level.SEVERE, "Errore navigazione dettaglio ordine", e);
         }
     }
-
 
     @FXML
     private void goBack() {
         try {
-            logger.log(Level.INFO, "Ritorno alla vista Manager");
             SceneManager.showManager();
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore durante il ritorno al manager", e);
+        }
+    }
+
+    private class OrderCell extends ListCell<Order> {
+        private final HBox root = new HBox(10);
+        private final Label lblId = new Label();
+        private final Label lblTable = new Label();
+        private final Label lblTotal = new Label();
+        private final Label lblStatus = new Label();
+
+        OrderCell() {
+            root.setAlignment(Pos.CENTER_LEFT);
+            root.setPadding(new Insets(8, 12, 8, 12));
+            root.getStyleClass().add("order-row");
+
+            Region spacer = new Region();
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            root.getChildren().addAll(lblId, lblTable, lblStatus, spacer, lblTotal);
+
+            setOnMouseClicked(e -> {
+                if (getItem() != null) navigateToOrderDetail(getItem());
+            });
+        }
+
+        @Override
+        protected void updateItem(Order order, boolean empty) {
+            super.updateItem(order, empty);
+            if (empty || order == null) {
+                setGraphic(null);
+            } else {
+                lblId.setText("#" + order.getId());
+                lblTable.setText("Tavolo " + order.getTavolo());
+                lblTotal.setText(String.format("€%.2f", order.getTotale()));
+                lblStatus.setText(order.getStatus());
+                setGraphic(root);
+            }
         }
     }
 }

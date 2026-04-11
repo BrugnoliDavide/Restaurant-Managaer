@@ -19,7 +19,7 @@ public class UsersFactory {
             case "cucina":
                 return new KitchenUser(username);
             case "":
-                return null;
+                throw new IllegalArgumentException("Il ruolo non può essere vuoto");
 
             default:
                 return new User(username, role) {

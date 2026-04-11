@@ -8,11 +8,15 @@ import com.example.rm.model.MenuProduct;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MenuService implements MenuUseCase {
 
     private final ProductDAO productDAO;
     private final CategoryDAO categoryDAO;
+
+    private static final Logger logger = Logger.getLogger(MenuService.class.getName());
 
     public MenuService() {
         this(new DatabaseProductDAO(), new DatabaseCategoryDAO());
@@ -28,6 +32,7 @@ public class MenuService implements MenuUseCase {
         try {
             return productDAO.findAll();
         } catch (Exception e) {
+            logger.log(Level.SEVERE, "Errore caricamento prodotti", e);
             return Collections.emptyList();
         }
     }

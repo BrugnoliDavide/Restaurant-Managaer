@@ -42,13 +42,17 @@ public class OrderDAOPostgres implements OrderDAO {
 
             conn.setAutoCommit(false);
 
-            boolean result = executeCreateOrderTransaction(
-                    pstmtOrder, pstmtItem,
-                    utente.getUsername(), tavolo, note, items
-            );
-
-            conn.commit();
-            return result;
+            try {
+                boolean result = executeCreateOrderTransaction(
+                        pstmtOrder, pstmtItem,
+                        utente.getUsername(), tavolo, note, items
+                );
+                conn.commit();
+                return result;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
 
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore creazione ordine", e);
@@ -526,5 +530,28 @@ public class OrderDAOPostgres implements OrderDAO {
             logger.log(Level.SEVERE, "Errore conteggio vendite per data", e);
         }
         return 0;
+    }
+
+    public Map<Integer, List<String>> getAllOrderItemsForDisplay() {
+        Map<Integer, List<String>> result = new HashMap<>();
+        String sql = "SELECT oi.order_id, oi.quantita, " +
+                "COALESCE(oi.nome_prodotto_snapshot, mi.nome, 'Prodotto eliminato') AS nome " +
+                "FROM order_items oi " +
+                "LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id " +
+                "ORDER BY oi.order_id";
+
+        try (Connection conn = ConnectionManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                int orderId = rs.getInt("order_id");
+                String display = rs.getInt("quantita") + "x " + rs.getString("nome");
+                result.computeIfAbsent(orderId, k -> new ArrayList<>()).add(display);
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore caricamento items per display", e);
+        }
+        return result;
     }
 }
