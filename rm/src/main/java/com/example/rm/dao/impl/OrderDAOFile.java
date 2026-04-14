@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Implementazione file system del DAO per gli ordini.
@@ -391,6 +392,23 @@ public class OrderDAOFile implements OrderDAO {
             result.put(order.getId(), getOrderItemsForDisplay(order.getId()));
         }
         return result;
+    }
+
+
+    @Override
+    public Set<Integer> getTablesWithPendingOrders() {
+        return getAllOrdersWithTotal().stream()
+                .filter(o -> !o.getStatus().equals("delivered") && !o.getStatus().equals("closed"))
+                .map(Order::getTavolo)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Order findById(int orderId) {
+        return getAllOrdersWithTotal().stream()
+                .filter(o -> o.getId() == orderId)
+                .findFirst()
+                .orElse(null);
     }
 
 }

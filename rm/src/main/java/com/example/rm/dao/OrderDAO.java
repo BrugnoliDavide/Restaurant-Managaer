@@ -7,6 +7,7 @@ import com.example.rm.model.User;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Data Access Object per la gestione degli ordini.
@@ -124,6 +125,8 @@ public interface OrderDAO {
 
     Map<Integer, List<String>> getAllOrderItemsForDisplay();
 
+    Set<Integer> getTablesWithPendingOrders();
 
+    Order findById(int orderId);
 
 }

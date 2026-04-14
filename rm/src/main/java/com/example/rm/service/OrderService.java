@@ -11,10 +11,9 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import com.example.rm.service.OrderService;
 
 /**
  * Gestisce l'accesso agli ordini attraverso il DAO attivo.
@@ -145,5 +144,13 @@ public final class OrderService {
 
     public static Map<Integer, List<String>> getAllItemsForDisplay() {
         return dao().getAllOrderItemsForDisplay();
+    }
+
+    public static Set<Integer> getTablesWithPendingOrders() {
+        return dao().getTablesWithPendingOrders();
+    }
+
+    public static Order findById(int orderId) {
+        return dao().findById(orderId);
     }
 }

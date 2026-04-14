@@ -321,27 +321,34 @@ public class OrderDAOPostgres implements OrderDAO {
 
     @Override
     public boolean decomposeOrderIfNeeded(int orderId) {
-        try {
-            List<OrderItem> allItems = getOrderItemsDetailed(orderId);
-            if (allItems.isEmpty()) {
-                return true;
-            }
+        List<OrderItem> allItems = getOrderItemsDetailed(orderId);
+        if (allItems.isEmpty()) {
+            return true;
+        }
 
-            String sql = "SELECT tavolo, username, note FROM orders WHERE id = ?";
-            try (Connection conn = getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+        String sqlRead = "SELECT tavolo, username, note FROM orders WHERE id = ?";
 
-                pstmt.setInt(1, orderId);
-                ResultSet rs = pstmt.executeQuery();
+        try (Connection conn = getConnection()) {
+            conn.setAutoCommit(false);
 
-                if (!rs.next()) {
-                    return false;
+            try {
+                // 1. Leggi i dati dell'ordine originale
+                Integer tavolo;
+                String username;
+                String note;
+
+                try (PreparedStatement pstmt = conn.prepareStatement(sqlRead)) {
+                    pstmt.setInt(1, orderId);
+                    ResultSet rs = pstmt.executeQuery();
+                    if (!rs.next()) {
+                        return false;
+                    }
+                    tavolo = rs.getInt("tavolo");
+                    username = rs.getString("username");
+                    note = rs.getString("note");
                 }
 
-                Integer tavolo = rs.getInt("tavolo");
-                String username = rs.getString("username");
-                String note = rs.getString("note");
-
+                // 2. Raggruppa per categoria
                 Map<String, List<OrderItem>> itemsByCategory = new HashMap<>();
                 for (OrderItem item : allItems) {
                     String categoria = item.getProduct().getTipologia();
@@ -353,19 +360,23 @@ public class OrderDAOPostgres implements OrderDAO {
                     return true;
                 }
 
-                // Crea i nuovi ordini per categoria ed elimina l'originale
-                try (Connection connNew = getConnection()) {
-                    createCategoryOrders(connNew, itemsByCategory, username, tavolo, note);
-                    deleteOriginalOrder(connNew, orderId);
-                    return true;
-                }
+                // 3. Crea i nuovi ordini e elimina l'originale — stessa connessione
+                createCategoryOrders(conn, itemsByCategory, username, tavolo, note);
+                deleteOriginalOrder(conn, orderId);
+
+                conn.commit();
+                return true;
+
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
             }
+
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore scomposizione ordine", e);
             return false;
         }
     }
-
     /**
      * Elimina l'ordine originale dopo averlo scomposto in ordini per categoria
      */
@@ -554,4 +565,55 @@ public class OrderDAOPostgres implements OrderDAO {
         }
         return result;
     }
+
+    @Override
+    public Set<Integer> getTablesWithPendingOrders() {
+        Set<Integer> tables = new HashSet<>();
+        String sql = "SELECT DISTINCT tavolo FROM orders WHERE status != 'delivered' AND status != 'closed'";
+
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            while (rs.next()) {
+                tables.add(rs.getInt("tavolo"));
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore recupero tavoli con ordini pendenti", e);
+        }
+        return tables;
+    }
+
+    @Override
+    public Order findById(int orderId) {
+        String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
+                "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) AS totale_calcolato " +
+                "FROM orders o LEFT JOIN order_items oi ON o.id = oi.order_id " +
+                "WHERE o.id = ? " +
+                "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, orderId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Order(
+                            rs.getInt(COL_ID),
+                            rs.getTimestamp(COL_DATA_ORA).toLocalDateTime(),
+                            rs.getInt(COL_TAVOLO),
+                            rs.getString(COL_USERNAME),
+                            rs.getString(COL_NOTE),
+                            rs.getString(COL_STATUS),
+                            rs.getDouble(COL_TOTALE_CALCOLATO)
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore recupero ordine per ID: {0}", orderId);
+        }
+        return null;
+    }
+
+
 }

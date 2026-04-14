@@ -63,6 +63,8 @@ public class EarningController {
         earningUseCase = useCase;
     }
 
+    private Set<Integer> tablesWithPending = new HashSet<>();
+
     @FXML
     public void initialize() {
         UserSession session = UserSession.getInstance();
@@ -91,6 +93,7 @@ public class EarningController {
 
     private void loadOpenOrders() {
         allOrders = earningUseCase.loadOrdersToPay();
+        tablesWithPending = OrderService.getTablesWithPendingOrders();
         groupOrdersByTable();
 
         if (searchField.getText() != null && !searchField.getText().trim().isEmpty()) {
@@ -198,7 +201,7 @@ public class EarningController {
 
         card.getChildren().addAll(leftInfo, lblTotal);
 
-        if (earningUseCase.hasPendingOrders(tableNumber)) {
+        if (tablesWithPending.contains(tableNumber)) {
             Label warning = new Label("⚠ Ordine non completo");
             warning.getStyleClass().add("warning-pending");
             leftInfo.getChildren().add(warning);
@@ -430,4 +433,6 @@ public class EarningController {
         section.getChildren().addAll(orderHeader, new Separator(), itemsList);
         return section;
     }
+
+
 }
