@@ -48,9 +48,11 @@ class DBConfigControllerTest {
 
     @Test
     void saveConfig_ReturnsFalse_WhenHostEmpty() {
-        boolean result = controller.saveConfig("", "5432", "db", "user", "pass");
+        DBConfigUseCase.SaveResult result = controller.saveConfig("", "5432", "db", "user", "pass");
 
-        assertFalse(result);
+        assertFalse(result.saved);
+        assertFalse(result.connectionOk);
+        assertNotNull(result.errorMessage);
         mockedConfigStore.verifyNoInteractions();
         mockedConnManager.verify(
                 () -> ConnectionManager.configure(any(), any(), any(), any(), any()),
@@ -60,27 +62,40 @@ class DBConfigControllerTest {
 
     @Test
     void saveConfig_SavesSuccessfully_WithValidInput() {
-        boolean result = controller.saveConfig("localhost", "5432", "testdb", "user", "pass123");
+        // Mock della connessione riuscita
+        mockedConnManager.when(ConnectionManager::testConnection).thenReturn(true);
 
-        assertTrue(result);
+        // Esecuzione
+        DBConfigUseCase.SaveResult result =
+                controller.saveConfig("localhost", "5432", "testdb", "user", "pass123");
+
+        // Verifiche risultato
+        assertTrue(result.saved);
+        assertTrue(result.connectionOk);
+        assertNull(result.errorMessage);
+
 
         mockedConfigStore.verify(() ->
                         DBConfigStore.save("localhost", "5432", "testdb", "user", "pass123"),
                 times(1)
         );
+
+
         mockedConnManager.verify(() ->
                         ConnectionManager.configure("localhost", "5432", "testdb", "user", "pass123"),
                 times(1)
         );
     }
-
     @Test
     void saveConfig_UsesExistingPassword_WhenNewPasswordEmpty() {
         mockedConfigStore.when(DBConfigStore::getPassword).thenReturn("oldpass");
+        mockedConnManager.when(ConnectionManager::testConnection).thenReturn(true);
 
-        boolean result = controller.saveConfig("localhost", "5432", "db", "user", "");
+        DBConfigUseCase.SaveResult result =
+                controller.saveConfig("localhost", "5432", "db", "user", "");
 
-        assertTrue(result);
+        assertTrue(result.saved);
+        assertTrue(result.connectionOk);
 
         mockedConfigStore.verify(DBConfigStore::getPassword, times(1));
         mockedConfigStore.verify(() ->
