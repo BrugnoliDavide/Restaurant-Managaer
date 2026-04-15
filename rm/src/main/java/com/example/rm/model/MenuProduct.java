@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class MenuProduct implements Serializable {
 
@@ -13,37 +15,37 @@ public class MenuProduct implements Serializable {
    private transient IntegerProperty id;
     private transient StringProperty nome;
     private transient StringProperty tipologia;
-    private transient DoubleProperty prezzoVendita;
-    private transient DoubleProperty costoRealizzazione;
+    private transient ObjectProperty<BigDecimal> prezzoVendita;
+    private transient ObjectProperty<BigDecimal> costoRealizzazione;
     private transient StringProperty allergeni;
 
     public MenuProduct() {
         this.id = new SimpleIntegerProperty(0);
         this.nome = new SimpleStringProperty("");
         this.tipologia = new SimpleStringProperty("");
-        this.prezzoVendita = new SimpleDoubleProperty(0.0);
-        this.costoRealizzazione = new SimpleDoubleProperty(0.0);
+        this.prezzoVendita = new SimpleObjectProperty<>(BigDecimal.ZERO);
+        this.costoRealizzazione = new SimpleObjectProperty<>(BigDecimal.ZERO);
         this.allergeni = new SimpleStringProperty("");
     }
 
     public MenuProduct(int id, String nome, String tipologia,
-                       double prezzo, double costo, String allergeni) {
+                       BigDecimal prezzo, BigDecimal costo, String allergeni) {
         this.id = new SimpleIntegerProperty(id);
         this.nome = new SimpleStringProperty(nome);
         this.tipologia = new SimpleStringProperty(tipologia);
-        this.prezzoVendita = new SimpleDoubleProperty(prezzo);
-        this.costoRealizzazione = new SimpleDoubleProperty(costo);
+        this.prezzoVendita = new SimpleObjectProperty<>(prezzo);
+        this.costoRealizzazione = new SimpleObjectProperty<>(costo);
         this.allergeni = new SimpleStringProperty(allergeni != null ? allergeni : "");
     }
 
     // Senza ID
     public MenuProduct(String nome, String tipologia,
-                       double prezzo, double costo, String allergeni) {
+                       BigDecimal prezzo, BigDecimal costo, String allergeni) {
         this(0, nome, tipologia, prezzo, costo, allergeni);
     }
 
     // Legacy
-    public MenuProduct(String nome, String tipologia, double prezzo, double costo) {
+    public MenuProduct(String nome, String tipologia, BigDecimal prezzo, BigDecimal costo) {
         this(0, nome, tipologia, prezzo, costo, "");
     }
 
@@ -53,8 +55,8 @@ public class MenuProduct implements Serializable {
         s.writeInt(getId());
         s.writeUTF(getNome() != null ? getNome() : "");
         s.writeUTF(getTipologia() != null ? getTipologia() : "");
-        s.writeDouble(getPrezzoVendita());
-        s.writeDouble(getCostoRealizzazione());
+        s.writeUTF(getPrezzoVendita().toPlainString());
+        s.writeUTF(getCostoRealizzazione().toPlainString());
         s.writeUTF(getAllergeni() != null ? getAllergeni() : "");
     }
 
@@ -64,8 +66,8 @@ public class MenuProduct implements Serializable {
         this.id = new SimpleIntegerProperty(s.readInt());
         this.nome = new SimpleStringProperty(s.readUTF());
         this.tipologia = new SimpleStringProperty(s.readUTF());
-        this.prezzoVendita = new SimpleDoubleProperty(s.readDouble());
-        this.costoRealizzazione = new SimpleDoubleProperty(s.readDouble());
+        this.prezzoVendita = new SimpleObjectProperty<>(new BigDecimal(s.readUTF()));
+        this.costoRealizzazione = new SimpleObjectProperty<>(new BigDecimal(s.readUTF()));
         this.allergeni = new SimpleStringProperty(s.readUTF());
     }
 
@@ -82,26 +84,29 @@ public class MenuProduct implements Serializable {
     public void setTipologia(String tipologia) { this.tipologia.set(tipologia); }
     public StringProperty tipologiaProperty() { return tipologia; }
 
-    public double getPrezzoVendita() { return prezzoVendita.get(); }
+    public BigDecimal getPrezzoVendita() { return prezzoVendita.get(); }
 
-    public double getCostoRealizzazione() { return costoRealizzazione.get(); }
+    public BigDecimal getCostoRealizzazione() { return costoRealizzazione.get(); }
 
     public String getAllergeni() { return allergeni.get(); }
     public void setAllergeni(String allergeni) {
         this.allergeni.set(allergeni != null ? allergeni : "");
     }
 
-    public double getMargine() {
-        return getPrezzoVendita() - getCostoRealizzazione();
+    public BigDecimal getMargine() {
+        return getPrezzoVendita().subtract(getCostoRealizzazione());
     }
 
-    public double getPercentualeMargine() {
-        if (getPrezzoVendita() == 0) return 0;
-        return (getMargine() / getPrezzoVendita()) * 100;
+    public int getPercentualeMargine() {
+        if (getPrezzoVendita().compareTo(BigDecimal.ZERO) == 0) return 0;
+        return getMargine()
+                .multiply(BigDecimal.valueOf(100))
+                .divide(getPrezzoVendita(), 0, RoundingMode.HALF_UP)
+                .intValue();
     }
 
-    public void setPrezzoVendita(double prezzo) {  this.prezzoVendita.set(prezzo); }
-    public void setCostoRealizzazione(double costo){this.costoRealizzazione.set(costo);}
+    public void setPrezzoVendita(BigDecimal prezzo) {  this.prezzoVendita.set(prezzo); }
+    public void setCostoRealizzazione(BigDecimal costo){this.costoRealizzazione.set(costo);}
 
 
     @Override

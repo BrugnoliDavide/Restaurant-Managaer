@@ -17,6 +17,12 @@ import static com.example.rm.service.DBConstants.POSTGRES_PREFIX;
  *   <li>{@code synchronized} su {@link #configure} per atomicità della scrittura;</li>
  *   <li>lettura singola in variabile locale nei metodi di lettura per evitare race condition.</li>
  * </ul>
+ *
+ * <p>Supporta due modalità di configurazione:
+ * <ol>
+ *   <li>Parametri separati (host, port, dbName, username, password)</li>
+ *   <li>URL JDBC diretto (es. {@code jdbc:postgresql://host:port/dbName})</li>
+ * </ol>
  */
 public final class ConnectionManager {
 
@@ -24,14 +30,13 @@ public final class ConnectionManager {
 
     /**
      * Record immutabile che aggrega le credenziali di connessione.
-     *
-     * <p>L'aggregazione in un unico oggetto è la chiave della thread-safety:
-     * un singolo campo {@code volatile} garantisce che url, user e pass
-     * vengano sempre letti come un'unità coerente.</p>
      */
     private record ConnectionConfig(String url, String user, String pass) {}
 
     private static volatile ConnectionConfig config = null;
+
+    /** Ultimo errore di connessione, utile per il feedback all'utente. */
+    private static volatile String lastConnectionError = null;
 
     private ConnectionManager() {
         throw new IllegalStateException("Utility class");
@@ -42,24 +47,69 @@ public final class ConnectionManager {
     // -------------------------------------------------------------------------
 
     /**
-     * Configura la connessione al database PostgreSQL.
-     *
-     * <p>{@code synchronized} per evitare che due thread sovrascrivano
-     * {@code config} in modo concorrente, producendo uno stato inconsistente.</p>
-     *
-     * @param ip       indirizzo del server
-     * @param port     porta del server
-     * @param dbName   nome del database
-     * @param username utente di accesso
-     * @param password password di accesso
+     * Configura la connessione al database PostgreSQL tramite parametri separati.
      */
     public static synchronized void configure(String ip, String port,
                                               String dbName, String username,
                                               String password) {
         String url = POSTGRES_PREFIX + ip + ":" + port + "/" + dbName;
         config = new ConnectionConfig(url, username, password);
+        lastConnectionError = null;
         OrderService.usePostgres();
         logger.log(Level.INFO, "Configurazione DB aggiornata: {0}", url);
+    }
+
+    /**
+     * Configura la connessione al database PostgreSQL tramite URL JDBC diretto.
+     *
+     * <p>L'URL deve essere nel formato {@code jdbc:postgresql://host:port/dbName}
+     * oppure un URL completo con parametri aggiuntivi.</p>
+     *
+     * @param jdbcUrl  URL JDBC completo
+     * @param username utente di accesso
+     * @param password password di accesso
+     * @throws IllegalArgumentException se l'URL non è valido
+     */
+    public static synchronized void configureWithUrl(String jdbcUrl, String username,
+                                                     String password) {
+        if (jdbcUrl == null || jdbcUrl.isBlank()) {
+            throw new IllegalArgumentException("L'URL JDBC non può essere vuoto");
+        }
+
+        // Normalizza: se l'utente omette il prefisso jdbc:postgresql://, lo aggiungiamo
+        String normalizedUrl = normalizeJdbcUrl(jdbcUrl.trim());
+
+        config = new ConnectionConfig(normalizedUrl, username, password);
+        lastConnectionError = null;
+        OrderService.usePostgres();
+        logger.log(Level.INFO, "Configurazione DB aggiornata tramite URL diretto: {0}", normalizedUrl);
+    }
+
+    /**
+     * Normalizza un URL JDBC, aggiungendo il prefisso se necessario.
+     *
+     * <p>Accetta i seguenti formati:
+     * <ul>
+     *   <li>{@code jdbc:postgresql://host:port/db}</li>
+     *   <li>{@code postgresql://host:port/db}</li>
+     *   <li>{@code host:port/db}</li>
+     * </ul>
+     */
+    static String normalizeJdbcUrl(String input) {
+        if (input.startsWith("jdbc:postgresql://")) {
+            return input;
+        }
+        if (input.startsWith("postgresql://")) {
+            return "jdbc:" + input;
+        }
+        // Formato minimo: host:port/db
+        if (input.contains(":") && input.contains("/")) {
+            return POSTGRES_PREFIX + input;
+        }
+        throw new IllegalArgumentException(
+                "Formato URL non riconosciuto. Formati accettati: " +
+                        "jdbc:postgresql://host:port/db, postgresql://host:port/db, host:port/db"
+        );
     }
 
     /**
@@ -73,8 +123,14 @@ public final class ConnectionManager {
         String user = DBConfigStore.getUser();
         String pass = DBConfigStore.getPassword();
 
-        if (!host.isBlank() && !port.isBlank() && !db.isBlank() && !user.isBlank()) {
+        // Verifica anche la password: senza password la connessione fallirà comunque
+        if (!host.isBlank() && !port.isBlank() && !db.isBlank()
+                && !user.isBlank() && !pass.isBlank()) {
             configure(host, port, db, user, pass);
+        } else if (!host.isBlank()) {
+            // Log informativo se la configurazione è parziale
+            logger.warning("Configurazione DB parziale: password mancante o vuota. "
+                    + "Reinserire le credenziali dal pannello di configurazione.");
         }
     }
 
@@ -84,14 +140,6 @@ public final class ConnectionManager {
 
     /**
      * Apre e restituisce una nuova connessione JDBC.
-     *
-     * <p>Legge {@code config} una sola volta in variabile locale:
-     * una doppia lettura potrebbe leggere due versioni diverse se un altro
-     * thread chiama {@link #configure} nel mezzo.</p>
-     *
-     * @return una nuova {@link Connection} attiva
-     * @throws SQLException           se la connessione fallisce
-     * @throws IllegalStateException  se {@link #configure} non è stato invocato
      */
     public static Connection getConnection() throws SQLException {
         ConnectionConfig current = config;
@@ -101,57 +149,118 @@ public final class ConnectionManager {
         return DriverManager.getConnection(current.url(), current.user(), current.pass());
     }
 
-    /**
-     * @return {@code true} se {@link #configure} è stato invocato almeno una volta
-     */
     public static boolean isConfigured() {
         return config != null;
     }
 
     /**
      * Verifica che la connessione al database sia effettivamente raggiungibile.
+     * Salva l'eventuale errore per il feedback all'utente.
      *
      * @return {@code true} se la connessione riesce, {@code false} altrimenti
      */
     public static boolean testConnection() {
         if (!isConfigured()) {
+            lastConnectionError = "Database non configurato. Inserire le credenziali.";
             logger.warning("Tentativo test DB senza configurazione completa");
             return false;
         }
         try (Connection conn = getConnection()) {
+            lastConnectionError = null;
             logger.info("Connessione al DB riuscita");
             return true;
         } catch (SQLException e) {
-            logger.log(Level.WARNING, "Connessione al DB fallita", e);
+            lastConnectionError = formatSqlError(e);
+            logger.log(Level.WARNING, "Connessione al DB fallita: {0}", lastConnectionError);
             return false;
         }
     }
 
+    /**
+     * Restituisce l'ultimo errore di connessione in formato leggibile.
+     *
+     * @return messaggio di errore, oppure {@code null} se l'ultima connessione è riuscita
+     */
+    public static String getLastConnectionError() {
+        return lastConnectionError;
+    }
+
+    /**
+     * Formatta un errore SQL in un messaggio comprensibile per l'utente.
+     */
+    private static String formatSqlError(SQLException e) {
+        String msg = e.getMessage();
+        if (msg == null) return "Errore sconosciuto";
+
+        // Errori comuni PostgreSQL tradotti in messaggi comprensibili
+        if (msg.contains("Connection refused")) {
+            return "Connessione rifiutata. Verificare che il server PostgreSQL "
+                    + "sia avviato e raggiungibile all'indirizzo configurato.";
+        }
+        if (msg.contains("password authentication failed")) {
+            return "Autenticazione fallita. Username o password errati.";
+        }
+        if (msg.contains("database") && msg.contains("does not exist")) {
+            return "Il database specificato non esiste sul server.";
+        }
+        if (msg.contains("UnknownHostException") || msg.contains("No such host")) {
+            return "Host non trovato. Verificare l'indirizzo del server.";
+        }
+        if (msg.contains("timeout") || msg.contains("timed out")) {
+            return "Timeout di connessione. Il server potrebbe non essere raggiungibile.";
+        }
+        // Fallback: messaggio originale (troncato se troppo lungo)
+        return msg.length() > 200 ? msg.substring(0, 200) + "..." : msg;
+    }
+
     // -------------------------------------------------------------------------
     // Getter per la UI di configurazione
-    // Ogni metodo legge config una sola volta per coerenza.
     // -------------------------------------------------------------------------
 
     public static String getHost() {
         ConnectionConfig current = config;
         if (current == null) return "";
-        String noPrefix = current.url().replace(POSTGRES_PREFIX, "");
-        return noPrefix.substring(0, noPrefix.indexOf(':'));
+        try {
+            String noPrefix = current.url().replace(POSTGRES_PREFIX, "");
+            int colonIdx = noPrefix.indexOf(':');
+            return colonIdx > 0 ? noPrefix.substring(0, colonIdx) : noPrefix;
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     public static String getPort() {
         ConnectionConfig current = config;
         if (current == null) return "";
-        String noPrefix = current.url().replace(POSTGRES_PREFIX, "");
-        int colonIdx = noPrefix.indexOf(':');
-        int slashIdx = noPrefix.indexOf('/');
-        return noPrefix.substring(colonIdx + 1, slashIdx);
+        try {
+            String noPrefix = current.url().replace(POSTGRES_PREFIX, "");
+            int colonIdx = noPrefix.indexOf(':');
+            int slashIdx = noPrefix.indexOf('/');
+            if (colonIdx >= 0 && slashIdx > colonIdx) {
+                return noPrefix.substring(colonIdx + 1, slashIdx);
+            }
+            return "";
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     public static String getDbName() {
         ConnectionConfig current = config;
         if (current == null) return "";
-        return current.url().substring(current.url().lastIndexOf('/') + 1);
+        try {
+            String url = current.url();
+            int lastSlash = url.lastIndexOf('/');
+            if (lastSlash >= 0 && lastSlash < url.length() - 1) {
+                // Rimuovi eventuali parametri query (?param=value)
+                String dbPart = url.substring(lastSlash + 1);
+                int queryIdx = dbPart.indexOf('?');
+                return queryIdx > 0 ? dbPart.substring(0, queryIdx) : dbPart;
+            }
+            return "";
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     public static String getUser() {
@@ -162,5 +271,15 @@ public final class ConnectionManager {
     public static boolean hasPassword() {
         ConnectionConfig current = config;
         return current != null && current.pass() != null && !current.pass().isBlank();
+    }
+
+    /**
+     * Restituisce l'URL JDBC corrente, utile per la modalità URL diretto.
+     *
+     * @return URL JDBC configurato, oppure stringa vuota se non configurato
+     */
+    public static String getJdbcUrl() {
+        ConnectionConfig current = config;
+        return current != null ? current.url() : "";
     }
 }

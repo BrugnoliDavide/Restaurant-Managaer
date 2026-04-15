@@ -24,6 +24,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
@@ -274,8 +276,8 @@ public class TakeOrderController {
                 : 0;
     }
 
-    private String formatPrice(double price) {
-        return "€ " + String.format("%.2f", price);
+    private String formatPrice(BigDecimal price) {
+        return "€ " + price.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
     private void handleIncrementProduct(MenuProduct prodotto) {
@@ -290,7 +292,7 @@ public class TakeOrderController {
 
     private void incrementProductQuantity(MenuProduct prodotto) {
         if (carrello.containsKey(prodotto.getId())) {
-            // Prodotto già presente, incrementa quantità
+            // Prodotto già presente, incrementa soltanto la quantità
             OrderItem existingItem = carrello.get(prodotto.getId());
             OrderItem updatedItem = createOrderItem(
                     prodotto,
@@ -335,9 +337,9 @@ public class TakeOrderController {
         return new OrderItem(
                 prodotto,
                 quantita,
-                prodotto.getPrezzoVendita(),      // prezzoSnapshot
-                prodotto.getCostoRealizzazione(), // costoSnapshot
-                prodotto.getNome()                // nomeSnapshot
+                prodotto.getPrezzoVendita(),
+                prodotto.getCostoRealizzazione(),
+                prodotto.getNome()
         );
     }
 

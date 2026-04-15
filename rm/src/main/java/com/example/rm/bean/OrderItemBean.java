@@ -2,6 +2,7 @@ package com.example.rm.bean;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Objects;
  * Corrisponde alla tabella {@code order_items} del database.
  *
  * <p>I campi {@code *Snapshot} conservano i valori di prezzo e nome
- * al momento dell'ordine, in modo che eventuali modifiche successive
+ * al momento dell'ordine, in modo che eventuali moFdifiche successive
  * al menù non alterino lo storico degli ordini già registrati.</p>
  */
 public class OrderItemBean implements Serializable {
@@ -20,8 +21,8 @@ public class OrderItemBean implements Serializable {
     private int    orderId;
     private int    menuItemId;
     private int    quantita;
-    private double prezzoVenditaSnapshot;
-    private double costoRealizzazioneSnapshot;
+    private BigDecimal prezzoVenditaSnapshot = BigDecimal.ZERO;
+    private BigDecimal costoRealizzazioneSnapshot = BigDecimal.ZERO;
     private String nomeProdottoSnapshot;
 
     // ------------------------------------------------------------------ //
@@ -42,8 +43,8 @@ public class OrderItemBean implements Serializable {
      * @param nomeProdottoSnapshot         nome del prodotto al momento dell'ordine
      */
     public OrderItemBean(int orderId, int menuItemId, int quantita,
-                         double prezzoVenditaSnapshot,
-                         double costoRealizzazioneSnapshot,
+                         BigDecimal prezzoVenditaSnapshot,
+                         BigDecimal costoRealizzazioneSnapshot,
                          String nomeProdottoSnapshot) {
         this.orderId                     = orderId;
         this.menuItemId                  = menuItemId;
@@ -81,19 +82,19 @@ public class OrderItemBean implements Serializable {
         this.quantita = quantita;
     }
 
-    public double getPrezzoVenditaSnapshot() {
+    public BigDecimal getPrezzoVenditaSnapshot() {
         return prezzoVenditaSnapshot;
     }
 
-    public void setPrezzoVenditaSnapshot(double prezzoVenditaSnapshot) {
+    public void setPrezzoVenditaSnapshot(BigDecimal prezzoVenditaSnapshot) {
         this.prezzoVenditaSnapshot = prezzoVenditaSnapshot;
     }
 
-    public double getCostoRealizzazioneSnapshot() {
+    public BigDecimal getCostoRealizzazioneSnapshot() {
         return costoRealizzazioneSnapshot;
     }
 
-    public void setCostoRealizzazioneSnapshot(double costoRealizzazioneSnapshot) {
+    public void setCostoRealizzazioneSnapshot(BigDecimal costoRealizzazioneSnapshot) {
         this.costoRealizzazioneSnapshot = costoRealizzazioneSnapshot;
     }
 
@@ -114,13 +115,9 @@ public class OrderItemBean implements Serializable {
      *
      * @return subtotale in euro
      */
-    public double getSubtotale() {
-        return quantita * prezzoVenditaSnapshot;
+    public BigDecimal getSubtotale() {
+        return prezzoVenditaSnapshot.multiply(BigDecimal.valueOf(quantita));
     }
-
-    // ------------------------------------------------------------------ //
-    //  equals, hashCode, toString                                          //
-    // ------------------------------------------------------------------ //
 
     @Override
     public boolean equals(Object o) {

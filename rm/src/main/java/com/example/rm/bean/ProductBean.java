@@ -2,6 +2,8 @@ package com.example.rm.bean;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Java Bean che rappresenta un prodotto del menù.
@@ -18,8 +20,8 @@ public class ProductBean implements Serializable {
     private int    id;
     private String nome;
     private String tipologia;
-    private double prezzoVendita;
-    private double costoRealizzazione;
+    private BigDecimal prezzoVendita;
+    private BigDecimal costoRealizzazione;
     private String allergeni;
 
     // ------------------------------------------------------------------ //
@@ -40,7 +42,7 @@ public class ProductBean implements Serializable {
      * @param allergeni            elenco allergeni (può essere stringa vuota, mai {@code null})
      */
     public ProductBean(int id, String nome, String tipologia,
-                       double prezzoVendita, double costoRealizzazione,
+                       BigDecimal prezzoVendita, BigDecimal costoRealizzazione,
                        String allergeni) {
         this.id                 = id;
         this.nome               = nome;
@@ -78,19 +80,19 @@ public class ProductBean implements Serializable {
         this.tipologia = tipologia;
     }
 
-    public double getPrezzoVendita() {
+    public BigDecimal getPrezzoVendita() {
         return prezzoVendita;
     }
 
-    public void setPrezzoVendita(double prezzoVendita) {
+    public void setPrezzoVendita(BigDecimal prezzoVendita) {
         this.prezzoVendita = prezzoVendita;
     }
 
-    public double getCostoRealizzazione() {
+    public BigDecimal getCostoRealizzazione() {
         return costoRealizzazione;
     }
 
-    public void setCostoRealizzazione(double costoRealizzazione) {
+    public void setCostoRealizzazione(BigDecimal costoRealizzazione) {
         this.costoRealizzazione = costoRealizzazione;
     }
 
@@ -111,18 +113,22 @@ public class ProductBean implements Serializable {
      *
      * @return differenza tra prezzo di vendita e costo di realizzazione
      */
-    public double getMargine() {
-        return prezzoVendita - costoRealizzazione;
+    public BigDecimal getMargine() {
+        return prezzoVendita.subtract(costoRealizzazione);
     }
+
+
 
     /**
      * Calcola la percentuale di margine sul prezzo di vendita.
      *
      * @return percentuale di margine; {@code 0.0} se il prezzo è zero
      */
-    public double getPercentualeMargine() {
-        if (prezzoVendita == 0.0) return 0.0;
-        return (getMargine() / prezzoVendita) * 100.0;
+    public BigDecimal getPercentualeMargine() {
+        if (prezzoVendita.compareTo(BigDecimal.ZERO) == 0) return BigDecimal.ZERO;
+        return getMargine()
+                .multiply(BigDecimal.valueOf(100))
+                .divide(prezzoVendita, 2, RoundingMode.HALF_UP);
     }
 
     // ------------------------------------------------------------------ //

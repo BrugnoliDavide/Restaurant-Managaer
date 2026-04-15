@@ -13,6 +13,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -107,15 +108,16 @@ public class OrderReviewDialog {
 
     private void populateProducts() {
         vboxProducts.getChildren().clear();
-        double totale = 0;
+        BigDecimal totale = BigDecimal.ZERO;
 
         for (OrderItem item : items) {
             String nomeProdotto = item.getProduct().getNome();
             int quantita = item.getQuantita();
-            double prezzoProdotto = item.getPrezzoSnapshot();
-            double totaleProdotto = quantita * prezzoProdotto;
+            BigDecimal prezzoProdotto = item.getPrezzoSnapshot();
+          //double totaleProdotto = quantita * prezzoProdotto;
+            BigDecimal totaleProdotto = prezzoProdotto.multiply(BigDecimal.valueOf(quantita));
 
-            totale += totaleProdotto;
+            totale = totale.add(totaleProdotto);
 
             // Crea riga per il prodotto
             HBox rowProduct = new HBox(10);

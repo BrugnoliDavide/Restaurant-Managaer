@@ -1,12 +1,10 @@
 package com.example.rm.controller;
 import com.example.rm.model.Order;
-import com.example.rm.service.ConnectionManager;
 import com.example.rm.service.LoggerService;
 import com.example.rm.service.OrderService;
 
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;

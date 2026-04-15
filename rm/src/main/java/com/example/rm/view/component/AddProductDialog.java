@@ -12,6 +12,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+import java.math.BigDecimal;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,15 +34,16 @@ public class AddProductDialog {
     private static final Logger logger = Logger.getLogger(AddProductDialog.class.getName());
 
     // Metodi legacy per compatibilità (senza callback)
+    //TODO già deprecato da rimuovere
     public static void display() {
         new DialogBuilder(null, null).show();
     }
 
+    //TODO già deprecato da rimuovere
     public static void displayEdit(MenuProduct productToEdit) {
         new DialogBuilder(productToEdit, null).show();
     }
 
-    // Nuovi metodi con callback
     public static void display(Consumer<Boolean> onComplete) {
         new DialogBuilder(null, onComplete).show();
     }
@@ -218,8 +220,8 @@ public class AddProductDialog {
         private MenuProduct buildProductFromForm() {
             String nome = txtName.getText().trim();
             String tipo = cmbType.getValue().trim();
-            double prezzo = parseDoubleValue(txtPrice.getText());
-            double costo = parseDoubleValue(txtCost.getText());
+            BigDecimal prezzo = parseBigDecimalValue(txtPrice.getText());
+            BigDecimal costo = parseBigDecimalValue(txtCost.getText());
             String allergeni = txtAllergens.getText().trim();
 
             if (isEditMode) {
@@ -244,5 +246,10 @@ public class AddProductDialog {
                 onComplete.accept(success);
             }
         }
+    }
+
+
+    private static BigDecimal parseBigDecimalValue(String text) {
+        return new BigDecimal(text.replace(",", "."));
     }
 }

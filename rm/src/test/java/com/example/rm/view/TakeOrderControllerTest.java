@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,8 +30,8 @@ class TakeOrderControllerCartTest {
         MenuProduct prodotto = mock(MenuProduct.class);
         when(prodotto.getId()).thenReturn(10);
         when(prodotto.getNome()).thenReturn("Pizza");
-        when(prodotto.getPrezzoVendita()).thenReturn(12.50);
-        when(prodotto.getCostoRealizzazione()).thenReturn(5.00);
+        when(prodotto.getPrezzoVendita()).thenReturn(BigDecimal.valueOf(12.50));
+        when(prodotto.getCostoRealizzazione()).thenReturn(BigDecimal.valueOf(5.00));
 
         invoke(controller, "incrementProductQuantity", MenuProduct.class, prodotto);
         invoke(controller, "incrementProductQuantity", MenuProduct.class, prodotto);
@@ -50,8 +51,8 @@ class TakeOrderControllerCartTest {
         MenuProduct prodotto = mock(MenuProduct.class);
         when(prodotto.getId()).thenReturn(10);
         when(prodotto.getNome()).thenReturn("Pizza");
-        when(prodotto.getPrezzoVendita()).thenReturn(12.50);
-        when(prodotto.getCostoRealizzazione()).thenReturn(5.00);
+        when(prodotto.getPrezzoVendita()).thenReturn(BigDecimal.valueOf(12.50));
+        when(prodotto.getCostoRealizzazione()).thenReturn(BigDecimal.valueOf(5.00));
 
         invoke(controller, "incrementProductQuantity", MenuProduct.class, prodotto);
         invoke(controller, "decrementProductQuantity", MenuProduct.class, prodotto);

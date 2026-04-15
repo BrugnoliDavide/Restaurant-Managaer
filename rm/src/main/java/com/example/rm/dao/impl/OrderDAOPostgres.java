@@ -20,6 +20,8 @@ public class OrderDAOPostgres implements OrderDAO {
     private static final Logger logger = Logger.getLogger(OrderDAOPostgres.class.getName());
     private static final String TODOSTRING = "to-do";
 
+    private static final String QTASTR = "quantita";
+    
     private Connection getConnection() throws SQLException {
         return ConnectionManager.getConnection();
     }
@@ -99,8 +101,8 @@ public class OrderDAOPostgres implements OrderDAO {
 
             pstmtItem.setInt(2, item.getProduct().getId());
             pstmtItem.setInt(3, item.getQuantita());
-            pstmtItem.setDouble(4, item.getPrezzoSnapshot());
-            pstmtItem.setDouble(5, item.getCostoSnapshot());
+            pstmtItem.setBigDecimal(4, item.getPrezzoSnapshot());
+            pstmtItem.setBigDecimal(5, item.getCostoSnapshot());
             pstmtItem.setString(6, item.getProduct().getNome());
             pstmtItem.addBatch();
         }
@@ -134,7 +136,7 @@ public class OrderDAOPostgres implements OrderDAO {
                         rs.getString(COL_USERNAME),
                         rs.getString(COL_NOTE),
                         rs.getString(COL_STATUS),
-                        rs.getDouble(COL_TOTALE_CALCOLATO)
+                        rs.getBigDecimal(COL_TOTALE_CALCOLATO)
                 ));
             }
         } catch (SQLException e) {
@@ -168,7 +170,7 @@ public class OrderDAOPostgres implements OrderDAO {
                         rs.getString(COL_USERNAME),
                         rs.getString(COL_NOTE),
                         rs.getString(COL_STATUS),
-                        rs.getDouble(COL_TOTALE_CALCOLATO)
+                        rs.getBigDecimal(COL_TOTALE_CALCOLATO)
                 ));
             }
         } catch (SQLException e) {
@@ -201,7 +203,7 @@ public class OrderDAOPostgres implements OrderDAO {
                         rs.getString(COL_USERNAME),
                         rs.getString(COL_NOTE),
                         rs.getString(COL_STATUS),
-                        rs.getDouble(COL_TOTALE_CALCOLATO)
+                        rs.getBigDecimal(COL_TOTALE_CALCOLATO)
                 ));
             }
         } catch (SQLException e) {
@@ -242,7 +244,7 @@ public class OrderDAOPostgres implements OrderDAO {
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
-                int quantita = rs.getInt("quantita");
+                int quantita = rs.getInt(QTASTR);
                 String nome = rs.getString("nome");
                 details.add(quantita + "x " + nome);
             }
@@ -287,9 +289,9 @@ public class OrderDAOPostgres implements OrderDAO {
 
                 OrderItem item = new OrderItem();
                 item.setProduct(product);
-                item.setQuantita(rs.getInt("quantita"));
-                item.setPrezzoSnapshot(rs.getDouble("prezzo_vendita_snapshot"));
-                item.setCostoSnapshot(rs.getDouble("costo_realizzazione_snapshot"));
+                item.setQuantita(rs.getInt(QTASTR));
+                item.setPrezzoSnapshot(rs.getBigDecimal("prezzo_vendita_snapshot"));
+                item.setCostoSnapshot(rs.getBigDecimal("costo_realizzazione_snapshot"));
                 item.setNomeSnapshot(rs.getString("nome_prodotto_snapshot"));
                 items.add(item);
             }
@@ -429,8 +431,8 @@ public class OrderDAOPostgres implements OrderDAO {
                 for (OrderItem item : categoryItems) {
                     pstmtNewItem.setInt(2, item.getProduct().getId());
                     pstmtNewItem.setInt(3, item.getQuantita());
-                    pstmtNewItem.setDouble(4, item.getPrezzoSnapshot());
-                    pstmtNewItem.setDouble(5, item.getCostoSnapshot());
+                    pstmtNewItem.setBigDecimal(4, item.getPrezzoSnapshot());
+                    pstmtNewItem.setBigDecimal(5, item.getCostoSnapshot());
                     pstmtNewItem.setString(6, item.getNomeSnapshot());
                     pstmtNewItem.addBatch();
                 }
@@ -557,7 +559,7 @@ public class OrderDAOPostgres implements OrderDAO {
 
             while (rs.next()) {
                 int orderId = rs.getInt("order_id");
-                String display = rs.getInt("quantita") + "x " + rs.getString("nome");
+                String display = rs.getInt(QTASTR) + "x " + rs.getString("nome");
                 result.computeIfAbsent(orderId, k -> new ArrayList<>()).add(display);
             }
         } catch (SQLException e) {
@@ -605,7 +607,7 @@ public class OrderDAOPostgres implements OrderDAO {
                             rs.getString(COL_USERNAME),
                             rs.getString(COL_NOTE),
                             rs.getString(COL_STATUS),
-                            rs.getDouble(COL_TOTALE_CALCOLATO)
+                            rs.getBigDecimal(COL_TOTALE_CALCOLATO)
                     );
                 }
             }

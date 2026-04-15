@@ -52,6 +52,7 @@
 
 .login-btn-fixed:hover { -fx-background-color: #444444 !important; }
 
+
 /* 3. LAYOUT BASE  */
 .view-background { -fx-background-color: -fx-bg-primary; }
 .surface-card {
@@ -90,7 +91,12 @@ context-menu-item-danger{
 }
 
 
-/* da qui in poi ci sono classi grafiche specifiche */
+/* da qui in poi ci sono classi grafiche specifiche
+
+    !! lavoro futuro
+    le quali andrebbero assimilate nel limite del possibile ad altre classi
+
+*/
 
 .row-title { -fx-font-size: 16px; -fx-text-fill: #333333; }
 .row-subtitle { -fx-font-size: 14px; -fx-text-fill: #777777; }

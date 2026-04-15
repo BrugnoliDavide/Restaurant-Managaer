@@ -7,6 +7,7 @@ import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -158,7 +159,7 @@ public class OrderDAOFile implements OrderDAO {
                     String note = parts[4].trim();
                     String status = parts[5].trim();
 
-                    double totale = calculateOrderTotal(id);
+                    BigDecimal totale = calculateOrderTotal(id);
 
                     orders.add(new Order(id, dataOra, tavolo, username, note, status, totale));
                 }
@@ -173,22 +174,22 @@ public class OrderDAOFile implements OrderDAO {
         return orders;
     }
 
-    private double calculateOrderTotal(int orderId) {
+    private BigDecimal calculateOrderTotal(int orderId) {
         Path itemsFile = orderItemsDir.resolve(orderString + orderId + ".csv");
         if (!Files.exists(itemsFile)) {
-            return 0.0;
+            return BigDecimal.ZERO;
         }
 
         try {
             List<String> lines = Files.readAllLines(itemsFile);
-            double total = 0.0;
+            BigDecimal total = BigDecimal.ZERO;
 
             for (int i = 1; i < lines.size(); i++) {
                 String[] parts = lines.get(i).split(CSV_SEPARATOR);
                 if (parts.length >= 3) {
                     int quantita = Integer.parseInt(parts[1].trim());
-                    double prezzo = Double.parseDouble(parts[2].trim());
-                    total += quantita * prezzo;
+                    BigDecimal prezzo = new BigDecimal(parts[2].trim());
+                    total = total.add(prezzo.multiply(BigDecimal.valueOf(quantita)));
                 }
             }
 
@@ -196,10 +197,9 @@ public class OrderDAOFile implements OrderDAO {
 
         } catch (IOException e) {
             logger.log(Level.WARNING, "Errore calcolo totale ordine {0}", orderId);
-            return 0.0;
+            return BigDecimal.ZERO;
         }
     }
-
     @Override
     public List<Order> getOrdersByStatus(String statusTarget) {
         return getAllOrdersWithTotal().stream()
@@ -292,8 +292,8 @@ public class OrderDAOFile implements OrderDAO {
                 if (parts.length >= 5) {
                     int menuItemId = Integer.parseInt(parts[0].trim());
                     int quantita = Integer.parseInt(parts[1].trim());
-                    double prezzoSnap = Double.parseDouble(parts[2].trim());
-                    double costoSnap = Double.parseDouble(parts[3].trim());
+                    BigDecimal prezzoSnap = new BigDecimal(parts[2].trim());
+                    BigDecimal costoSnap = new BigDecimal(parts[3].trim());
                     String nomeSnap = parts[4].trim();
 
                     MenuProduct product = new MenuProduct();

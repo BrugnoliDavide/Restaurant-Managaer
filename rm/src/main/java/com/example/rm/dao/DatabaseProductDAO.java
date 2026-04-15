@@ -146,8 +146,8 @@ public class DatabaseProductDAO implements ProductDAO {
     private void bindProduct(PreparedStatement pstmt, MenuProduct p) throws SQLException {
         pstmt.setString(1, p.getNome());
         pstmt.setString(2, p.getTipologia());
-        pstmt.setDouble(3, p.getPrezzoVendita());
-        pstmt.setDouble(4, p.getCostoRealizzazione());
+        pstmt.setBigDecimal(3, p.getPrezzoVendita());
+        pstmt.setBigDecimal(4, p.getCostoRealizzazione());
         pstmt.setString(5, p.getAllergeni());
     }
 
@@ -156,8 +156,8 @@ public class DatabaseProductDAO implements ProductDAO {
                 rs.getInt("id"),
                 rs.getString("nome"),
                 rs.getString("tipologia"),
-                rs.getDouble("prezzo_vendita"),
-                rs.getDouble("costo_realizzazione"),
+                rs.getBigDecimal("prezzo_vendita"),
+                rs.getBigDecimal("costo_realizzazione"),
                 rs.getString("allergeni")
         );
     }

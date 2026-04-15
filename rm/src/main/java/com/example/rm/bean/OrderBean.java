@@ -2,6 +2,7 @@ package com.example.rm.bean;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,7 +33,7 @@ public class OrderBean implements Serializable {
     private String          username;
     private String          note;
     private String          status;
-    private double          totale;
+    private BigDecimal totale;
     private List<OrderItemBean> items;
 
     // ------------------------------------------------------------------ //
@@ -60,7 +61,7 @@ public class OrderBean implements Serializable {
      */
     public OrderBean(int id, LocalDateTime dataOra, int tavolo,
                      String username, String note,
-                     String status, double totale) {
+                     String status, BigDecimal totale) {
         this.id       = id;
         this.dataOra  = dataOra;
         this.tavolo   = tavolo;
@@ -123,11 +124,11 @@ public class OrderBean implements Serializable {
         this.status = status;
     }
 
-    public double getTotale() {
+    public BigDecimal getTotale() {
         return totale;
     }
 
-    public void setTotale(double totale) {
+    public void setTotale(BigDecimal totale) {
         this.totale = totale;
     }
 

@@ -42,18 +42,7 @@ public class OrderService implements OrderUseCase {
             logger.log(Level.WARNING, "ID ordine non valido: {0}", orderId);
             return null;
         }
-
-        try {
-            List<Order> allOrders = com.example.rm.service.OrderService.getAllWithTotal();
-
-            return allOrders.stream()
-                    .filter(order -> order.getId() == orderId)
-                    .findFirst()
-                    .orElse(null);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Errore recupero ordine ID: {0}", orderId);
-            return null;
-        }
+        return com.example.rm.service.OrderService.findById(orderId);
     }
 
 }

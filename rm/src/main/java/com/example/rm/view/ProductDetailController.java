@@ -12,10 +12,13 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import com.example.rm.dao.DatabaseProductDAO;
 
 /**
@@ -27,11 +30,16 @@ public class ProductDetailController {
     private static final Logger logger = Logger.getLogger(ProductDetailController.class.getName());
     private static final double POSITIVE_TREND_THRESHOLD = 30.0;
 
-    @FXML private Label lblBack;
-    @FXML private Label lblName;
-    @FXML private Button btnEdit;
-    @FXML private Button btnDelete;
-    @FXML private VBox contentBox;
+    @FXML
+    private Label lblBack;
+    @FXML
+    private Label lblName;
+    @FXML
+    private Button btnEdit;
+    @FXML
+    private Button btnDelete;
+    @FXML
+    private VBox contentBox;
 
     private MenuProduct product;
 
@@ -128,6 +136,7 @@ public class ProductDetailController {
 
     /**
      * Imposta il prodotto da visualizzare e aggiorna la vista.
+     *
      * @param product Il prodotto da visualizzare
      */
     public void setProduct(MenuProduct product) {
@@ -141,15 +150,16 @@ public class ProductDetailController {
 
     /**
      *
+     * //TODO
      * !! eliminabile
-     *
+     * <p>
      * Restituisce il contenitore principale per i dettagli.
+     *
      * @return VBox contenitore
      */
     public VBox getContentBox() {
         return contentBox;
     }
-
 
 
     /**
@@ -176,6 +186,7 @@ public class ProductDetailController {
 
     /**
      * Aggiunge la sezione dei dettagli alla vista.
+     *
      * @param stats Le statistiche calcolate
      */
     private void addDetailSection(ProductStatistics stats) {
@@ -193,6 +204,8 @@ public class ProductDetailController {
         addRow("Variazione Percentuale", formatPercentage(stats.variationPercent));
         addSeparator();
 
+        //ho wrappato la variabile realizedIncome inq uanto ò'errore possibile derivante da un tipo errat
+        //è trascurabile e per evitare di rompere molte logiche gia esistenti
         addRow("Incasso Realizzato (30gg)", formatCurrency(stats.realizedIncome));
 
         if (product.getAllergeni() != null && !product.getAllergeni().isEmpty()) {
@@ -203,6 +216,7 @@ public class ProductDetailController {
 
     /**
      * Calcola le statistiche del prodotto.
+     *
      * @return Oggetto contenente le statistiche
      */
     private ProductStatistics calculateStatistics() {
@@ -212,18 +226,13 @@ public class ProductDetailController {
         LocalDateTime endPrev30 = now.minusDays(30);
 
         long salesLast30 = OrderService.getQuantitySoldInRange(
-                product.getId(),
-                startLast30,
-                now
-        );
+                product.getId(), startLast30, now);
 
         long salesPrevious30 = OrderService.getQuantitySoldInRange(
-                product.getId(),
-                startPrev30,
-                endPrev30
-        );
+                product.getId(), startPrev30, endPrev30);
 
-        double realizedIncome = salesLast30 * product.getPrezzoVendita();
+        BigDecimal realizedIncome = product.getPrezzoVendita()
+                .multiply(BigDecimal.valueOf(salesLast30));
 
         double variationPercent = 0.0;
         if (salesPrevious30 > 0) {
@@ -231,15 +240,13 @@ public class ProductDetailController {
         }
 
         return new ProductStatistics(
-                salesLast30,
-                salesPrevious30,
-                realizedIncome,
-                variationPercent
-        );
+                salesLast30, salesPrevious30,
+                realizedIncome, variationPercent);
     }
 
     /**
      * Aggiunge una riga di dettaglio alla vista.
+     *
      * @param title Titolo della riga
      * @param value Valore da visualizzare
      */
@@ -276,24 +283,27 @@ public class ProductDetailController {
 
     /**
      * Calcola il margine unitario del prodotto.
+     *
      * @return Margine unitario
      */
-    private double calculateMargin() {
-        return product.getPrezzoVendita() - product.getCostoRealizzazione();
+    private BigDecimal calculateMargin() {
+        return product.getPrezzoVendita().subtract(product.getCostoRealizzazione());
     }
 
 
     /**
      * Formatta un valore monetario.
+     *
      * @param amount Importo da formattare
      * @return Stringa formattata
      */
-    private String formatCurrency(double amount) {
-        return String.format("€ %.2f", amount);
+    private String formatCurrency(BigDecimal amount) {
+        return "€ " + amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
     /**
      * Formatta una percentuale.
+     *
      * @param percent Percentuale da formattare
      * @return Stringa formattata
      */
@@ -314,11 +324,11 @@ public class ProductDetailController {
     private static class ProductStatistics {
         final long salesLast30;
         final long salesPrevious30;
-        final double realizedIncome;
+        final BigDecimal realizedIncome;
         final double variationPercent;
 
         ProductStatistics(long salesLast30, long salesPrevious30,
-                          double realizedIncome, double variationPercent) {
+                          BigDecimal realizedIncome, double variationPercent) {
             this.salesLast30 = salesLast30;
             this.salesPrevious30 = salesPrevious30;
             this.realizedIncome = realizedIncome;

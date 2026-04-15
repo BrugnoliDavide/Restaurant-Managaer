@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -46,15 +47,15 @@ class DatabaseProductDAOMockStaticTest {
     @Test
     void testSave_NewProduct_Success() throws SQLException {
         MenuProduct product = createProduct(0, "Pizza Margherita",
-                "Piatto principale", 12.5, 4.5, "Glutine");
+                "Piatto principale", BigDecimal.valueOf(12.5), BigDecimal.valueOf(4.5), "Glutine");
 
         when(mockPreparedStatement.executeUpdate()).thenReturn(1);
 
         assertTrue(dao.save(product));
         verify(mockPreparedStatement).setString(1, "Pizza Margherita");
         verify(mockPreparedStatement).setString(2, "Piatto principale");
-        verify(mockPreparedStatement).setDouble(3, 12.5);
-        verify(mockPreparedStatement).setDouble(4, 4.5);
+        verify(mockPreparedStatement).setBigDecimal(3, new BigDecimal("12.5"));
+        verify(mockPreparedStatement).setBigDecimal(4, new BigDecimal("4.5"));
         verify(mockPreparedStatement).setString(5, "Glutine");
         verify(mockPreparedStatement).executeUpdate();
     }
@@ -84,15 +85,15 @@ class DatabaseProductDAOMockStaticTest {
     @Test
     void testSave_ExistingProduct_Success() throws SQLException {
         MenuProduct product = createProduct(1, "Pizza Margherita",
-                "Piatto principale", 12.5, 4.5, "Glutine");
+                "Piatto principale", BigDecimal.valueOf(12.5),BigDecimal.valueOf( 4.5), "Glutine");
 
         when(mockPreparedStatement.executeUpdate()).thenReturn(1);
 
         assertTrue(dao.save(product));
         verify(mockPreparedStatement).setString(1, "Pizza Margherita");
         verify(mockPreparedStatement).setString(2, "Piatto principale");
-        verify(mockPreparedStatement).setDouble(3, 12.5);
-        verify(mockPreparedStatement).setDouble(4, 4.5);
+        verify(mockPreparedStatement).setBigDecimal(3, new BigDecimal("12.5"));
+        verify(mockPreparedStatement).setBigDecimal(4, new BigDecimal("4.5"));
         verify(mockPreparedStatement).setString(5, "Glutine");
         verify(mockPreparedStatement).setInt(6, 1);
         verify(mockPreparedStatement).executeUpdate();
@@ -157,7 +158,7 @@ class DatabaseProductDAOMockStaticTest {
     // --- Helper ---
 
     private MenuProduct createProduct(int id, String nome, String tipologia,
-                                      double prezzo, double costo, String allergeni) {
+                                      BigDecimal prezzo, BigDecimal costo, String allergeni) {
         MenuProduct p = new MenuProduct();
         p.setId(id);
         p.setNome(nome);

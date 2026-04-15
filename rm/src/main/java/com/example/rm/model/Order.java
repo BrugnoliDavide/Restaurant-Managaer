@@ -4,6 +4,7 @@ import com.example.rm.service.OrderService;
 import javafx.beans.property.*;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class Order implements Serializable {
     private transient StringProperty username;
     private transient StringProperty note;
     private transient StringProperty status;
-    private transient DoubleProperty totale;
+    private transient ObjectProperty<BigDecimal> totale;
 
     public Order() {
         this.id = new SimpleIntegerProperty(0);
@@ -27,18 +28,18 @@ public class Order implements Serializable {
         this.username = new SimpleStringProperty("");
         this.note = new SimpleStringProperty("");
         this.status = new SimpleStringProperty("to-do");
-        this.totale = new SimpleDoubleProperty(0.0);
+        this.totale = new SimpleObjectProperty<>(BigDecimal.ZERO);
     }
 
     public Order(int id, LocalDateTime dataOra, int tavolo,
-                 String username, String note, String status, double totale) {
+                 String username, String note, String status, BigDecimal totale) {
         this.id = new SimpleIntegerProperty(id);
         this.dataOra = new SimpleObjectProperty<>(dataOra);
         this.tavolo = new SimpleIntegerProperty(tavolo);
         this.username = new SimpleStringProperty(username);
         this.note = new SimpleStringProperty(note != null ? note : "");
         this.status = new SimpleStringProperty(status);
-        this.totale = new SimpleDoubleProperty(totale);
+        this.totale = new SimpleObjectProperty<>(totale);
     }
 
     @Serial
@@ -50,7 +51,7 @@ public class Order implements Serializable {
         s.writeUTF(getUsername() != null ? getUsername() : "");
         s.writeUTF(getNote() != null ? getNote() : "");
         s.writeUTF(getStatus() != null ? getStatus() : "");
-        s.writeDouble(getTotale());
+        s.writeUTF(getTotale().toPlainString());
     }
 
     @Serial
@@ -62,7 +63,7 @@ public class Order implements Serializable {
         this.username = new SimpleStringProperty(s.readUTF());
         this.note = new SimpleStringProperty(s.readUTF());
         this.status = new SimpleStringProperty(s.readUTF());
-        this.totale = new SimpleDoubleProperty(s.readDouble());
+        this.totale = new SimpleObjectProperty<>(new BigDecimal(s.readUTF()));
     }
 
     public int getId() { return id.get(); }
@@ -82,7 +83,7 @@ public class Order implements Serializable {
     public String getStatus() { return status.get(); }
     public void setStatus(String status) { this.status.set(status); }
 
-    public double getTotale() { return totale.get(); }
+    public BigDecimal getTotale() { return totale.get(); }
 
     public boolean hasNote() {
         String n = getNote();

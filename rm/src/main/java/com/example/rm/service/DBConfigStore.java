@@ -18,6 +18,11 @@ import javax.crypto.spec.SecretKeySpec;
 /**
  * Gestisce il salvataggio sicuro delle credenziali di connessione al database
  * utilizzando cifratura AES-GCM per la password.
+ *
+ * <p><strong>Correzione applicata:</strong> in caso di fallimento della decifratura,
+ * la chiave NON viene più rimossa automaticamente dalle preferenze. Viene
+ * restituita una stringa vuota e registrato un warning nel log. L'utente
+ * dovrà reinserire la password manualmente dal pannello di configurazione.</p>
  */
 public final class DBConfigStore {
 
@@ -40,7 +45,6 @@ public final class DBConfigStore {
     }
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-
 
     private static SecretKeySpec getKey() {
         try {
@@ -113,24 +117,24 @@ public final class DBConfigStore {
     }
 
     public static void save(String host, String port, String db, String user, String pass) {
-
         if (DemoModeManager.isDemoMode()) {
-            logger.log(Level.INFO,"modalità DEMO attiva: i dati inseririti saranno eliminati alla chiusura del sistema");
+            logger.log(Level.INFO,
+                    "Modalità DEMO attiva: i dati inseriti saranno eliminati alla chiusura del sistema");
+            return;
         }
-        else{
 
-            prefs.put(KEY_HOST, host);
-            prefs.put(KEY_PORT, port);
-            prefs.put(KEY_NAME, db);
-            prefs.put(KEY_USER, user);
+        prefs.put(KEY_HOST, host);
+        prefs.put(KEY_PORT, port);
+        prefs.put(KEY_NAME, db);
+        prefs.put(KEY_USER, user);
 
-            if (pass != null && !pass.isBlank()) {
-                String encryptedPass = encrypt(pass);
-                if (!encryptedPass.isEmpty()) {
-                    prefs.put(KEY_PASS, encryptedPass);
-                } else {
-                    logger.log(Level.WARNING, "Impossibile cifrare la password: non verrà salvata");
-                }
+        if (pass != null && !pass.isBlank()) {
+            String encryptedPass = encrypt(pass);
+            if (!encryptedPass.isEmpty()) {
+                prefs.put(KEY_PASS, encryptedPass);
+            } else {
+                logger.log(Level.WARNING,
+                        "Impossibile cifrare la password: non verrà salvata");
             }
         }
     }
@@ -151,6 +155,15 @@ public final class DBConfigStore {
         return prefs.get(KEY_USER, "");
     }
 
+    /**
+     * Recupera la password decifrata dalle preferenze.
+     *
+     * <p><strong>Correzione:</strong> se la decifratura fallisce, la chiave
+     * cifrata NON viene più rimossa. Viene restituita stringa vuota e
+     * l'utente dovrà reinserire la password dal pannello di configurazione.</p>
+     *
+     * @return password in chiaro, oppure stringa vuota se non disponibile
+     */
     public static String getPassword() {
         String encrypted = prefs.get(KEY_PASS, "");
         if (encrypted.isBlank()) {
@@ -160,10 +173,11 @@ public final class DBConfigStore {
         String decrypted = decrypt(encrypted);
 
         if (decrypted.isEmpty() && !encrypted.isEmpty()) {
+            // CORREZIONE: non rimuoviamo più la chiave.
+            // Logghiamo un warning per diagnostica, ma NON cancelliamo i dati.
             logger.log(Level.WARNING,
-                    "Password cifrata con vecchio algoritmo non sicuro. " +
-                            "Sarà necessario reinserire le credenziali.");
-            prefs.remove(KEY_PASS);
+                    "Impossibile decifrare la password salvata. "
+                            + "L'utente dovrà reinserire le credenziali dal pannello di configurazione.");
         }
 
         return decrypted;
@@ -174,7 +188,8 @@ public final class DBConfigStore {
             prefs.clear();
             logger.info("Configurazione DB cancellata con successo");
         } catch (Exception e) {
-            logger.log(Level.WARNING, "Errore durante la cancellazione della configurazione DB", e);
+            logger.log(Level.WARNING,
+                    "Errore durante la cancellazione della configurazione DB", e);
         }
     }
 
@@ -190,7 +205,6 @@ public final class DBConfigStore {
         if (encrypted.isEmpty()) {
             return false;
         }
-
         String decrypted = decrypt(encrypted);
         return !decrypted.isEmpty();
     }

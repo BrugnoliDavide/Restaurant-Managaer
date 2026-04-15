@@ -22,6 +22,8 @@ import javafx.util.Duration;
 import com.example.rm.view.component.ChangePasswordDialog;
 import javafx.stage.Stage;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.Level;
@@ -50,7 +52,9 @@ public class EarningController {
 
     private Timeline pollingTimeline;
 
-    private String valueFormat = "€%.2f";
+    private String formatCurrency(BigDecimal amount) {
+        return "€" + amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
+    }
     private String selectedString = "selected";
     private String tavoloString = "Tavolo ";
     
@@ -110,7 +114,9 @@ public class EarningController {
 
         if (previouslySelected != null && ordersByTable.containsKey(previouslySelected)) {
             List<Order> orders = ordersByTable.get(previouslySelected);
-            double total = orders.stream().mapToDouble(Order::getTotale).sum();
+            BigDecimal total = orders.stream()
+                .map(Order::getTotale)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
             showTableDetails(previouslySelected, orders, total);
         } else if (previouslySelected != null && !ordersByTable.containsKey(previouslySelected)) {
             clearDetailsPane();
@@ -195,8 +201,10 @@ public class EarningController {
 
         leftInfo.getChildren().addAll(lblTable, lblSubtitle);
 
-        double totalAmount = orders.stream().mapToDouble(Order::getTotale).sum();
-        Label lblTotal = new Label(String.format(valueFormat, totalAmount));
+        BigDecimal totalAmount = orders.stream()
+                .map(Order::getTotale)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Label lblTotal = new Label(formatCurrency(totalAmount));
         lblTotal.getStyleClass().add("table-total");
 
         card.getChildren().addAll(leftInfo, lblTotal);
@@ -221,7 +229,7 @@ public class EarningController {
         return card;
     }
 
-    private void showTableDetails(int tableNumber, List<Order> orders, double totalAmount) {
+    private void showTableDetails(int tableNumber, List<Order> orders, BigDecimal totalAmount) {
         detailsPane.getChildren().clear();
 
         VBox content = new VBox(15);
@@ -251,7 +259,7 @@ public class EarningController {
         Label lblTotalLabel = new Label("TOTALE:");
         lblTotalLabel.getStyleClass().add("details-total-label");
 
-        Label lblTotalValue = new Label(String.format(valueFormat, totalAmount));
+        Label lblTotalValue = new Label(formatCurrency(totalAmount));
         lblTotalValue.getStyleClass().add("details-total-value");
 
         totalBox.getChildren().addAll(lblTotalLabel, lblTotalValue);
@@ -330,13 +338,14 @@ public class EarningController {
             }
         }
 
-        double totale = deliveredOrdersShown.stream()
-                .mapToDouble(Order::getTotale)
-                .sum();
+        BigDecimal totale = deliveredOrdersShown.stream()
+                .map(Order::getTotale)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
 
         Alert conferma = new Alert(Alert.AlertType.CONFIRMATION);
         conferma.setTitle("Conferma Pagamento");
-        conferma.setContentText("Incassare €" + String.format("%.2f", totale) + "?");
+        conferma.setContentText("Incassare " + formatCurrency(totale) + "?");
 
         if (conferma.showAndWait().filter(ButtonType.OK::equals).isPresent()) {
             boolean success = deliveredOrdersShown.stream()
@@ -393,7 +402,7 @@ public class EarningController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Label lblOrderTotal = new Label(String.format(valueFormat, order.getTotale()));
+        Label lblOrderTotal = new Label(formatCurrency(order.getTotale()));
         lblOrderTotal.getStyleClass().add("order-row-total");
 
         orderHeader.getChildren().addAll(lblOrderId, lblStatus, spacer, lblOrderTotal);
@@ -404,7 +413,7 @@ public class EarningController {
         List<OrderItem> items = OrderService.getItemsDetailed(order.getId());
 
         for (OrderItem item : items) {
-            double rowTotal = item.getQuantita() * item.getPrezzoSnapshot();
+            BigDecimal rowTotal = item.getPrezzoSnapshot().multiply(BigDecimal.valueOf(item.getQuantita()));
 
             HBox itemRow = new HBox(10);
             itemRow.setAlignment(Pos.CENTER_LEFT);
@@ -416,7 +425,7 @@ public class EarningController {
             Region itemSpacer = new Region();
             HBox.setHgrow(itemSpacer, Priority.ALWAYS);
 
-            Label lblPrice = new Label(String.format(valueFormat, rowTotal));
+            Label lblPrice = new Label(formatCurrency(rowTotal));
             lblPrice.getStyleClass().add("order-item-price");
 
             itemRow.getChildren().addAll(lblName, itemSpacer, lblPrice);
