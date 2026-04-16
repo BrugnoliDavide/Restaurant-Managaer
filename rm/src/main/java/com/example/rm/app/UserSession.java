@@ -26,7 +26,7 @@ public class UserSession {
     private static volatile UserSession instance;
 
     private final User user;
-    private Set<Integer> managedTables = null;
+    private volatile Set<Integer> managedTables = Set.of();
 
     private UserSession(User user) {
         this.user = user;
@@ -81,14 +81,12 @@ public class UserSession {
     }
 
     public void setManagedTables(Set<Integer> tables) {
-        this.managedTables = tables;
+        this.managedTables = (tables == null) ? Set.of() : Set.copyOf(tables);
     }
 
     public boolean isTableManaged(int tableNumber) {
-        if (managedTables == null || managedTables.isEmpty()) {
-            return true;
-        }
-        return managedTables.contains(tableNumber);
+        Set<Integer> snapshot = managedTables;
+        return snapshot.isEmpty() || snapshot.contains(tableNumber);
     }
 
     // -------------------------------------------------------------------------

@@ -149,20 +149,6 @@ public class ProductDetailController {
     }
 
     /**
-     *
-     * //TODO
-     * !! eliminabile
-     * <p>
-     * Restituisce il contenitore principale per i dettagli.
-     *
-     * @return VBox contenitore
-     */
-    public VBox getContentBox() {
-        return contentBox;
-    }
-
-
-    /**
      * Renderizza i dettagli del prodotto nella vista.
      */
     private void render() {

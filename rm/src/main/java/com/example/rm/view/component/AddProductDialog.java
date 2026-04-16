@@ -34,18 +34,8 @@ public class AddProductDialog {
     private static final Logger logger = Logger.getLogger(AddProductDialog.class.getName());
 
     // Metodi legacy per compatibilità (senza callback)
-    //TODO già deprecato da rimuovere
     public static void display() {
         new DialogBuilder(null, null).show();
-    }
-
-    //TODO già deprecato da rimuovere
-    public static void displayEdit(MenuProduct productToEdit) {
-        new DialogBuilder(productToEdit, null).show();
-    }
-
-    public static void display(Consumer<Boolean> onComplete) {
-        new DialogBuilder(null, onComplete).show();
     }
 
     public static void displayEdit(MenuProduct productToEdit, Consumer<Boolean> onComplete) {

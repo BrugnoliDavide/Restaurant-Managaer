@@ -42,25 +42,36 @@ public class OrderDAOPostgres implements OrderDAO {
              PreparedStatement pstmtOrder = conn.prepareStatement(sqlOrder, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement pstmtItem = conn.prepareStatement(sqlItem)) {
 
-            conn.setAutoCommit(false);
+                conn.setAutoCommit(false);
 
-            try {
-                boolean result = executeCreateOrderTransaction(
-                        pstmtOrder, pstmtItem,
-                        utente.getUsername(), tavolo, note, items
-                );
-                conn.commit();
-                return result;
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            }
+                return runInTransaction(conn, pstmtOrder, pstmtItem, utente, tavolo, note, items);
 
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore creazione ordine", e);
             return false;
         }
     }
+
+    private boolean runInTransaction(Connection conn,
+                                     PreparedStatement pstmtOrder,
+                                     PreparedStatement pstmtItem,
+                                     User utente,
+                                     Integer tavolo,
+                                     String note,
+                                     List<OrderItem> items) throws SQLException {
+        try {
+            boolean result = executeCreateOrderTransaction(
+                    pstmtOrder, pstmtItem,
+                    utente.getUsername(), tavolo, note, items
+            );
+            conn.commit();
+            return result;
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+        }
+    }
+
 
     private boolean executeCreateOrderTransaction(
             PreparedStatement pstmtOrder,
