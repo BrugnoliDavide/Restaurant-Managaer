@@ -6,12 +6,13 @@ import java.math.RoundingMode;
 
 public class OrderItem {
 
+    private int id;
     private MenuProduct product;
     private int quantita;
     private BigDecimal  prezzoSnapshot;
     private BigDecimal costoSnapshot;
     private String nomeSnapshot;
-
+    private String status = "active";
 
     public OrderItem() {
     }
@@ -24,8 +25,6 @@ public class OrderItem {
         this.costoSnapshot = costoSnapshot;
         this.nomeSnapshot = nomeSnapshot;
     }
-
-
 
     public MenuProduct getProduct() {
         return product;
@@ -67,9 +66,6 @@ public class OrderItem {
         this.nomeSnapshot = nomeSnapshot;
     }
 
-
-
-
     public String getDisplayName() {
         if (nomeSnapshot != null && !nomeSnapshot.isEmpty()) {
             return nomeSnapshot;
@@ -77,9 +73,26 @@ public class OrderItem {
         return product != null ? product.getNome() : "Prodotto sconosciuto";
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     @Override
     public String toString() {
         return String.format("%dx %s (€%s)", quantita, getDisplayName(),
                 prezzoSnapshot.setScale(2, RoundingMode.HALF_UP));
     }
+
 }

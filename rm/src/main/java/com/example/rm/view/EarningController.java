@@ -390,14 +390,20 @@ public class EarningController {
         VBox section = new VBox(8);
         section.getStyleClass().add("order-section");
 
+        // ===== HEADER ORDINE =====
         HBox orderHeader = new HBox(10);
         orderHeader.setAlignment(Pos.CENTER_LEFT);
 
         Label lblOrderId = new Label("Ordine #" + order.getId());
         lblOrderId.getStyleClass().add("order-header-title");
 
-        Label lblStatus = new Label("Consegnato");
+        boolean isDelivered = "delivered".equalsIgnoreCase(order.getStatus());
+
+        Label lblStatus = new Label(isDelivered ? "Consegnato" : "⏳ In attesa");
         lblStatus.getStyleClass().add("order-status");
+        if (!isDelivered) {
+            lblStatus.getStyleClass().add("pending-status");
+        }
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -405,20 +411,40 @@ public class EarningController {
         Label lblOrderTotal = new Label(formatCurrency(order.getTotale()));
         lblOrderTotal.getStyleClass().add("order-row-total");
 
-        orderHeader.getChildren().addAll(lblOrderId, lblStatus, spacer, lblOrderTotal);
+        // ===== BOTTONE ELIMINA ORDINE =====
+        Button btnDeleteOrder = new Button("✖");
+        btnDeleteOrder.getStyleClass().add("btn-delete-order");
 
+        btnDeleteOrder.setOnAction(e -> {
+            earningUseCase.setOrderStatus(order.getId(), "canceled");
+            refreshDataPreservingSelection();
+        });
+
+        orderHeader.getChildren().addAll(
+                lblOrderId,
+                lblStatus,
+                spacer,
+                lblOrderTotal,
+                btnDeleteOrder
+        );
+
+        // ===== LISTA PRODOTTI =====
         VBox itemsList = new VBox(4);
         itemsList.setPadding(new Insets(8, 0, 0, 10));
 
         List<OrderItem> items = OrderService.getItemsDetailed(order.getId());
 
         for (OrderItem item : items) {
-            BigDecimal rowTotal = item.getPrezzoSnapshot().multiply(BigDecimal.valueOf(item.getQuantita()));
+            BigDecimal rowTotal = item.getPrezzoSnapshot()
+                    .multiply(BigDecimal.valueOf(item.getQuantita()));
 
             HBox itemRow = new HBox(10);
             itemRow.setAlignment(Pos.CENTER_LEFT);
 
-            String nomeProdotto = item.getProduct() != null ? item.getProduct().getNome() : "???";
+            String nomeProdotto = item.getProduct() != null
+                    ? item.getProduct().getNome()
+                    : "???";
+
             Label lblName = new Label(item.getQuantita() + "x " + nomeProdotto);
             lblName.getStyleClass().add("order-item-name");
 
@@ -428,10 +454,26 @@ public class EarningController {
             Label lblPrice = new Label(formatCurrency(rowTotal));
             lblPrice.getStyleClass().add("order-item-price");
 
-            itemRow.getChildren().addAll(lblName, itemSpacer, lblPrice);
+            // ===== BOTTONE ELIMINA ITEM =====
+            Button btnRemoveItem = new Button("✖");
+            btnRemoveItem.getStyleClass().add("btn-delete-item");
+
+            btnRemoveItem.setOnAction(e -> {
+                earningUseCase.cancelItemFromOrder(order.getId(), item.getId());
+                refreshDataPreservingSelection();
+            });
+
+            itemRow.getChildren().addAll(
+                    lblName,
+                    itemSpacer,
+                    lblPrice,
+                    btnRemoveItem
+            );
+
             itemsList.getChildren().add(itemRow);
         }
 
+        // ===== NOTE =====
         if (order.hasNote()) {
             Label lblNote = new Label("Note: " + order.getNote());
             lblNote.setWrapText(true);
@@ -442,6 +484,5 @@ public class EarningController {
         section.getChildren().addAll(orderHeader, new Separator(), itemsList);
         return section;
     }
-
 
 }

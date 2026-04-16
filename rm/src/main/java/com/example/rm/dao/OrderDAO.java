@@ -129,4 +129,5 @@ public interface OrderDAO {
 
     Order findById(int orderId);
 
+    boolean removeOrderItem(int orderId, int itemId);
 }

@@ -37,4 +37,9 @@ public class EarningService implements EarningUseCase {
     public void setOrderStatus(int orderId, String status) {
         OrderService.setStatus(orderId, status);
     }
+
+    @Override
+    public void cancelItemFromOrder(int orderId, int itemId) {
+        OrderService.removeOrderItem(orderId, itemId);
+    }
 }

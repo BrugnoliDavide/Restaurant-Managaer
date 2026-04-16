@@ -12,5 +12,6 @@ public interface EarningUseCase {
     boolean hasPendingOrders(int tableNumber);
     boolean markOrderAsPaid(int orderId);
     void setOrderStatus(int orderId, String status);
+    void cancelItemFromOrder(int orderId, int itemId);
 }
 

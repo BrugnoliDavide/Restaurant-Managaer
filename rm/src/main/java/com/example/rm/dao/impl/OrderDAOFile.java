@@ -126,7 +126,8 @@ public class OrderDAOFile implements OrderDAO {
 
     private void saveOrderItems(int orderId, List<OrderItem> items) throws IOException {
         Path itemsFile = orderItemsDir.resolve(orderString + orderId + ".csv");
-        StringBuilder content = new StringBuilder("menu_item_id;quantita;prezzo_snapshot;costo_snapshot;nome_snapshot\n");
+        StringBuilder content = new StringBuilder(
+                "menu_item_id;quantita;prezzo_snapshot;costo_snapshot;nome_snapshot;status\n");
 
         for (OrderItem item : items) {
             if (item.getProduct() == null) continue;
@@ -136,6 +137,8 @@ public class OrderDAOFile implements OrderDAO {
                     .append(item.getPrezzoSnapshot()).append(CSV_SEPARATOR)
                     .append(item.getCostoSnapshot()).append(CSV_SEPARATOR)
                     .append(item.getProduct().getNome().replace(CSV_SEPARATOR, ","))
+                    .append(CSV_SEPARATOR)
+                    .append("active")
                     .append(System.lineSeparator());
         }
 
@@ -302,6 +305,7 @@ public class OrderDAOFile implements OrderDAO {
                     product.setTipologia("Non disponibile");
 
                     OrderItem item = new OrderItem();
+                    item.setId(i - 1);
                     item.setProduct(product);
                     item.setQuantita(quantita);
                     item.setPrezzoSnapshot(prezzoSnap);
@@ -409,6 +413,71 @@ public class OrderDAOFile implements OrderDAO {
                 .filter(o -> o.getId() == orderId)
                 .findFirst()
                 .orElse(null);
+    }
+
+
+
+
+
+    //lo scopo di questa implementazione è prettamente "didattico" e necessario
+    //al fine di avere due implementazioni di un DAO, anche se la sua esistenza potrebbe essere di dubbia utilità
+    @Override
+    public synchronized boolean removeOrderItem(int orderId, int itemId) {
+        if (itemId < 0) {
+            logger.log(Level.WARNING, "itemId non valido: {0}", itemId);
+            return false;
+        }
+
+        Path itemsFile = orderItemsDir.resolve(orderString + orderId + ".csv");
+
+        if (!Files.exists(itemsFile)) {
+            logger.log(Level.WARNING,
+                    "File articoli non trovato per ordine {0}", orderId);
+            return false;
+        }
+
+        try {
+            List<String> lines = Files.readAllLines(itemsFile);
+
+            // La riga 0 è l'header; le righe dati partono dall'indice 1.
+            // Per convenzione itemId == indice 0-based della riga dati,
+            // quindi la riga nel file è (itemId + 1).
+            int targetLine = itemId + 1;
+
+            if (targetLine >= lines.size()) {
+                logger.log(Level.WARNING,
+                        "itemId {0} fuori range per ordine {1} (righe dati {2})",
+                        new Object[]{itemId, orderId, lines.size() - 1});
+                return false;
+            }
+
+            List<String> updated = new ArrayList<>(lines.size() - 1);
+            updated.add(lines.get(0)); // header preservato
+            for (int i = 1; i < lines.size(); i++) {
+                if (i != targetLine) {
+                    updated.add(lines.get(i));
+                }
+            }
+
+            // Riscrittura sicura: scrivo su file temporaneo e poi rimpiazzo
+            // il file originale, così da evitare file troncati in caso di crash.
+            Path tmp = itemsFile.resolveSibling(itemsFile.getFileName() + ".tmp");
+            Files.write(tmp, updated,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.WRITE);
+            Files.move(tmp, itemsFile, StandardCopyOption.REPLACE_EXISTING);
+
+            logger.log(Level.INFO,
+                    "Rimosso item {0} dall''ordine {1}",
+                    new Object[]{itemId, orderId});
+            return true;
+
+        } catch (IOException e) {
+            logger.log(Level.SEVERE,
+                    "Errore rimozione item " + itemId + " da ordine " + orderId, e);
+            return false;
+        }
     }
 
 }

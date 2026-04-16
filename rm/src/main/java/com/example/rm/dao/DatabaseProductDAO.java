@@ -13,9 +13,7 @@ public class DatabaseProductDAO implements ProductDAO {
 
     private static final Logger logger = Logger.getLogger(DatabaseProductDAO.class.getName());
 
-    // -------------------------------------------------------------------------
-    // Query
-    // -------------------------------------------------------------------------
+
 
     @Override
     public List<MenuProduct> findAll() {
@@ -57,7 +55,8 @@ public class DatabaseProductDAO implements ProductDAO {
     @Override
     public long getQuantitySold(String nomeProdotto) {
         String sql = "SELECT SUM(oi.quantita) FROM order_items oi "
-                + "JOIN menu_items mi ON oi.menu_item_id = mi.id WHERE mi.nome = ?";
+                + "JOIN menu_items mi ON oi.menu_item_id = mi.id "
+                + "WHERE mi.nome = ? AND oi.status <> 'canceled'";
 
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

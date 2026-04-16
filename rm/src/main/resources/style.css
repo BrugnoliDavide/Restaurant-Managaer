@@ -568,3 +568,19 @@ context-menu-item-danger{
 .financial-list .list-cell:empty {
     -fx-background-color: transparent;
 }
+
+.btn-delete-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: red;
+    -fx-cursor: hand;
+}
+
+.btn-delete-order {
+    -fx-background-color: transparent;
+    -fx-text-fill: red;
+    -fx-font-size: 14px;
+}
+
+.pending-status {
+    -fx-text-fill: orange;
+}

@@ -120,7 +120,8 @@ public class OrderDAOPostgres implements OrderDAO {
         List<Order> list = new ArrayList<>();
         String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
                 "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) as totale_calcolato " +
-                "FROM orders o LEFT JOIN order_items oi ON o.id = oi.order_id " +
+                "FROM orders o LEFT JOIN order_items oi " +
+                "    ON o.id = oi.order_id AND oi.status <> 'canceled' " +
                 "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status " +
                 "ORDER BY o.data_ora DESC";
 
@@ -151,7 +152,8 @@ public class OrderDAOPostgres implements OrderDAO {
         String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
                 "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) AS totale_calcolato " +
                 "FROM orders o " +
-                "LEFT JOIN order_items oi ON o.id = oi.order_id " +
+                "LEFT JOIN order_items oi " +
+                "    ON o.id = oi.order_id AND oi.status <> 'canceled' " +
                 "WHERE o.status = ? " +
                 "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status " +
                 "ORDER BY o.data_ora DESC";
@@ -184,11 +186,11 @@ public class OrderDAOPostgres implements OrderDAO {
         List<Order> list = new ArrayList<>();
         String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
                 "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) as totale_calcolato " +
-                "FROM orders o LEFT JOIN order_items oi ON o.id = oi.order_id " +
+                "FROM orders o LEFT JOIN order_items oi " +
+                "    ON o.id = oi.order_id AND oi.status <> 'canceled' " +
                 "WHERE o.status = ? AND o.data_ora >= NOW() - INTERVAL '24 HOURS' " +
                 "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status " +
                 "ORDER BY o.data_ora ASC";
-
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -235,7 +237,7 @@ public class OrderDAOPostgres implements OrderDAO {
                 "COALESCE(oi.nome_prodotto_snapshot, mi.nome, 'Prodotto eliminato') AS nome " +
                 "FROM order_items oi " +
                 "LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id " +
-                "WHERE oi.order_id = ?";
+                "WHERE oi.order_id = ? AND oi.status <> 'canceled'";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -257,12 +259,13 @@ public class OrderDAOPostgres implements OrderDAO {
     @Override
     public List<OrderItem> getOrderItemsDetailed(int orderId) {
         List<OrderItem> items = new ArrayList<>();
-        String sql = "SELECT oi.menu_item_id, oi.quantita, oi.prezzo_vendita_snapshot, " +
+        String sql = "SELECT oi.id AS oi_id, oi.status AS oi_status, " +
+                "oi.menu_item_id, oi.quantita, oi.prezzo_vendita_snapshot, " +
                 "oi.costo_realizzazione_snapshot, oi.nome_prodotto_snapshot, " +
                 "mi.id AS product_id, mi.nome AS product_nome, mi.tipologia AS product_tipologia " +
                 "FROM order_items oi " +
                 "LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id " +
-                "WHERE oi.order_id = ?";
+                "WHERE oi.order_id = ? AND oi.status <> 'canceled'";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -288,6 +291,8 @@ public class OrderDAOPostgres implements OrderDAO {
                 }
 
                 OrderItem item = new OrderItem();
+                item.setId(rs.getInt("oi_id"));
+                item.setStatus(rs.getString("oi_status"));
                 item.setProduct(product);
                 item.setQuantita(rs.getInt(QTASTR));
                 item.setPrezzoSnapshot(rs.getBigDecimal("prezzo_vendita_snapshot"));
@@ -300,7 +305,6 @@ public class OrderDAOPostgres implements OrderDAO {
         }
         return items;
     }
-
     @Override
     public List<Order> getReadyOrdersForWaiter() {
         return getOrdersByStatus("ready");
@@ -525,7 +529,7 @@ public class OrderDAOPostgres implements OrderDAO {
                 "FROM order_items oi " +
                 "JOIN orders o ON oi.order_id = o.id " +
                 "WHERE oi.menu_item_id = ? AND o.data_ora >= ? AND o.data_ora <= ? " +
-                "AND o.status != 'canceled'";
+                "AND o.status != 'canceled' AND oi.status <> 'canceled'";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -551,6 +555,7 @@ public class OrderDAOPostgres implements OrderDAO {
                 "COALESCE(oi.nome_prodotto_snapshot, mi.nome, 'Prodotto eliminato') AS nome " +
                 "FROM order_items oi " +
                 "LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id " +
+                "WHERE oi.status <> 'canceled' " +
                 "ORDER BY oi.order_id";
 
         try (Connection conn = ConnectionManager.getConnection();
@@ -590,7 +595,8 @@ public class OrderDAOPostgres implements OrderDAO {
     public Order findById(int orderId) {
         String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
                 "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) AS totale_calcolato " +
-                "FROM orders o LEFT JOIN order_items oi ON o.id = oi.order_id " +
+                "FROM orders o LEFT JOIN order_items oi " +
+                "    ON o.id = oi.order_id AND oi.status <> 'canceled' " +
                 "WHERE o.id = ? " +
                 "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status";
 
@@ -615,6 +621,25 @@ public class OrderDAOPostgres implements OrderDAO {
             logger.log(Level.SEVERE, "Errore recupero ordine per ID: {0}", orderId);
         }
         return null;
+    }
+
+
+
+    @Override
+    public boolean removeOrderItem(int orderId, int itemId) {
+        String sql = "DELETE FROM order_items WHERE id = ? AND order_id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, itemId);
+            ps.setInt(2, orderId);
+            int affected = ps.executeUpdate();
+            logger.log(Level.INFO, "Rimosso item {0} da ordine {1}: {2} righe",
+                    new Object[]{itemId, orderId, affected});
+            return affected > 0;
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore rimozione item", e);
+            return false;
+        }
     }
 
 

@@ -34,9 +34,8 @@ public final class OrderService {
         throw new IllegalStateException("Utility class");
     }
 
-    // -------------------------------------------------------------------------
     // Inizializzazione DAO
-    // -------------------------------------------------------------------------
+
 
     /**
      * Attiva l'implementazione PostgreSQL.
@@ -62,9 +61,9 @@ public final class OrderService {
         }
     }
 
-    // -------------------------------------------------------------------------
+
     // Accesso al DAO
-    // -------------------------------------------------------------------------
+
 
     private static OrderDAO dao() {
         OrderDAO current = dao;
@@ -75,9 +74,8 @@ public final class OrderService {
         return current;
     }
 
-    // -------------------------------------------------------------------------
+
     // Operazioni sugli ordini
-    // -------------------------------------------------------------------------
 
     public static boolean create(List<OrderItem> items, Integer tavolo,
                                  String note, User utente) {
@@ -153,4 +151,9 @@ public final class OrderService {
     public static Order findById(int orderId) {
         return dao().findById(orderId);
     }
+
+    public static boolean removeOrderItem(int orderId, int itemId) {
+        return dao().removeOrderItem(orderId, itemId);
+    }
+
 }
