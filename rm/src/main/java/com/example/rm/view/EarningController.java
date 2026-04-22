@@ -52,10 +52,10 @@ public class EarningController {
 
     private Timeline pollingTimeline;
     
-    private String OIPstr = "order-item-price";
-    private String OINstr = "order-item-name";
-    private String CanceledSTR = "canceled";
-    private String AnnullaSTR = "annulla";
+    private String oipSTR = "order-item-price";
+    private String oinSTR = "order-item-name";
+    private String canceledSTR = "canceled";
+    private String annullaSTR = "annulla";
 
     private String formatCurrency(BigDecimal amount) {
         return "€" + amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
@@ -330,7 +330,7 @@ public class EarningController {
 
             ButtonType annullaPaga = new ButtonType("Paga e cancella i pendenti");
             ButtonType deliveredPaga = new ButtonType("Contrassegna come consegnato e Paga");
-            ButtonType nonPagare = new ButtonType(AnnullaSTR);
+            ButtonType nonPagare = new ButtonType(annullaSTR);
             alert.getButtonTypes().setAll(annullaPaga, deliveredPaga, nonPagare);
 
             Optional<ButtonType> result = alert.showAndWait();
@@ -339,7 +339,7 @@ public class EarningController {
             }
 
             if (result.get() == annullaPaga) {
-                pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, CanceledSTR));
+                pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, canceledSTR));
                 logger.log(Level.INFO,"Annullati pendenti tavolo {0}", tavolo);
             } else if (result.get() == deliveredPaga) {
                 pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, "delivered"));
@@ -429,7 +429,7 @@ public class EarningController {
         btnDeleteOrder.getStyleClass().add("btn-delete-order");
 
         btnDeleteOrder.setOnAction(e -> {
-            earningUseCase.setOrderStatus(order.getId(), CanceledSTR);
+            earningUseCase.setOrderStatus(order.getId(), canceledSTR);
             refreshDataPreservingSelection();
         });
 
@@ -459,13 +459,13 @@ public class EarningController {
                     : "???";
 
             Label lblName = new Label(item.getQuantita() + "x " + nomeProdotto);
-            lblName.getStyleClass().add(OINstr);
+            lblName.getStyleClass().add(oinSTR);
 
             Region itemSpacer = new Region();
             HBox.setHgrow(itemSpacer, Priority.ALWAYS);
 
             Label lblPrice = new Label(formatCurrency(rowTotal));
-            lblPrice.getStyleClass().add(OIPstr);
+            lblPrice.getStyleClass().add(oipSTR);
 
             // BOTTONE ELIMINA ITEM
             Button btnRemoveItem = new Button("✖");
@@ -483,7 +483,7 @@ public class EarningController {
                         + " dall'ordine #" + order.getId());
 
                 ButtonType btnOk = new ButtonType("Elimina", ButtonBar.ButtonData.OK_DONE);
-                ButtonType btnCancel = new ButtonType(AnnullaSTR, ButtonBar.ButtonData.CANCEL_CLOSE);
+                ButtonType btnCancel = new ButtonType(annullaSTR, ButtonBar.ButtonData.CANCEL_CLOSE);
                 confirm.getButtonTypes().setAll(btnOk, btnCancel);
 
                 confirm.showAndWait()
@@ -574,7 +574,7 @@ public class EarningController {
 
     private HBox createOrderHeaderRow(int orderId) {
         Label lblOrderSub = new Label("Ordine #" + orderId);
-        lblOrderSub.getStyleClass().add(OINstr);
+        lblOrderSub.getStyleClass().add(oinSTR);
 
         Button btnDelete = new Button("✖");
         btnDelete.getStyleClass().add("btn-delete-order");
@@ -583,7 +583,7 @@ public class EarningController {
                     "Annullare l'ordine #" + orderId + "?",
                     "L'ordine in preparazione sarà marcato come cancellato.",
                     "Annulla ordine")) {
-                earningUseCase.setOrderStatus(orderId, CanceledSTR);
+                earningUseCase.setOrderStatus(orderId, canceledSTR);
                 refreshDataPreservingSelection();
             }
         });
@@ -602,10 +602,10 @@ public class EarningController {
                 : "???";
 
         Label lblName = new Label("⏳ " + item.getQuantita() + "x " + nomeProdotto);
-        lblName.getStyleClass().add(OINstr);
+        lblName.getStyleClass().add(oinSTR);
 
         Label lblPrice = new Label(formatCurrency(rowTotal));
-        lblPrice.getStyleClass().add(OIPstr);
+        lblPrice.getStyleClass().add(oipSTR);
 
         Button btnRemove = new Button("✖");
         btnRemove.getStyleClass().add("btn-delete-item");
@@ -631,7 +631,7 @@ public class EarningController {
 
     private HBox createSubtotalRow(String prefix, BigDecimal amount) {
         Label lbl = new Label(prefix + formatCurrency(amount));
-        lbl.getStyleClass().add(OIPstr);
+        lbl.getStyleClass().add(oipSTR);
 
         HBox row = new HBox(lbl);
         row.setAlignment(Pos.CENTER_RIGHT);
@@ -645,7 +645,7 @@ public class EarningController {
         confirm.setContentText(body);
 
         ButtonType ok = new ButtonType(confirmLabel, ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancel = new ButtonType(AnnullaSTR, ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType cancel = new ButtonType(annullaSTR, ButtonBar.ButtonData.CANCEL_CLOSE);
         confirm.getButtonTypes().setAll(ok, cancel);
 
         return confirm.showAndWait().filter(ok::equals).isPresent();

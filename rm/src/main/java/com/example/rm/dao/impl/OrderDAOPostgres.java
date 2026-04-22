@@ -343,57 +343,56 @@ public class OrderDAOPostgres implements OrderDAO {
             return true;
         }
 
-        String sqlRead = "SELECT tavolo, username, note FROM orders WHERE id = ?";
-
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
-
             try {
-                // 1. Leggi i dati dell'ordine originale
-                Integer tavolo;
-                String username;
-                String note;
-
-                try (PreparedStatement pstmt = conn.prepareStatement(sqlRead)) {
-                    pstmt.setInt(1, orderId);
-                    ResultSet rs = pstmt.executeQuery();
-                    if (!rs.next()) {
-                        return false;
-                    }
-                    tavolo = rs.getInt("tavolo");
-                    username = rs.getString("username");
-                    note = rs.getString("note");
-                }
-
-                // 2. Raggruppa per categoria
-                Map<String, List<OrderItem>> itemsByCategory = new HashMap<>();
-                for (OrderItem item : allItems) {
-                    String categoria = item.getProduct().getTipologia();
-                    itemsByCategory.computeIfAbsent(categoria, k -> new ArrayList<>()).add(item);
-                }
-
-                // Se c'è solo 1 categoria, non scomporre
-                if (itemsByCategory.size() <= 1) {
-                    return true;
-                }
-
-                // 3. Crea i nuovi ordini e elimina l'originale — stessa connessione
-                createCategoryOrders(conn, itemsByCategory, username, tavolo, note);
-                deleteOriginalOrder(conn, orderId);
-
+                boolean result = executeDecomposition(conn, orderId, allItems);
                 conn.commit();
-                return true;
-
+                return result;
             } catch (SQLException e) {
                 conn.rollback();
                 throw e;
             }
-
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore scomposizione ordine", e);
             return false;
         }
     }
+
+    private boolean executeDecomposition(Connection conn, int orderId,
+                                         List<OrderItem> allItems) throws SQLException {
+        String sqlRead = "SELECT tavolo, username, note FROM orders WHERE id = ?";
+
+        Integer tavolo;
+        String username;
+        String note;
+
+        try (PreparedStatement pstmt = conn.prepareStatement(sqlRead)) {
+            pstmt.setInt(1, orderId);
+            ResultSet rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                return false;
+            }
+            tavolo = rs.getInt("tavolo");
+            username = rs.getString("username");
+            note = rs.getString("note");
+        }
+
+        Map<String, List<OrderItem>> itemsByCategory = new HashMap<>();
+        for (OrderItem item : allItems) {
+            String categoria = item.getProduct().getTipologia();
+            itemsByCategory.computeIfAbsent(categoria, k -> new ArrayList<>()).add(item);
+        }
+
+        if (itemsByCategory.size() <= 1) {
+            return true;
+        }
+
+        createCategoryOrders(conn, itemsByCategory, username, tavolo, note);
+        deleteOriginalOrder(conn, orderId);
+        return true;
+    }
+
     /**
      * Elimina l'ordine originale dopo averlo scomposto in ordini per categoria
      */
