@@ -114,7 +114,6 @@ public class OrderReviewDialog {
             String nomeProdotto = item.getProduct().getNome();
             int quantita = item.getQuantita();
             BigDecimal prezzoProdotto = item.getPrezzoSnapshot();
-          //double totaleProdotto = quantita * prezzoProdotto;
             BigDecimal totaleProdotto = prezzoProdotto.multiply(BigDecimal.valueOf(quantita));
 
             totale = totale.add(totaleProdotto);

@@ -475,7 +475,7 @@ public class OrderDAOFile implements OrderDAO {
 
         } catch (IOException e) {
             logger.log(Level.SEVERE,
-                    "Errore rimozione item {0}   da ordine ", new Object[]{itemId,orderId, e});
+                    "Errore rimozione item {0}   da ordine {1}", new Object[]{itemId,orderId});
             return false;
         }
     }

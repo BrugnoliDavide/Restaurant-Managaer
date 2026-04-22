@@ -221,10 +221,6 @@ public class AddProductDialog {
             }
         }
 
-        private double parseDoubleValue(String text) {
-            return Double.parseDouble(text.replace(",", "."));
-        }
-
         private boolean saveProduct(MenuProduct product) {
             return isEditMode
                     ? menuService.updateProduct(product)
@@ -236,10 +232,8 @@ public class AddProductDialog {
                 onComplete.accept(success);
             }
         }
-    }
-
-
-    private static BigDecimal parseBigDecimalValue(String text) {
-        return new BigDecimal(text.replace(",", "."));
+        private static BigDecimal parseBigDecimalValue(String text) {
+            return new BigDecimal(text.replace(",", "."));
+        }
     }
 }

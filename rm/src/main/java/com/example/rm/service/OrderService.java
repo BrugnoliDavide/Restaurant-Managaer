@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,7 +27,7 @@ public final class OrderService {
 
     private static final Logger logger = Logger.getLogger(OrderService.class.getName());
 
-    private static volatile OrderDAO dao = null;
+    private static final AtomicReference<OrderDAO> dao = new AtomicReference<>(null);
 
 
 
@@ -42,7 +43,7 @@ public final class OrderService {
      * Da invocare dopo {@link ConnectionManager#configure}.
      */
     public static synchronized void usePostgres() {
-        dao = new OrderDAOPostgres();
+        dao.set(new OrderDAOPostgres());
         logger.info("OrderDAO: modalità PostgreSQL attiva");
     }
 
@@ -54,7 +55,7 @@ public final class OrderService {
      */
     public static synchronized void useFileSystem(String basePath) {
         try {
-            dao = new OrderDAOFile(basePath);
+            dao.set(new OrderDAOFile(basePath));
             logger.log(Level.INFO, "OrderDAO: modalità file system attiva: {0}", basePath);
         } catch (IOException e) {
             throw new IllegalStateException("Impossibile inizializzare file system", e);
@@ -66,7 +67,7 @@ public final class OrderService {
 
 
     private static OrderDAO dao() {
-        OrderDAO current = dao;
+        OrderDAO current = dao.get();
         if (current == null) {
             throw new IllegalStateException(
                     "OrderService non inizializzato. Invocare usePostgres() o useFileSystem().");

@@ -4,6 +4,7 @@ import com.example.rm.exception.InvalidUserSessionException;
 import com.example.rm.model.User;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Sessione utente corrente, implementata come Singleton thread-safe.
@@ -26,7 +27,8 @@ public class UserSession {
     private static volatile UserSession instance;
 
     private final User user;
-    private volatile Set<Integer> managedTables = Set.of();
+    private final AtomicReference<Set<Integer>> managedTables =
+            new AtomicReference<>(Set.of());
 
     private UserSession(User user) {
         this.user = user;
@@ -81,11 +83,11 @@ public class UserSession {
     }
 
     public void setManagedTables(Set<Integer> tables) {
-        this.managedTables = (tables == null) ? Set.of() : Set.copyOf(tables);
+        managedTables.set(tables == null ? Set.of() : Set.copyOf(tables));
     }
 
     public boolean isTableManaged(int tableNumber) {
-        Set<Integer> snapshot = managedTables;
+        Set<Integer> snapshot = managedTables.get();
         return snapshot.isEmpty() || snapshot.contains(tableNumber);
     }
 

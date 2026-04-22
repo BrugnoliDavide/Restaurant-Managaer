@@ -96,12 +96,11 @@ public class DBConfigController implements DBConfigUseCase {
 
         } catch (IllegalArgumentException e) {
             logger.log(Level.WARNING, "URL JDBC non valido: {0}", e.getMessage());
-            return SaveResult.validationError(
-                    "Formato URL non valido. Formati accettati:\n"
-                            + "• jdbc:postgresql://host:porta/database\n"
-                            + "• postgresql://host:porta/database\n"
-                            + "• host:porta/database"
-            );
+            return SaveResult.validationError("""
+            Formato URL non valido. Formati accettati:
+            • jdbc:postgresql://host:porta/database
+            • postgresql://host:porta/database
+            • host:porta/database""");
         }
     }
 

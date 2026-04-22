@@ -117,18 +117,6 @@ public class FinancialController {
                 order.getDataOra().toString().toLowerCase().contains(query);
     }
 
-    private void navigateToOrderDetail(Order order) {
-        if (order == null) return;
-        try {
-            OrderDetailView detailView = new OrderDetailView(order);
-            if (ordersListView.getScene() != null) {
-                ordersListView.getScene().setRoot(detailView.getRoot());
-            }
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "Errore navigazione dettaglio ordine", e);
-        }
-    }
-
     @FXML
     private void goBack() {
         try {
@@ -171,6 +159,17 @@ public class FinancialController {
                 lblTotal.setText(String.format("€%.2f", order.getTotale()));
                 lblStatus.setText(order.getStatus());
                 setGraphic(root);
+            }
+        }
+        private void navigateToOrderDetail(Order order) {
+            if (order == null) return;
+            try {
+                OrderDetailView detailView = new OrderDetailView(order);
+                if (ordersListView.getScene() != null) {
+                    ordersListView.getScene().setRoot(detailView.getRoot());
+                }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Errore navigazione dettaglio ordine", e);
             }
         }
     }

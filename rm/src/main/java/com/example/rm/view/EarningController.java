@@ -51,6 +51,11 @@ public class EarningController {
     private HBox selectedCard = null;
 
     private Timeline pollingTimeline;
+    
+    private String OIPstr = "order-item-price";
+    private String OINstr = "order-item-name";
+    private String CanceledSTR = "canceled";
+    private String AnnullaSTR = "annulla";
 
     private String formatCurrency(BigDecimal amount) {
         return "€" + amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
@@ -325,7 +330,7 @@ public class EarningController {
 
             ButtonType annullaPaga = new ButtonType("Paga e cancella i pendenti");
             ButtonType deliveredPaga = new ButtonType("Contrassegna come consegnato e Paga");
-            ButtonType nonPagare = new ButtonType("Annulla");
+            ButtonType nonPagare = new ButtonType(AnnullaSTR);
             alert.getButtonTypes().setAll(annullaPaga, deliveredPaga, nonPagare);
 
             Optional<ButtonType> result = alert.showAndWait();
@@ -334,7 +339,7 @@ public class EarningController {
             }
 
             if (result.get() == annullaPaga) {
-                pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, "canceled"));
+                pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, CanceledSTR));
                 logger.log(Level.INFO,"Annullati pendenti tavolo {0}", tavolo);
             } else if (result.get() == deliveredPaga) {
                 pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, "delivered"));
@@ -424,7 +429,7 @@ public class EarningController {
         btnDeleteOrder.getStyleClass().add("btn-delete-order");
 
         btnDeleteOrder.setOnAction(e -> {
-            earningUseCase.setOrderStatus(order.getId(), "canceled");
+            earningUseCase.setOrderStatus(order.getId(), CanceledSTR);
             refreshDataPreservingSelection();
         });
 
@@ -454,13 +459,13 @@ public class EarningController {
                     : "???";
 
             Label lblName = new Label(item.getQuantita() + "x " + nomeProdotto);
-            lblName.getStyleClass().add("order-item-name");
+            lblName.getStyleClass().add(OINstr);
 
             Region itemSpacer = new Region();
             HBox.setHgrow(itemSpacer, Priority.ALWAYS);
 
             Label lblPrice = new Label(formatCurrency(rowTotal));
-            lblPrice.getStyleClass().add("order-item-price");
+            lblPrice.getStyleClass().add(OIPstr);
 
             // BOTTONE ELIMINA ITEM
             Button btnRemoveItem = new Button("✖");
@@ -478,7 +483,7 @@ public class EarningController {
                         + " dall'ordine #" + order.getId());
 
                 ButtonType btnOk = new ButtonType("Elimina", ButtonBar.ButtonData.OK_DONE);
-                ButtonType btnCancel = new ButtonType("Annulla", ButtonBar.ButtonData.CANCEL_CLOSE);
+                ButtonType btnCancel = new ButtonType(AnnullaSTR, ButtonBar.ButtonData.CANCEL_CLOSE);
                 confirm.getButtonTypes().setAll(btnOk, btnCancel);
 
                 confirm.showAndWait()
@@ -512,110 +517,127 @@ public class EarningController {
     }
 
     private VBox createPendingItemsSection(int tableNumber) {
-        VBox section = new VBox(8);
-        section.getStyleClass().add("order-section");
-
         List<Integer> pendingIds = earningUseCase.getPendingOrderIds(tableNumber);
         if (pendingIds.isEmpty()) {
-            return section;
+            return new VBox(8);
         }
 
-        // ===== HEADER =====
-        HBox header = new HBox(10);
-        header.setAlignment(Pos.CENTER_LEFT);
-
-        Label lblTitle = new Label("⏳ In Preparazione");
-        lblTitle.getStyleClass().addAll("order-header-title", "pending-status");
-        header.getChildren().add(lblTitle);
-
-        // ===== LISTA =====
         VBox itemsList = new VBox(4);
         itemsList.setPadding(new Insets(8, 0, 0, 10));
 
         BigDecimal subtotale = BigDecimal.ZERO;
-
         for (Integer orderId : pendingIds) {
-            List<OrderItem> items = earningUseCase.getOrderItemsDetailed(orderId);
-            if (items.isEmpty()) continue;
-
-            // --- riga intestazione dell'ordine pendente, con ✖ ---
-            HBox orderRow = new HBox(10);
-            orderRow.setAlignment(Pos.CENTER_LEFT);
-
-            Label lblOrderSub = new Label("Ordine #" + orderId);
-            lblOrderSub.getStyleClass().add("order-item-name");
-
-            Region orderSpacer = new Region();
-            HBox.setHgrow(orderSpacer, Priority.ALWAYS);
-
-            Button btnDeletePendingOrder = new Button("✖");
-            btnDeletePendingOrder.getStyleClass().add("btn-delete-order");
-            btnDeletePendingOrder.setOnAction(e -> {
-                if (confirmDialog(
-                        "Annullare l'ordine #" + orderId + "?",
-                        "L'ordine in preparazione sarà marcato come cancellato.",
-                        "Annulla ordine")) {
-                    earningUseCase.setOrderStatus(orderId, "canceled");
-                    refreshDataPreservingSelection();
-                }
-            });
-
-            orderRow.getChildren().addAll(lblOrderSub, orderSpacer, btnDeletePendingOrder);
-            itemsList.getChildren().add(orderRow);
-
-            // --- righe articolo, ciascuna con ✖ ---
-            for (OrderItem item : items) {
-                BigDecimal rowTotal = item.getPrezzoSnapshot()
-                        .multiply(BigDecimal.valueOf(item.getQuantita()));
-                subtotale = subtotale.add(rowTotal);
-
-                HBox itemRow = new HBox(10);
-                itemRow.setAlignment(Pos.CENTER_LEFT);
-                itemRow.setPadding(new Insets(0, 0, 0, 12));
-
-                String nomeProdotto = item.getProduct() != null
-                        ? item.getProduct().getNome()
-                        : "???";
-
-                Label lblName = new Label("⏳ " + item.getQuantita() + "x " + nomeProdotto);
-                lblName.getStyleClass().add("order-item-name");
-
-                Region itemSpacer = new Region();
-                HBox.setHgrow(itemSpacer, Priority.ALWAYS);
-
-                Label lblPrice = new Label(formatCurrency(rowTotal));
-                lblPrice.getStyleClass().add("order-item-price");
-
-                Button btnRemovePending = new Button("✖");
-                btnRemovePending.getStyleClass().add("btn-delete-item");
-                btnRemovePending.setOnAction(e -> {
-                    if (confirmDialog(
-                            "Eliminare questo articolo?",
-                            item.getQuantita() + "x " + nomeProdotto
-                                    + " dall'ordine #" + orderId,
-                            "Elimina")) {
-                        earningUseCase.cancelItemFromOrder(orderId, item.getId());
-                        refreshDataPreservingSelection();
-                    }
-                });
-
-                itemRow.getChildren().addAll(lblName, itemSpacer, lblPrice, btnRemovePending);
-                itemsList.getChildren().add(itemRow);
-            }
+            subtotale = subtotale.add(appendOrderBlock(itemsList, orderId));
         }
 
-        // --- subtotale della sezione ---
-        HBox subtotalRow = new HBox();
-        subtotalRow.setAlignment(Pos.CENTER_RIGHT);
-        subtotalRow.setPadding(new Insets(6, 0, 0, 0));
-        Label lblSub = new Label("Subtotale in preparazione: " + formatCurrency(subtotale));
-        lblSub.getStyleClass().add("order-item-price");
-        subtotalRow.getChildren().add(lblSub);
-
-        section.getChildren().addAll(header, new Separator(), itemsList, subtotalRow);
+        VBox section = new VBox(8);
+        section.getStyleClass().add("order-section");
+        section.getChildren().addAll(
+                createPendingHeader(),
+                new Separator(),
+                itemsList,
+                createSubtotalRow("Subtotale in preparazione: ", subtotale)
+        );
         return section;
     }
 
+    private HBox createPendingHeader() {
+        Label lblTitle = new Label("⏳ In Preparazione");
+        lblTitle.getStyleClass().addAll("order-header-title", "pending-status");
+
+        HBox header = new HBox(10, lblTitle);
+        header.setAlignment(Pos.CENTER_LEFT);
+        return header;
+    }
+
+    /**
+     * Aggiunge al contenitore la riga dell'ordine e le righe dei singoli articoli.
+     * @return il subtotale dell'ordine, utile per l'accumulo esterno.
+     */
+    private BigDecimal appendOrderBlock(VBox container, int orderId) {
+        List<OrderItem> items = earningUseCase.getOrderItemsDetailed(orderId);
+        if (items.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        container.getChildren().add(createOrderHeaderRow(orderId));
+
+        BigDecimal orderTotal = BigDecimal.ZERO;
+        for (OrderItem item : items) {
+            BigDecimal rowTotal = item.getPrezzoSnapshot()
+                    .multiply(BigDecimal.valueOf(item.getQuantita()));
+            orderTotal = orderTotal.add(rowTotal);
+            container.getChildren().add(createItemRow(orderId, item, rowTotal));
+        }
+        return orderTotal;
+    }
+
+    private HBox createOrderHeaderRow(int orderId) {
+        Label lblOrderSub = new Label("Ordine #" + orderId);
+        lblOrderSub.getStyleClass().add(OINstr);
+
+        Button btnDelete = new Button("✖");
+        btnDelete.getStyleClass().add("btn-delete-order");
+        btnDelete.setOnAction(e -> {
+            if (confirmDialog(
+                    "Annullare l'ordine #" + orderId + "?",
+                    "L'ordine in preparazione sarà marcato come cancellato.",
+                    "Annulla ordine")) {
+                earningUseCase.setOrderStatus(orderId, CanceledSTR);
+                refreshDataPreservingSelection();
+            }
+        });
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox row = new HBox(10, lblOrderSub, spacer, btnDelete);
+        row.setAlignment(Pos.CENTER_LEFT);
+        return row;
+    }
+
+    private HBox createItemRow(int orderId, OrderItem item, BigDecimal rowTotal) {
+        String nomeProdotto = item.getProduct() != null
+                ? item.getProduct().getNome()
+                : "???";
+
+        Label lblName = new Label("⏳ " + item.getQuantita() + "x " + nomeProdotto);
+        lblName.getStyleClass().add(OINstr);
+
+        Label lblPrice = new Label(formatCurrency(rowTotal));
+        lblPrice.getStyleClass().add(OIPstr);
+
+        Button btnRemove = new Button("✖");
+        btnRemove.getStyleClass().add("btn-delete-item");
+        btnRemove.setOnAction(e -> {
+            if (confirmDialog(
+                    "Eliminare questo articolo?",
+                    item.getQuantita() + "x " + nomeProdotto
+                            + " dall'ordine #" + orderId,
+                    "Elimina")) {
+                earningUseCase.cancelItemFromOrder(orderId, item.getId());
+                refreshDataPreservingSelection();
+            }
+        });
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox row = new HBox(10, lblName, spacer, lblPrice, btnRemove);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(0, 0, 0, 12));
+        return row;
+    }
+
+    private HBox createSubtotalRow(String prefix, BigDecimal amount) {
+        Label lbl = new Label(prefix + formatCurrency(amount));
+        lbl.getStyleClass().add(OIPstr);
+
+        HBox row = new HBox(lbl);
+        row.setAlignment(Pos.CENTER_RIGHT);
+        row.setPadding(new Insets(6, 0, 0, 0));
+        return row;
+    }
     private boolean confirmDialog(String header, String body, String confirmLabel) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Conferma");
@@ -623,7 +645,7 @@ public class EarningController {
         confirm.setContentText(body);
 
         ButtonType ok = new ButtonType(confirmLabel, ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancel = new ButtonType("Annulla", ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType cancel = new ButtonType(AnnullaSTR, ButtonBar.ButtonData.CANCEL_CLOSE);
         confirm.getButtonTypes().setAll(ok, cancel);
 
         return confirm.showAndWait().filter(ok::equals).isPresent();

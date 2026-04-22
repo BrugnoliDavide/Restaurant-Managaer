@@ -3,6 +3,7 @@ package com.example.rm.service;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -33,18 +34,18 @@ public final class ConnectionManager {
      */
     private record ConnectionConfig(String url, String user, String pass) {}
 
-    private static volatile ConnectionConfig config = null;
+    private static final AtomicReference<ConnectionConfig> config =
+            new AtomicReference<>(null);
 
     /** Ultimo errore di connessione, utile per il feedback all'utente. */
-    private static volatile String lastConnectionError = null;
+    private static final AtomicReference<String> lastConnectionError =
+            new AtomicReference<>(null);
 
     private ConnectionManager() {
         throw new IllegalStateException("Utility class");
     }
 
-    // -------------------------------------------------------------------------
     // Configurazione
-    // -------------------------------------------------------------------------
 
     /**
      * Configura la connessione al database PostgreSQL tramite parametri separati.
@@ -53,8 +54,8 @@ public final class ConnectionManager {
                                               String dbName, String username,
                                               String password) {
         String url = POSTGRES_PREFIX + ip + ":" + port + "/" + dbName;
-        config = new ConnectionConfig(url, username, password);
-        lastConnectionError = null;
+        config.set(new ConnectionConfig(url, username, password));
+        lastConnectionError.set(null);
         OrderService.usePostgres();
         logger.log(Level.INFO, "Configurazione DB aggiornata: {0}", url);
     }
@@ -75,14 +76,12 @@ public final class ConnectionManager {
         if (jdbcUrl == null || jdbcUrl.isBlank()) {
             throw new IllegalArgumentException("L'URL JDBC non può essere vuoto");
         }
-
-        // Normalizza: se l'utente omette il prefisso jdbc:postgresql://, lo aggiungiamo
         String normalizedUrl = normalizeJdbcUrl(jdbcUrl.trim());
-
-        config = new ConnectionConfig(normalizedUrl, username, password);
-        lastConnectionError = null;
+        config.set(new ConnectionConfig(normalizedUrl, username, password));
+        lastConnectionError.set(null);
         OrderService.usePostgres();
-        logger.log(Level.INFO, "Configurazione DB aggiornata tramite URL diretto: {0}", normalizedUrl);
+        logger.log(Level.INFO, "Configurazione DB aggiornata tramite URL diretto: {0}",
+                normalizedUrl);
     }
 
     /**
@@ -142,7 +141,7 @@ public final class ConnectionManager {
      * Apre e restituisce una nuova connessione JDBC.
      */
     public static Connection getConnection() throws SQLException {
-        ConnectionConfig current = config;
+        ConnectionConfig current = config.get();
         if (current == null) {
             throw new IllegalStateException("Database non configurato");
         }
@@ -161,28 +160,28 @@ public final class ConnectionManager {
      */
     public static boolean testConnection() {
         if (!isConfigured()) {
-            lastConnectionError = "Database non configurato. Inserire le credenziali.";
+            lastConnectionError.set("Database non configurato. Inserire le credenziali.");
             logger.warning("Tentativo test DB senza configurazione completa");
             return false;
         }
         try (Connection conn = getConnection()) {
-            lastConnectionError = null;
+            lastConnectionError.set(null);
             logger.info("Connessione al DB riuscita");
             return true;
         } catch (SQLException e) {
-            lastConnectionError = formatSqlError(e);
-            logger.log(Level.WARNING, "Connessione al DB fallita: {0}", lastConnectionError);
+            lastConnectionError.set(formatSqlError(e));
+            logger.log(Level.WARNING, "Connessione al DB fallita: {0}",
+                    lastConnectionError.get());
             return false;
         }
     }
-
     /**
      * Restituisce l'ultimo errore di connessione in formato leggibile.
      *
      * @return messaggio di errore, oppure {@code null} se l'ultima connessione è riuscita
      */
     public static String getLastConnectionError() {
-        return lastConnectionError;
+        return lastConnectionError.get();
     }
 
     /**
@@ -218,7 +217,7 @@ public final class ConnectionManager {
     // -------------------------------------------------------------------------
 
     public static String getHost() {
-        ConnectionConfig current = config;
+        ConnectionConfig current = config.get();
         if (current == null) return "";
         try {
             String noPrefix = current.url().replace(POSTGRES_PREFIX, "");
@@ -230,7 +229,7 @@ public final class ConnectionManager {
     }
 
     public static String getPort() {
-        ConnectionConfig current = config;
+        ConnectionConfig current = config.get();
         if (current == null) return "";
         try {
             String noPrefix = current.url().replace(POSTGRES_PREFIX, "");
@@ -246,7 +245,7 @@ public final class ConnectionManager {
     }
 
     public static String getDbName() {
-        ConnectionConfig current = config;
+        ConnectionConfig current = config.get();
         if (current == null) return "";
         try {
             String url = current.url();
@@ -264,12 +263,12 @@ public final class ConnectionManager {
     }
 
     public static String getUser() {
-        ConnectionConfig current = config;
+        ConnectionConfig current = config.get();
         return current != null ? current.user() : "";
     }
 
     public static boolean hasPassword() {
-        ConnectionConfig current = config;
+        ConnectionConfig current = config.get();
         return current != null && current.pass() != null && !current.pass().isBlank();
     }
 
@@ -279,7 +278,7 @@ public final class ConnectionManager {
      * @return URL JDBC configurato, oppure stringa vuota se non configurato
      */
     public static String getJdbcUrl() {
-        ConnectionConfig current = config;
+        ConnectionConfig current = config.get();
         return current != null ? current.url() : "";
     }
 }
