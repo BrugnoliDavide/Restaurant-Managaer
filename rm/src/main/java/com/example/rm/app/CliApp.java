@@ -1,50 +1,69 @@
 package com.example.rm.app;
 
-import com.example.rm.controller.*;
+import com.example.rm.controller.FinancialService;
+import com.example.rm.controller.FinancialUseCase;
+import com.example.rm.controller.ManagerService;
+import com.example.rm.controller.ManagerUseCase;
+import com.example.rm.controller.MenuService;
+import com.example.rm.controller.MenuUseCase;
 import com.example.rm.dao.DatabaseProductDAO;
 import com.example.rm.dao.ProductDAO;
+import com.example.rm.exception.AuthenticationException;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
 import com.example.rm.service.ConnectionManager;
 import com.example.rm.service.SecurityService;
-import com.example.rm.exception.AuthenticationException;
 
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Formatter;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
  * Interfaccia a riga di comando (CLI) per Restaurant Manager.
  * <p>
  * Consente al <strong>manager</strong> di eseguire le operazioni principali
- * senza avviare l'interfaccia grafica JavaFX:
- * <ul>
- *   <li>Configurazione della connessione al database</li>
- *   <li>Autenticazione</li>
- *   <li>Gestione staff (lista, creazione, eliminazione utenti)</li>
- *   <li>Gestione menù (lista, aggiunta, modifica, eliminazione prodotti)</li>
- *   <li>Consultazione ordini e report finanziario</li>
- *   <li>Cambio password</li>
- * </ul>
+ * senza avviare l'interfaccia grafica JavaFX.
  * <p>
- * La classe riutilizza integralmente i layer {@code controller} e {@code service}
- * già presenti nel progetto, senza introdurre dipendenze aggiuntive.
- * <p>
- * <strong>Avvio:</strong> eseguire il metodo {@code main} di questa classe
- * al posto di {@link Launcher#main(String[])}.
+ * L'output verso il terminale avviene tramite un {@link Logger} dedicato
+ * con un {@link Formatter} che produce testo pulito (senza timestamp né
+ * livello di log), in conformità alla regola SonarCloud java:S106.
  */
 public class CliApp {
 
     // =====================================================================
-    //  Costanti
+    //  Logger CLI — output pulito verso stdout
     // =====================================================================
 
-    private static final Logger logger = Logger.getLogger(CliApp.class.getName());
+    private static final Logger CLI = Logger.getLogger("cli.output");
+
+    static {
+        CLI.setUseParentHandlers(false);
+        ConsoleHandler handler = new ConsoleHandler();
+        handler.setFormatter(new Formatter() {
+            @Override
+            public String format(LogRecord record) {
+                return record.getMessage() + System.lineSeparator();
+            }
+        });
+        handler.setLevel(Level.ALL);
+        CLI.setLevel(Level.ALL);
+        CLI.addHandler(handler);
+    }
+
+    /** Logger applicativo (diagnostica, non output utente). */
+    private static final Logger APP_LOG = Logger.getLogger(CliApp.class.getName());
+
+    // =====================================================================
+    //  Costanti di formattazione
+    // =====================================================================
 
     private static final DateTimeFormatter DTF =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -53,55 +72,88 @@ public class CliApp {
             "════════════════════════════════════════════════════════════════";
     private static final String THIN_SEP =
             "────────────────────────────────────────────────────────────────";
+    private static final String LINE_35  = "─".repeat(35);
+    private static final String LINE_73  = "─".repeat(73);
+    private static final String LINE_98  = "─".repeat(98);
+    private static final String BOX_BAR  = "══════════════════════════════════════════";
+
+    private static final String OK_PREFIX    = "  ✔ ";
+    private static final String ERR_PREFIX   = "  ✖ ";
+    private static final String WARN_PREFIX  = "  ⚠ ";
+
+    private static final String CHOICE             = "  Scelta: ";
+    private static final String MSG_INVALID_CHOICE = WARN_PREFIX + "Scelta non valida.";
+    private static final String MSG_OP_CANCELLED   = "  Operazione annullata.";
+    private static final String MSG_INVALID_ID     = ERR_PREFIX + "ID non valido.";
+    private static final String MSG_INVALID_VALUE  = ERR_PREFIX + "Valore non valido.";
+
+    private static final int MAX_LOGIN_ATTEMPTS = 3;
 
     // =====================================================================
     //  Servizi (riuso del layer esistente)
     // =====================================================================
 
-    private static final ManagerUseCase   managerUseCase   = new ManagerService();
-    private static final MenuUseCase      menuUseCase      = new MenuService();
-    private static final FinancialUseCase financialUseCase = new FinancialService();
-    private static final ProductDAO       productDAO       = new DatabaseProductDAO();
+    private final ManagerUseCase   managerUseCase;
+    private final MenuUseCase      menuUseCase;
+    private final FinancialUseCase financialUseCase;
+    private final ProductDAO       productDAO;
 
     // =====================================================================
     //  Stato della sessione
     // =====================================================================
 
-    private static String loggedUsername = null;
-    private static String loggedRole    = null;
+    private String loggedUsername;
+    private String loggedRole;
+
+    // =====================================================================
+    //  Costruttori
+    // =====================================================================
+
+    public CliApp() {
+        this.managerUseCase   = new ManagerService();
+        this.menuUseCase      = new MenuService();
+        this.financialUseCase = new FinancialService();
+        this.productDAO       = new DatabaseProductDAO();
+    }
+
+    /** Costruttore per test e dependency injection. */
+    CliApp(ManagerUseCase mu, MenuUseCase meu, FinancialUseCase fu, ProductDAO pd) {
+        this.managerUseCase   = mu;
+        this.menuUseCase      = meu;
+        this.financialUseCase = fu;
+        this.productDAO       = pd;
+    }
 
     // =====================================================================
     //  Entry point
     // =====================================================================
 
     public static void main(String[] args) {
-
         System.setProperty("java.util.logging.SimpleFormatter.format",
                 "[%1$tF %1$tT] [%4$-7s] %5$s %n");
 
-        Scanner sc = new Scanner(System.in);
-        printBanner();
+        new CliApp().run();
+    }
 
-        // 1. Configurazione DB
-        configureDatabase(sc);
+    void run() {
+        try (Scanner sc = new Scanner(System.in)) {
+            printBanner();
+            configureDatabase(sc);
 
-        // 2. Login
-        if (!login(sc)) {
-            System.out.println("\n✖ Autenticazione fallita. Uscita.");
-            return;
+            if (!login(sc)) {
+                CLI.info(ERR_PREFIX + "Autenticazione fallita. Uscita.");
+                return;
+            }
+
+            if (!"manager".equalsIgnoreCase(loggedRole)) {
+                CLI.info(WARN_PREFIX + "Questa CLI è riservata al ruolo manager.");
+                CLI.info("  Il tuo ruolo corrente è: " + loggedRole);
+                return;
+            }
+
+            mainLoop(sc);
+            CLI.info("\nArrivederci!");
         }
-
-        // 3. Verifica ruolo manager
-        if (!"manager".equalsIgnoreCase(loggedRole)) {
-            System.out.println("\n⚠ Questa CLI è riservata al ruolo manager.");
-            System.out.println("  Il tuo ruolo corrente è: " + loggedRole);
-            System.out.println("  Uscita.");
-            return;
-        }
-
-        // 4. Menu principale
-        mainLoop(sc);
-        System.out.println("\nArrivederci!");
     }
 
     // =====================================================================
@@ -109,10 +161,10 @@ public class CliApp {
     // =====================================================================
 
     private static void printBanner() {
-        System.out.println(SEPARATOR);
-        System.out.println("     RESTAURANT MANAGER — Interfaccia CLI");
-        System.out.println(SEPARATOR);
-        System.out.println();
+        CLI.info(SEPARATOR);
+        CLI.info("     RESTAURANT MANAGER — Interfaccia CLI");
+        CLI.info(SEPARATOR);
+        CLI.info("");
     }
 
     // =====================================================================
@@ -120,45 +172,72 @@ public class CliApp {
     // =====================================================================
 
     private static void configureDatabase(Scanner sc) {
-        System.out.println("─── Configurazione Database ───\n");
+        CLI.info("─── Configurazione Database ───\n");
+        tryLoadSavedPreferences();
 
-        // Tentativo di caricamento da preferenze salvate
-        ConnectionManager.loadFromPreferences();
-
-        if (ConnectionManager.testConnection()) {
-            System.out.println("✔ Connessione al database riuscita (configurazione salvata).\n");
-            com.example.rm.service.OrderService.usePostgres();
+        if (safeTestConnection()) {
+            CLI.info(OK_PREFIX + "Connessione al database riuscita (configurazione salvata).\n");
             return;
         }
 
-        System.out.println("Nessuna configurazione valida trovata. Inserire i parametri:\n");
+        CLI.info("Nessuna configurazione valida trovata. Inserire i parametri:\n");
+        promptDatabaseParams(sc);
+    }
 
-        System.out.print("  Host [localhost]: ");
-        String host = sc.nextLine().trim();
-        if (host.isEmpty()) host = "localhost";
+    private static void tryLoadSavedPreferences() {
+        try {
+            ConnectionManager.loadFromPreferences();
+        } catch (Exception e) {
+            APP_LOG.log(Level.FINE, "Nessuna preferenza DB salvata: {0}", e.getMessage());
+        }
+    }
 
-        System.out.print("  Porta [5432]: ");
-        String port = sc.nextLine().trim();
-        if (port.isEmpty()) port = "5432";
+    private static void promptDatabaseParams(Scanner sc) {
+        boolean connected = false;
+        while (!connected) {
+            String host   = promptWithDefault(sc, "  Host [localhost]: ", "localhost");
+            String port   = promptWithDefault(sc, "  Porta [5432]: ", "5432");
+            String dbName = prompt(sc, "  Nome database: ");
+            String dbUser = prompt(sc, "  Username DB: ");
+            String dbPass = prompt(sc, "  Password DB: ");
 
-        System.out.print("  Nome database: ");
-        String dbName = sc.nextLine().trim();
+            if (dbName.isEmpty() || dbUser.isEmpty() || dbPass.isEmpty()) {
+                CLI.info(ERR_PREFIX + "Nome database, username e password sono obbligatori.\n");
+                continue;
+            }
 
-        System.out.print("  Username DB: ");
-        String dbUser = sc.nextLine().trim();
+            ConnectionManager.configure(host, port, dbName, dbUser, dbPass);
 
-        System.out.print("  Password DB: ");
-        String dbPass = sc.nextLine().trim();
+            if (safeTestConnection()) {
+                CLI.info(OK_PREFIX + "Connessione al database riuscita.\n");
+                connected = true;
+            } else {
+                printConnectionError();
+                if (!confirm(sc, "  Riprovare? (s/n): ")) {
+                    CLI.info("  Il programma prosegue, ma le operazioni su DB falliranno.\n");
+                    break;
+                }
+                CLI.info("");
+            }
+        }
+    }
 
-        ConnectionManager.configure(host, port, dbName, dbUser, dbPass);
+    private static void printConnectionError() {
+        String err = ConnectionManager.getLastConnectionError();
+        CLI.info(ERR_PREFIX + "Connessione fallita: "
+                + (err != null ? err : "errore sconosciuto"));
+    }
 
-        if (ConnectionManager.testConnection()) {
-            System.out.println("\n✔ Connessione al database riuscita.\n");
-        } else {
-            String err = ConnectionManager.getLastConnectionError();
-            System.out.println("\n✖ Connessione fallita: " +
-                    (err != null ? err : "errore sconosciuto"));
-            configureDatabase(sc);
+    /**
+     * Invoca {@link ConnectionManager#testConnection()} intercettando
+     * l'eventuale {@code IllegalStateException} dovuta al difetto noto
+     * in {@code ConnectionManager.isConfigured()}.
+     */
+    private static boolean safeTestConnection() {
+        try {
+            return ConnectionManager.testConnection();
+        } catch (IllegalStateException e) {
+            return false;
         }
     }
 
@@ -166,28 +245,32 @@ public class CliApp {
     //  Login
     // =====================================================================
 
-    private static boolean login(Scanner sc) {
-        System.out.println("─── Login ───\n");
+    private boolean login(Scanner sc) {
+        CLI.info("─── Login ───\n");
+        for (int attempt = 1; attempt <= MAX_LOGIN_ATTEMPTS; attempt++) {
+            String user = prompt(sc, "  Username: ");
+            String pass = prompt(sc, "  Password: ");
 
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            System.out.print("  Username: ");
-            String user = sc.nextLine().trim();
-            System.out.print("  Password: ");
-            String pass = sc.nextLine().trim();
-
-            try {
-                String role = SecurityService.authenticate(user, pass);
-                loggedUsername = user;
-                loggedRole = role;
-                System.out.println("\n✔ Benvenuto, " + user + " [" + role + "]");
+            if (tryAuthenticate(user, pass, attempt)) {
                 return true;
-            } catch (AuthenticationException e) {
-                System.out.println("  ✖ " + e.getUserMessage()
-                        + " (tentativo " + attempt + "/3)\n");
-            } catch (Exception e) {
-                System.out.println("  ✖ Errore imprevisto: " + e.getMessage()
-                        + " (tentativo " + attempt + "/3)\n");
             }
+        }
+        return false;
+    }
+
+    private boolean tryAuthenticate(String user, String pass, int attempt) {
+        try {
+            String role = SecurityService.authenticate(user, pass);
+            loggedUsername = user;
+            loggedRole = role;
+            CLI.info(OK_PREFIX + "Benvenuto, " + user + " [" + role + "]");
+            return true;
+        } catch (AuthenticationException e) {
+            CLI.info(ERR_PREFIX + e.getUserMessage()
+                    + " (tentativo " + attempt + "/" + MAX_LOGIN_ATTEMPTS + ")\n");
+        } catch (Exception e) {
+            CLI.info(ERR_PREFIX + "Errore imprevisto: " + e.getMessage()
+                    + " (tentativo " + attempt + "/" + MAX_LOGIN_ATTEMPTS + ")\n");
         }
         return false;
     }
@@ -196,204 +279,177 @@ public class CliApp {
     //  Loop principale
     // =====================================================================
 
-    private static void mainLoop(Scanner sc) {
+    private void mainLoop(Scanner sc) {
         boolean running = true;
         while (running) {
             printMainMenu();
-            String choice = sc.nextLine().trim();
-
-            switch (choice) {
+            switch (sc.nextLine().trim()) {
                 case "1" -> staffMenu(sc);
                 case "2" -> menuMenu(sc);
                 case "3" -> ordersMenu(sc);
                 case "4" -> changePassword(sc);
                 case "0" -> running = false;
-                default  -> System.out.println("  ⚠ Scelta non valida.\n");
+                default  -> CLI.info(MSG_INVALID_CHOICE);
             }
         }
     }
 
-    private static void printMainMenu() {
-        System.out.println();
-        System.out.println(SEPARATOR);
-        System.out.println("  MENU PRINCIPALE — " + loggedUsername);
-        System.out.println(SEPARATOR);
-        System.out.println("  1. Gestione Staff");
-        System.out.println("  2. Gestione Menù");
-        System.out.println("  3. Ordini e Report");
-        System.out.println("  4. Cambia Password");
-        System.out.println("  0. Esci");
-        System.out.println(THIN_SEP);
-        System.out.print("  Scelta: ");
+    private void printMainMenu() {
+        CLI.info("");
+        CLI.info(SEPARATOR);
+        CLI.info("  MENU PRINCIPALE — " + loggedUsername);
+        CLI.info(SEPARATOR);
+        CLI.info("  1. Gestione Staff");
+        CLI.info("  2. Gestione Menù");
+        CLI.info("  3. Ordini e Report");
+        CLI.info("  4. Cambia Password");
+        CLI.info("  0. Esci");
+        CLI.info(THIN_SEP);
+        CLI.info(CHOICE);
     }
 
     // =====================================================================
     //  1. GESTIONE STAFF
     // =====================================================================
 
-    private static void staffMenu(Scanner sc) {
+    private void staffMenu(Scanner sc) {
         boolean back = false;
         while (!back) {
-            System.out.println();
-            System.out.println(THIN_SEP);
-            System.out.println("  GESTIONE STAFF");
-            System.out.println(THIN_SEP);
-            System.out.println("  1. Elenco utenti");
-            System.out.println("  2. Aggiungi utente");
-            System.out.println("  3. Elimina utente");
-            System.out.println("  0. Indietro");
-            System.out.print("  Scelta: ");
-
+            printSubMenu("GESTIONE STAFF",
+                    "1. Elenco utenti",
+                    "2. Aggiungi utente",
+                    "3. Elimina utente");
             switch (sc.nextLine().trim()) {
                 case "1" -> listUsers();
                 case "2" -> addUser(sc);
                 case "3" -> deleteUser(sc);
                 case "0" -> back = true;
-                default  -> System.out.println("  ⚠ Scelta non valida.");
+                default  -> CLI.info(MSG_INVALID_CHOICE);
             }
         }
     }
 
-    private static void listUsers() {
+    private void listUsers() {
         List<User> users = managerUseCase.loadAllUsers();
-        System.out.println();
+        CLI.info("");
         if (users.isEmpty()) {
-            System.out.println("  Nessun utente registrato.");
+            CLI.info("  Nessun utente registrato.");
             return;
         }
-        System.out.printf("  %-20s %-15s%n", "USERNAME", "RUOLO");
-        System.out.println("  " + "─".repeat(35));
+        CLI.info(String.format("  %-20s %-15s", "USERNAME", "RUOLO"));
+        CLI.info("  " + LINE_35);
         for (User u : users) {
-            System.out.printf("  %-20s %-15s%n", u.getUsername(), u.getRole());
+            CLI.info(String.format("  %-20s %-15s", u.getUsername(), u.getRole()));
         }
-        System.out.println("  Totale: " + users.size() + " utenti.");
+        CLI.info("  Totale: " + users.size() + " utenti.");
     }
 
-    private static void addUser(Scanner sc) {
-        System.out.println();
-        System.out.print("  Username nuovo utente: ");
-        String u = sc.nextLine().trim();
-        System.out.print("  Password: ");
-        String p = sc.nextLine().trim();
-        System.out.println("  Ruoli disponibili: manager, cameriere, cucina, cassiere");
-        System.out.print("  Ruolo: ");
-        String r = sc.nextLine().trim().toLowerCase();
+    private void addUser(Scanner sc) {
+        CLI.info("");
+        String u = prompt(sc, "  Username nuovo utente: ");
+        String p = prompt(sc, "  Password: ");
+        CLI.info("  Ruoli disponibili: manager, cameriere, cucina, cassiere");
+        String r = prompt(sc, "  Ruolo: ").toLowerCase();
 
         if (u.isEmpty() || p.isEmpty() || r.isEmpty()) {
-            System.out.println("  ✖ Tutti i campi sono obbligatori.");
+            CLI.info(ERR_PREFIX + "Tutti i campi sono obbligatori.");
             return;
         }
-
         if (!List.of("manager", "cameriere", "cucina", "cassiere").contains(r)) {
-            System.out.println("  ✖ Ruolo non valido.");
+            CLI.info(ERR_PREFIX + "Ruolo non valido.");
             return;
         }
 
         boolean ok = SecurityService.registerUser(u, p, r);
-        if (ok) {
-            System.out.println("  ✔ Utente «" + u + "» creato con ruolo «" + r + "».");
-        } else {
-            System.out.println("  ✖ Impossibile creare l'utente (username già esistente?).");
-        }
+        CLI.info(ok
+                ? OK_PREFIX + "Utente «" + u + "» creato con ruolo «" + r + "»."
+                : ERR_PREFIX + "Impossibile creare l'utente (username già esistente?).");
     }
 
-    private static void deleteUser(Scanner sc) {
+    private void deleteUser(Scanner sc) {
         listUsers();
-        System.out.println();
-        System.out.print("  Username da eliminare: ");
-        String target = sc.nextLine().trim();
+        CLI.info("");
+        String target = prompt(sc, "  Username da eliminare: ");
 
         if (target.isEmpty()) {
-            System.out.println("  ✖ Username non fornito.");
+            CLI.info(ERR_PREFIX + "Username non fornito.");
             return;
         }
         if (target.equalsIgnoreCase(loggedUsername)) {
-            System.out.println("  ✖ Non è possibile eliminare l'utente attualmente collegato.");
+            CLI.info(ERR_PREFIX + "Non è possibile eliminare l'utente attualmente collegato.");
             return;
         }
-
-        System.out.print("  Conferma eliminazione di «" + target + "»? (s/n): ");
-        if (!"s".equalsIgnoreCase(sc.nextLine().trim())) {
-            System.out.println("  Operazione annullata.");
+        if (!confirm(sc, "  Conferma eliminazione di «" + target + "»? (s/n): ")) {
+            CLI.info(MSG_OP_CANCELLED);
             return;
         }
 
         boolean ok = managerUseCase.deleteUser(target);
-        System.out.println(ok
-                ? "  ✔ Utente «" + target + "» eliminato."
-                : "  ✖ Utente non trovato o errore durante l'eliminazione.");
+        CLI.info(ok
+                ? OK_PREFIX + "Utente «" + target + "» eliminato."
+                : ERR_PREFIX + "Utente non trovato o errore durante l'eliminazione.");
     }
 
     // =====================================================================
     //  2. GESTIONE MENÙ
     // =====================================================================
 
-    private static void menuMenu(Scanner sc) {
+    private void menuMenu(Scanner sc) {
         boolean back = false;
         while (!back) {
-            System.out.println();
-            System.out.println(THIN_SEP);
-            System.out.println("  GESTIONE MENÙ");
-            System.out.println(THIN_SEP);
-            System.out.println("  1. Elenco prodotti");
-            System.out.println("  2. Aggiungi prodotto");
-            System.out.println("  3. Modifica prodotto");
-            System.out.println("  4. Elimina prodotto");
-            System.out.println("  0. Indietro");
-            System.out.print("  Scelta: ");
-
+            printSubMenu("GESTIONE MENÙ",
+                    "1. Elenco prodotti",
+                    "2. Aggiungi prodotto",
+                    "3. Modifica prodotto",
+                    "4. Elimina prodotto");
             switch (sc.nextLine().trim()) {
                 case "1" -> listProducts();
                 case "2" -> addProduct(sc);
                 case "3" -> editProduct(sc);
                 case "4" -> deleteProduct(sc);
                 case "0" -> back = true;
-                default  -> System.out.println("  ⚠ Scelta non valida.");
+                default  -> CLI.info(MSG_INVALID_CHOICE);
             }
         }
     }
 
-    private static void listProducts() {
+    private void listProducts() {
         List<MenuProduct> products = menuUseCase.loadAllProducts();
-        System.out.println();
+        CLI.info("");
         if (products.isEmpty()) {
-            System.out.println("  Nessun prodotto nel menù.");
+            CLI.info("  Nessun prodotto nel menù.");
             return;
         }
 
-        System.out.printf("  %-5s %-25s %-15s %10s %10s %8s  %-20s%n",
-                "ID", "NOME", "CATEGORIA", "PREZZO", "COSTO", "MARG.%", "ALLERGENI");
-        System.out.println("  " + "─".repeat(98));
+        CLI.info(String.format("  %-5s %-25s %-15s %10s %10s %8s  %-20s",
+                "ID", "NOME", "CATEGORIA", "PREZZO", "COSTO", "MARG.%", "ALLERGENI"));
+        CLI.info("  " + LINE_98);
 
         for (MenuProduct p : products) {
-            System.out.printf("  %-5d %-25s %-15s %10.2f %10.2f %7d%%  %-20s%n",
+            CLI.info(String.format("  %-5d %-25s %-15s %10.2f %10.2f %7d%%  %-20s",
                     p.getId(),
                     truncate(p.getNome(), 25),
                     truncate(p.getTipologia(), 15),
                     p.getPrezzoVendita(),
                     p.getCostoRealizzazione(),
                     p.getPercentualeMargine(),
-                    truncate(p.getAllergeni(), 20));
+                    truncate(p.getAllergeni(), 20)));
         }
-        System.out.println("  Totale: " + products.size() + " prodotti.");
+        CLI.info("  Totale: " + products.size() + " prodotti.");
     }
 
-    private static void addProduct(Scanner sc) {
-        System.out.println();
-        System.out.println("  ─── Nuovo prodotto ───");
+    private void addProduct(Scanner sc) {
+        CLI.info("\n  ─── Nuovo prodotto ───");
 
-        System.out.print("  Nome: ");
-        String nome = sc.nextLine().trim();
-        if (nome.isEmpty()) { System.out.println("  ✖ Nome obbligatorio."); return; }
+        String nome = prompt(sc, "  Nome: ");
+        if (nome.isEmpty()) { CLI.info(ERR_PREFIX + "Nome obbligatorio."); return; }
 
-        // Mostra categorie esistenti come suggerimento
         List<String> categorie = menuUseCase.loadCategories();
         if (!categorie.isEmpty()) {
-            System.out.println("  Categorie esistenti: " + String.join(", ", categorie));
+            CLI.info("  Categorie esistenti: " + String.join(", ", categorie));
         }
-        System.out.print("  Categoria (tipologia): ");
-        String tipologia = sc.nextLine().trim();
-        if (tipologia.isEmpty()) { System.out.println("  ✖ Categoria obbligatoria."); return; }
+        String tipologia = prompt(sc, "  Categoria (tipologia): ");
+        if (tipologia.isEmpty()) { CLI.info(ERR_PREFIX + "Categoria obbligatoria."); return; }
 
         BigDecimal prezzo = readBigDecimal(sc, "  Prezzo di vendita (€): ");
         if (prezzo == null) return;
@@ -401,199 +457,193 @@ public class CliApp {
         BigDecimal costo = readBigDecimal(sc, "  Costo di realizzazione (€): ");
         if (costo == null) return;
 
-        System.out.print("  Allergeni (vuoto se nessuno): ");
-        String allergeni = sc.nextLine().trim();
+        String allergeni = prompt(sc, "  Allergeni (vuoto se nessuno): ");
 
         MenuProduct product = new MenuProduct(nome, tipologia, prezzo, costo, allergeni);
         boolean ok = menuUseCase.addProduct(product);
-        System.out.println(ok
-                ? "  ✔ Prodotto «" + nome + "» aggiunto al menù."
-                : "  ✖ Errore durante l'inserimento.");
+        CLI.info(ok
+                ? OK_PREFIX + "Prodotto «" + nome + "» aggiunto al menù."
+                : ERR_PREFIX + "Errore durante l'inserimento.");
     }
 
-    private static void editProduct(Scanner sc) {
+    private void editProduct(Scanner sc) {
         listProducts();
-        System.out.println();
-        System.out.print("  ID del prodotto da modificare: ");
-        int id = readInt(sc);
-        if (id <= 0) { System.out.println("  ✖ ID non valido."); return; }
+        CLI.info("");
+        int id = readInt(sc, "  ID del prodotto da modificare: ");
+        if (id <= 0) { CLI.info(MSG_INVALID_ID); return; }
 
         MenuProduct existing = menuUseCase.getProductById(id);
         if (existing == null) {
-            System.out.println("  ✖ Prodotto con ID " + id + " non trovato.");
+            CLI.info(ERR_PREFIX + "Prodotto con ID " + id + " non trovato.");
             return;
         }
 
-        System.out.println("  (Premere Invio per mantenere il valore attuale)\n");
+        CLI.info("  (Premere Invio per mantenere il valore attuale)\n");
 
-        System.out.print("  Nome [" + existing.getNome() + "]: ");
-        String nome = sc.nextLine().trim();
-        if (!nome.isEmpty()) existing.setNome(nome);
+        applyIfNotEmpty(prompt(sc, "  Nome [" + existing.getNome() + "]: "),
+                existing::setNome);
+        applyIfNotEmpty(prompt(sc, "  Categoria [" + existing.getTipologia() + "]: "),
+                existing::setTipologia);
 
-        System.out.print("  Categoria [" + existing.getTipologia() + "]: ");
-        String tip = sc.nextLine().trim();
-        if (!tip.isEmpty()) existing.setTipologia(tip);
-
-        System.out.print("  Prezzo vendita [" + existing.getPrezzoVendita() + "]: ");
-        String prezzoStr = sc.nextLine().trim();
-        if (!prezzoStr.isEmpty()) {
-            try { existing.setPrezzoVendita(new BigDecimal(prezzoStr)); }
-            catch (NumberFormatException e) {
-                System.out.println("  ✖ Valore non valido."); return;
-            }
+        if (!editBigDecimalField(sc, "  Prezzo vendita [" + existing.getPrezzoVendita() + "]: ",
+                existing::setPrezzoVendita)) {
+            return;
+        }
+        if (!editBigDecimalField(sc, "  Costo realizzazione [" + existing.getCostoRealizzazione() + "]: ",
+                existing::setCostoRealizzazione)) {
+            return;
         }
 
-        System.out.print("  Costo realizzazione [" + existing.getCostoRealizzazione() + "]: ");
-        String costoStr = sc.nextLine().trim();
-        if (!costoStr.isEmpty()) {
-            try { existing.setCostoRealizzazione(new BigDecimal(costoStr)); }
-            catch (NumberFormatException e) {
-                System.out.println("  ✖ Valore non valido."); return;
-            }
-        }
-
-        System.out.print("  Allergeni [" + existing.getAllergeni() + "]: ");
-        String allerg = sc.nextLine().trim();
-        if (!allerg.isEmpty()) existing.setAllergeni(allerg);
+        applyIfNotEmpty(prompt(sc, "  Allergeni [" + existing.getAllergeni() + "]: "),
+                existing::setAllergeni);
 
         boolean ok = menuUseCase.updateProduct(existing);
-        System.out.println(ok
-                ? "  ✔ Prodotto aggiornato."
-                : "  ✖ Errore durante l'aggiornamento.");
+        CLI.info(ok ? OK_PREFIX + "Prodotto aggiornato."
+                : ERR_PREFIX + "Errore durante l'aggiornamento.");
     }
 
-    private static void deleteProduct(Scanner sc) {
+    /**
+     * Legge un campo BigDecimal opzionale; se l'utente preme Invio,
+     * il campo non viene modificato. Restituisce {@code false} se
+     * il valore inserito non è valido.
+     */
+    private static boolean editBigDecimalField(Scanner sc, String message,
+                                               java.util.function.Consumer<BigDecimal> setter) {
+        String raw = prompt(sc, message);
+        if (raw.isEmpty()) {
+            return true; // campo non modificato
+        }
+        BigDecimal val = parseBigDecimalOrNull(raw);
+        if (val == null) {
+            CLI.info(MSG_INVALID_VALUE);
+            return false;
+        }
+        setter.accept(val);
+        return true;
+    }
+
+    private void deleteProduct(Scanner sc) {
         listProducts();
-        System.out.println();
-        System.out.print("  ID del prodotto da eliminare: ");
-        int id = readInt(sc);
-        if (id <= 0) { System.out.println("  ✖ ID non valido."); return; }
+        CLI.info("");
+        int id = readInt(sc, "  ID del prodotto da eliminare: ");
+        if (id <= 0) { CLI.info(MSG_INVALID_ID); return; }
 
         MenuProduct existing = menuUseCase.getProductById(id);
         if (existing == null) {
-            System.out.println("  ✖ Prodotto con ID " + id + " non trovato.");
+            CLI.info(ERR_PREFIX + "Prodotto con ID " + id + " non trovato.");
             return;
         }
-
-        System.out.print("  Conferma eliminazione di «" + existing.getNome() + "»? (s/n): ");
-        if (!"s".equalsIgnoreCase(sc.nextLine().trim())) {
-            System.out.println("  Operazione annullata.");
+        if (!confirm(sc, "  Conferma eliminazione di «" + existing.getNome() + "»? (s/n): ")) {
+            CLI.info(MSG_OP_CANCELLED);
             return;
         }
 
         boolean ok = productDAO.delete((long) id);
-        System.out.println(ok
-                ? "  ✔ Prodotto eliminato."
-                : "  ✖ Errore durante l'eliminazione.");
+        CLI.info(ok ? OK_PREFIX + "Prodotto eliminato."
+                : ERR_PREFIX + "Errore durante l'eliminazione.");
     }
 
     // =====================================================================
     //  3. ORDINI E REPORT
     // =====================================================================
 
-    private static void ordersMenu(Scanner sc) {
+    private void ordersMenu(Scanner sc) {
         boolean back = false;
         while (!back) {
-            System.out.println();
-            System.out.println(THIN_SEP);
-            System.out.println("  ORDINI E REPORT");
-            System.out.println(THIN_SEP);
-            System.out.println("  1. Tutti gli ordini (con totale)");
-            System.out.println("  2. Dettaglio di un ordine");
-            System.out.println("  3. Ordini da pagare");
-            System.out.println("  4. Ordini attivi in cucina");
-            System.out.println("  0. Indietro");
-            System.out.print("  Scelta: ");
-
+            printSubMenu("ORDINI E REPORT",
+                    "1. Tutti gli ordini (con totale)",
+                    "2. Dettaglio di un ordine",
+                    "3. Ordini da pagare",
+                    "4. Ordini attivi in cucina");
             switch (sc.nextLine().trim()) {
                 case "1" -> listAllOrders();
                 case "2" -> orderDetail(sc);
                 case "3" -> listOrdersToPay();
                 case "4" -> listKitchenActive();
                 case "0" -> back = true;
-                default  -> System.out.println("  ⚠ Scelta non valida.");
+                default  -> CLI.info(MSG_INVALID_CHOICE);
             }
         }
     }
 
-    private static void listAllOrders() {
-        List<Order> orders = financialUseCase.loadAllOrdersWithTotal();
-        printOrderTable(orders, "TUTTI GLI ORDINI");
+    private void listAllOrders() {
+        printOrderTable(financialUseCase.loadAllOrdersWithTotal(), "TUTTI GLI ORDINI");
     }
 
     private static void listOrdersToPay() {
-        List<Order> orders = com.example.rm.service.OrderService.getToPay();
-        printOrderTable(orders, "ORDINI DA PAGARE");
+        printOrderTable(com.example.rm.service.OrderService.getToPay(), "ORDINI DA PAGARE");
     }
 
     private static void listKitchenActive() {
-        List<Order> orders = com.example.rm.service.OrderService.getKitchenActive();
-        printOrderTable(orders, "ORDINI ATTIVI IN CUCINA");
+        printOrderTable(com.example.rm.service.OrderService.getKitchenActive(),
+                "ORDINI ATTIVI IN CUCINA");
     }
 
     private static void printOrderTable(List<Order> orders, String title) {
-        System.out.println();
-        System.out.println("  " + title);
-        System.out.println("  " + "─".repeat(title.length()));
+        CLI.info("\n  " + title);
+        CLI.info("  " + "─".repeat(title.length()));
 
         if (orders.isEmpty()) {
-            System.out.println("  Nessun ordine trovato.");
+            CLI.info("  Nessun ordine trovato.");
             return;
         }
 
-        System.out.printf("  %-6s %-18s %-8s %-15s %-12s %10s%n",
-                "ID", "DATA/ORA", "TAVOLO", "CAMERIERE", "STATO", "TOTALE €");
-        System.out.println("  " + "─".repeat(73));
+        CLI.info(String.format("  %-6s %-18s %-8s %-15s %-12s %10s",
+                "ID", "DATA/ORA", "TAVOLO", "CAMERIERE", "STATO", "TOTALE €"));
+        CLI.info("  " + LINE_73);
 
         BigDecimal grandTotal = BigDecimal.ZERO;
         for (Order o : orders) {
-            System.out.printf("  %-6d %-18s %-8d %-15s %-12s %10.2f%n",
+            CLI.info(String.format("  %-6d %-18s %-8d %-15s %-12s %10.2f",
                     o.getId(),
                     o.getDataOra().format(DTF),
                     o.getTavolo(),
                     truncate(o.getUsername(), 15),
                     o.getStatus(),
-                    o.getTotale());
+                    o.getTotale()));
             grandTotal = grandTotal.add(o.getTotale());
         }
-        System.out.println("  " + "─".repeat(73));
-        System.out.printf("  %d ordini — Totale complessivo: €%.2f%n",
-                orders.size(), grandTotal);
+        CLI.info("  " + LINE_73);
+        CLI.info(String.format("  %d ordini — Totale complessivo: €%.2f",
+                orders.size(), grandTotal));
     }
 
     private static void orderDetail(Scanner sc) {
-        System.out.println();
-        System.out.print("  ID ordine: ");
-        int id = readInt(sc);
-        if (id <= 0) { System.out.println("  ✖ ID non valido."); return; }
+        CLI.info("");
+        int id = readInt(sc, "  ID ordine: ");
+        if (id <= 0) { CLI.info(MSG_INVALID_ID); return; }
 
         Order order = com.example.rm.service.OrderService.findById(id);
         if (order == null) {
-            System.out.println("  ✖ Ordine #" + id + " non trovato.");
+            CLI.info(ERR_PREFIX + "Ordine #" + id + " non trovato.");
             return;
         }
 
-        System.out.println();
-        System.out.println("  ╔══════════════════════════════════════════╗");
-        System.out.printf("  ║  ORDINE #%-33d║%n", order.getId());
-        System.out.println("  ╠══════════════════════════════════════════╣");
-        System.out.printf("  ║  Data:      %-30s║%n", order.getDataOra().format(DTF));
-        System.out.printf("  ║  Tavolo:    %-30d║%n", order.getTavolo());
-        System.out.printf("  ║  Cameriere: %-30s║%n", order.getUsername());
-        System.out.printf("  ║  Stato:     %-30s║%n", order.getStatus());
-        System.out.printf("  ║  Totale:    €%-29.2f║%n", order.getTotale());
+        printOrderDetailBox(order);
+    }
+
+    private static void printOrderDetailBox(Order order) {
+        CLI.info("");
+        CLI.info("  ╔" + BOX_BAR + "╗");
+        CLI.info(String.format("  ║  ORDINE #%-33d║", order.getId()));
+        CLI.info("  ╠" + BOX_BAR + "╣");
+        CLI.info(String.format("  ║  Data:      %-30s║", order.getDataOra().format(DTF)));
+        CLI.info(String.format("  ║  Tavolo:    %-30d║", order.getTavolo()));
+        CLI.info(String.format("  ║  Cameriere: %-30s║", order.getUsername()));
+        CLI.info(String.format("  ║  Stato:     %-30s║", order.getStatus()));
+        CLI.info(String.format("  ║  Totale:    €%-29.2f║", order.getTotale()));
         if (order.hasNote()) {
-            System.out.printf("  ║  Note:      %-30s║%n", truncate(order.getNote(), 30));
+            CLI.info(String.format("  ║  Note:      %-30s║", truncate(order.getNote(), 30)));
         }
-        System.out.println("  ╠══════════════════════════════════════════╣");
-        System.out.println("  ║  ARTICOLI                                ║");
-        System.out.println("  ╠══════════════════════════════════════════╣");
+        CLI.info("  ╠" + BOX_BAR + "╣");
+        CLI.info("  ║  ARTICOLI                                ║");
+        CLI.info("  ╠" + BOX_BAR + "╣");
 
         List<OrderItem> items =
-                com.example.rm.service.OrderService.getItemsDetailed(id);
+                com.example.rm.service.OrderService.getItemsDetailed(order.getId());
 
         if (items.isEmpty()) {
-            System.out.println("  ║  (nessun articolo)                       ║");
+            CLI.info("  ║  (nessun articolo)                       ║");
         } else {
             for (OrderItem item : items) {
                 String line = String.format("%dx %s — €%.2f",
@@ -601,44 +651,87 @@ public class CliApp {
                         item.getDisplayName(),
                         item.getPrezzoSnapshot()
                                 .multiply(BigDecimal.valueOf(item.getQuantita())));
-                System.out.printf("  ║  • %-39s║%n", truncate(line, 39));
+                CLI.info(String.format("  ║  • %-39s║", truncate(line, 39)));
             }
         }
-        System.out.println("  ╚══════════════════════════════════════════╝");
+        CLI.info("  ╚" + BOX_BAR + "╝");
     }
 
     // =====================================================================
     //  4. CAMBIO PASSWORD
     // =====================================================================
 
-    private static void changePassword(Scanner sc) {
-        System.out.println();
-        System.out.println("  ─── Cambio Password ───");
-        System.out.print("  Password attuale: ");
-        String current = sc.nextLine().trim();
-        System.out.print("  Nuova password (min 6 caratteri): ");
-        String newPass = sc.nextLine().trim();
-        System.out.print("  Conferma nuova password: ");
-        String confirm = sc.nextLine().trim();
+    private void changePassword(Scanner sc) {
+        CLI.info("\n  ─── Cambio Password ───");
+        String current = prompt(sc, "  Password attuale: ");
+        String newPass = prompt(sc, "  Nuova password (min 6 caratteri): ");
+        String conf    = prompt(sc, "  Conferma nuova password: ");
 
         if (newPass.length() < 6) {
-            System.out.println("  ✖ La password deve essere di almeno 6 caratteri.");
+            CLI.info(ERR_PREFIX + "La password deve essere di almeno 6 caratteri.");
             return;
         }
-
-        if (!newPass.equals(confirm)) {
-            System.out.println("  ✖ Le password non corrispondono.");
+        if (!newPass.equals(conf)) {
+            CLI.info(ERR_PREFIX + "Le password non corrispondono.");
             return;
         }
 
         boolean ok = SecurityService.changePassword(loggedUsername, current, newPass);
-        System.out.println(ok
-                ? "  ✔ Password aggiornata con successo."
-                : "  ✖ Password attuale errata o errore durante l'aggiornamento.");
+        CLI.info(ok ? OK_PREFIX + "Password aggiornata con successo."
+                : ERR_PREFIX + "Password attuale errata o errore durante l'aggiornamento.");
     }
 
     // =====================================================================
-    //  Utilità
+    //  Utilità — I/O
+    // =====================================================================
+
+    private static String prompt(Scanner sc, String message) {
+        CLI.info(message);
+        return sc.nextLine().trim();
+    }
+
+    private static String promptWithDefault(Scanner sc, String message, String defaultVal) {
+        String input = prompt(sc, message);
+        return input.isEmpty() ? defaultVal : input;
+    }
+
+    private static boolean confirm(Scanner sc, String message) {
+        return "s".equalsIgnoreCase(prompt(sc, message));
+    }
+
+    private static int readInt(Scanner sc, String message) {
+        String raw = prompt(sc, message);
+        try {
+            return Integer.parseInt(raw);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private static BigDecimal readBigDecimal(Scanner sc, String message) {
+        String raw = prompt(sc, message).replace(",", ".");
+        BigDecimal val = parseBigDecimalOrNull(raw);
+        if (val == null) {
+            CLI.info(ERR_PREFIX + "Valore numerico non valido.");
+            return null;
+        }
+        if (val.compareTo(BigDecimal.ZERO) < 0) {
+            CLI.info(ERR_PREFIX + "Il valore non può essere negativo.");
+            return null;
+        }
+        return val;
+    }
+
+    private static BigDecimal parseBigDecimalOrNull(String raw) {
+        try {
+            return new BigDecimal(raw.replace(",", "."));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    // =====================================================================
+    //  Utilità — formattazione
     // =====================================================================
 
     private static String truncate(String s, int max) {
@@ -646,28 +739,22 @@ public class CliApp {
         return s.length() <= max ? s : s.substring(0, max - 1) + "…";
     }
 
-    private static BigDecimal readBigDecimal(Scanner sc, String prompt) {
-        System.out.print(prompt);
-        String raw = sc.nextLine().trim().replace(",", ".");
-        try {
-            BigDecimal val = new BigDecimal(raw);
-            if (val.compareTo(BigDecimal.ZERO) < 0) {
-                System.out.println("  ✖ Il valore non può essere negativo.");
-                return null;
-            }
-            return val;
-        } catch (NumberFormatException e) {
-            System.out.println("  ✖ Valore numerico non valido.");
-            return null;
+    private static void applyIfNotEmpty(String value,
+                                        java.util.function.Consumer<String> setter) {
+        if (!value.isEmpty()) {
+            setter.accept(value);
         }
     }
 
-    private static int readInt(Scanner sc) {
-        String raw = sc.nextLine().trim();
-        try {
-            return Integer.parseInt(raw);
-        } catch (NumberFormatException e) {
-            return -1;
+    private static void printSubMenu(String title, String... options) {
+        CLI.info("");
+        CLI.info(THIN_SEP);
+        CLI.info("  " + title);
+        CLI.info(THIN_SEP);
+        for (String opt : options) {
+            CLI.info("  " + opt);
         }
+        CLI.info("  0. Indietro");
+        CLI.info(CHOICE);
     }
 }
