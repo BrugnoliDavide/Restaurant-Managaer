@@ -149,7 +149,7 @@ public final class ConnectionManager {
     }
 
     public static boolean isConfigured() {
-        return config != null;
+        return config.get() != null;
     }
 
     /**
