@@ -125,7 +125,9 @@ public class KitchenPreferencesDialog {
             if (success) {
                 showSuccessAlert("Preferenze salvate con successo!");
                 if (onComplete != null) onComplete.accept(true);
-                stage.close();
+                if (stage != null) {
+                    stage.close();
+                }
             } else {
                 showErrorAlert("Errore durante il salvataggio delle preferenze");
             }
@@ -138,7 +140,9 @@ public class KitchenPreferencesDialog {
     @FXML
     private void handleCancel() {
         if (onComplete != null) onComplete.accept(false);
-        stage.close();
+        if (stage != null) {
+            stage.close();
+        }
     }
 
     @FXML
@@ -147,8 +151,9 @@ public class KitchenPreferencesDialog {
         confirmDialog.setTitle("Ripristina Preferenze");
         confirmDialog.setHeaderText("Sei sicuro?");
         confirmDialog.setContentText("Tutte le preferenze verranno ripristinate ai valori di default.");
-        confirmDialog.initOwner(stage);
-
+        if (stage != null) {
+            confirmDialog.initOwner(stage);
+        }
 
         confirmDialog.showAndWait()
                 .filter(ButtonType.OK::equals)
@@ -165,21 +170,25 @@ public class KitchenPreferencesDialog {
                 });
     }
 
-    private void showSuccessAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Successo");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.initOwner(stage);
-        alert.showAndWait();
-    }
-
     private void showErrorAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Errore");
         alert.setHeaderText(null);
         alert.setContentText(message);
-        alert.initOwner(stage);
+        if (stage != null) {
+            alert.initOwner(stage);
+        }
+        alert.showAndWait();
+    }
+
+    private void showSuccessAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Successo");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        if (stage != null) {
+            alert.initOwner(stage);
+        }
         alert.showAndWait();
     }
 }
