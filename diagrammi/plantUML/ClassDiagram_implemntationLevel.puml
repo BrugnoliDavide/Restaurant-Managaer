@@ -1,0 +1,1223 @@
+@startuml
+
+!theme plain
+top to bottom direction
+skinparam linetype ortho
+
+class AbstractView {
+   root: Parent
+}
+class AddProductDialog {
+  + display(): void
+  + displayEdit(MenuProduct, Consumer<Boolean>): void
+   menuUseCase: MenuUseCase
+}
+class AppStatus {
+   dbConnectionOk: boolean
+}
+class AuthenticationException {
+   userMessage: String
+}
+interface CategoryDAO << interface >> {
+   allCategories: List<String>
+}
+class ChangePasswordDialog {
+  + show(Stage): void
+}
+class ChangePasswordDialogController {
+  - handleSave(): void
+  - highlightEmptyFields(): void
+  - showError(String): void
+  - highlightField(PasswordField): void
+  - resetFieldStyles(): void
+  - showSuccessAlert(): void
+  - initialize(): void
+   stage: Stage
+}
+class CliApp {
+  - menuMenu(Scanner): void
+  - deleteProduct(Scanner): void
+  - parseBigDecimalOrNull(String): BigDecimal?
+  - tryLoadSavedPreferences(): void
+  - promptDatabaseParams(Scanner): void
+  - readInt(Scanner, String): int
+  - listUsers(): void
+  - printConnectionError(): void
+  - addProduct(Scanner): void
+  - promptWithDefault(Scanner, String, String): String
+  - listProducts(): void
+  - login(Scanner): boolean
+  - safeTestConnection(): boolean
+  - printOrderDetailBox(Order): void
+  - tryAuthenticate(String, String, int): boolean
+  - applyIfNotEmpty(String, Consumer<String>): void
+  - readBigDecimal(Scanner, String): BigDecimal?
+  - printMainMenu(): void
+  - printOrderTable(List<Order>, String): void
+  - confirm(Scanner, String): boolean
+  - addUser(Scanner): void
+  + main(String[]): void
+  - staffMenu(Scanner): void
+  - printSubMenu(String, String[]): void
+  - printBanner(): void
+  ~ run(): void
+  - editProduct(Scanner): void
+  - ordersMenu(Scanner): void
+  - mainLoop(Scanner): void
+  - listKitchenActive(): void
+  - editBigDecimalField(Scanner, String, Consumer<BigDecimal>): boolean
+  - orderDetail(Scanner): void
+  - listAllOrders(): void
+  - deleteUser(Scanner): void
+  - listOrdersToPay(): void
+  - configureDatabase(Scanner): void
+  - prompt(Scanner, String): String
+  - changePassword(Scanner): void
+  - truncate(String, int): String
+}
+class ConnectionManager {
+  + configureWithUrl(String, String, String): void
+  + configure(String, String, String, String, String): void
+  + loadFromPreferences(): void
+  + hasPassword(): boolean
+  + testConnection(): boolean
+  ~ normalizeJdbcUrl(String): String
+  - formatSqlError(SQLException): String
+   host: String
+   jdbcUrl: String
+   connection: Connection
+   dbName: String
+   user: String
+   port: String
+   lastConnectionError: String
+   configured: boolean
+}
+class DBConfigController {
+  + loadConfig(): DBConfig
+  + saveConfig(String, String, String, String, String): SaveResult
+  - resolvePassword(String): String?
+  - testAndReturnResult(): SaveResult
+  + saveConfigWithUrl(String, String, String): SaveResult
+  - isBlank(String): boolean
+}
+class DBConfigPopupController {
+  - showStatus(String, StatusType): void
+  - closePopup(): void
+  - initialize(): void
+  - showUrlMode(): void
+  - handleSave(): void
+  - handleSaveResult(SaveResult): void
+  - updatePasswordStatus(boolean): void
+  - handleTest(): void
+  - showParamsMode(): void
+}
+class DBConfigStore {
+  + clearAll(): void
+  + save(String, String, String, String, String): void
+  + hasValidPassword(): boolean
+  - decrypt(String): String
+  - encrypt(String): String
+  + hasConfiguration(): boolean
+   port: String
+   password: String
+   host: String
+   dbName: String
+   key: SecretKeySpec
+   user: String
+}
+interface DBConfigUseCase << interface >> {
+  + loadConfig(): DBConfig
+  + saveConfigWithUrl(String, String, String): SaveResult
+  + saveConfig(String, String, String, String, String): SaveResult
+}
+class DBConstants
+class DatabaseCategoryDAO {
+   allCategories: List<String>
+}
+class DatabaseKitchenPreferencesDAO {
+  + deleteKitchenPreferences(String): boolean
+  + saveKitchenPreferences(KitchenPreferences): boolean
+  + loadByUsername(String): KitchenPreferences
+  + deleteByUsername(String): boolean
+  + getKitchenPreferences(String): KitchenPreferences
+  + save(KitchenPreferences): boolean
+}
+class DatabaseNotConfiguredException {
+   userMessage: String
+}
+class DatabaseProductDAO {
+  + delete(Long): boolean
+  - mapRow(ResultSet): MenuProduct
+  + save(MenuProduct): boolean
+  - insert(MenuProduct): boolean
+  - update(MenuProduct): boolean
+  + getQuantitySold(String): long
+  - bindProduct(PreparedStatement, MenuProduct): void
+  + findById(int): MenuProduct
+  + findAll(): List<MenuProduct>
+}
+class DatabaseUserDAO {
+  + findAll(): List<User>
+  + updatePassword(String, String): boolean
+  + findCredentials(String): UserCredentials
+  + delete(String): boolean
+  + insert(String, String, String): boolean
+}
+class DateHeaderController {
+   dateText: String
+}
+class DemoModeManager {
+   demoMode: boolean
+}
+class EarningController {
+  - formatCurrency(BigDecimal): String
+  - appendOrderBlock(VBox, int): BigDecimal
+  + initialize(): void
+  - loadOpenOrders(): void
+  - startPolling(): void
+  - renderTableCards(Map<Integer, List<Order>>): void
+  - createOrderHeaderRow(int): HBox
+  - clearDetailsPane(): void
+  - confirmDialog(String, String, String): boolean
+  - createPendingItemsSection(int): VBox
+  - markTableAsPaid(List<Order>): void
+  - createItemRow(int, OrderItem, BigDecimal): HBox
+  + stopPolling(): void
+  - onSearch(): void
+  - refreshDataPreservingSelection(): void
+  - showTableDetails(int, List<Order>, BigDecimal): void
+  - createSubtotalRow(String, BigDecimal): HBox
+  - groupOrdersByTable(): void
+  - createPendingHeader(): HBox
+  - createTableCard(int, List<Order>): HBox
+  - handleProfileMenu(MouseEvent): void
+  - createOrderSection(Order): VBox
+   earningUseCase: EarningUseCase
+}
+class EarningEinkView
+class EarningService {
+  + getOrderItemsDetailed(int): List<OrderItem>
+  + getPendingOrderIds(int): List<Integer>
+  + setOrderStatus(int, String): void
+  + loadOrdersToPay(): List<Order>
+  + cancelItemFromOrder(int, int): void
+  + markOrderAsPaid(int): boolean
+  + hasPendingOrders(int): boolean
+}
+interface EarningUseCase << interface >> {
+  + getOrderItemsDetailed(int): List<OrderItem>
+  + hasPendingOrders(int): boolean
+  + cancelItemFromOrder(int, int): void
+  + loadOrdersToPay(): List<Order>
+  + setOrderStatus(int, String): void
+  + getPendingOrderIds(int): List<Integer>
+  + markOrderAsPaid(int): boolean
+}
+class EarningView
+class FinancialController {
+  + initialize(): void
+  - matchesOrderId(Order, String): boolean
+  - goBack(): void
+  - matchesTable(Order, String): boolean
+  - setupSearchListener(): void
+  - normalizeSearchQuery(String): String
+  - matchesDate(Order, String): boolean
+  - filterAndRender(String): void
+  - matchesSearchQuery(Order, String): boolean
+  - loadDataFromDB(): void
+  - filterOrders(String): List<Order>
+  - matchesTotal(Order, String): boolean
+   financialUseCase: FinancialUseCase
+}
+class FinancialService {
+  + loadAllOrdersWithTotal(): List<Order>
+  + loadAllOrdersWithDisplayItems(): List<Order>
+}
+interface FinancialUseCase << interface >> {
+  + loadAllOrdersWithDisplayItems(): List<Order>
+  + loadAllOrdersWithTotal(): List<Order>
+}
+class FinancialView
+class InvalidUserSessionException
+class KitchenController {
+  - handleProfileMenu(MouseEvent): void
+  + refreshData(): void
+  - showPreferencesDialog(): void
+  + initialize(): void
+   kitchenUseCase: KitchenUseCase
+}
+class KitchenEinkView
+interface KitchenOrderCardFactory << interface >> {
+  + createOrderCard(Order, Runnable): Node
+}
+class KitchenOrderCardFactoryClassic {
+  + createOrderCard(Order, Runnable): Node
+}
+class KitchenOrderCardFactoryEink {
+  + createOrderCard(Order, Runnable): Node
+}
+class KitchenPreferences {
+  + shouldDisplayOrder(Set<String>): boolean
+  + equals(Object): boolean
+  + isCategorySelected(String): boolean
+  + removeCategory(String): void
+  + toString(): String
+  + hashCode(): int
+  + clearCategories(): void
+  + addCategory(String): void
+   selectedCategories: Set<String>
+   includeOtherCategories: boolean
+   username: String
+   splitMixedCategoryOrders: boolean
+}
+class KitchenPreferencesController {
+  + save(KitchenPreferences): boolean
+  + load(String): KitchenPreferences
+  + reset(String): boolean
+}
+interface KitchenPreferencesDAO << interface >> {
+  + loadByUsername(String): KitchenPreferences
+  + save(KitchenPreferences): boolean
+  + deleteByUsername(String): boolean
+}
+class KitchenPreferencesDialog {
+  - populateCategories(): void
+  + show(Stage, String, Consumer<Boolean>): void
+  - handleCancel(): void
+  - showSuccessAlert(String): void
+  - showErrorAlert(String): void
+  - handleReset(): void
+  - handleSave(): void
+  - initialize(String, Consumer<Boolean>): void
+   categoryDAO: CategoryDAO
+   prefsService: KitchenPreferencesUseCase
+}
+interface KitchenPreferencesUseCase << interface >> {
+  + load(String): KitchenPreferences
+  + save(KitchenPreferences): boolean
+  + reset(String): boolean
+}
+class KitchenService {
+  + decomposeOrder(int): void
+  + splitMixedOrdersIfNeeded(): void
+  + loadPreferences(String): KitchenPreferences
+  + updateOrderStatus(int, String): boolean
+  + loadFilteredOrders(String): List<Order>
+  + loadActiveOrders(): List<Order>
+  + markOrderAsReady(int): void
+  + getOrderItemsDisplay(int): List<String>
+}
+class KitchenService {
+  + getPreferences(String): KitchenPreferences
+  + getActiveOrdersFiltered(String): List<Order>
+  - categoriesOf(List<OrderItem>): Set<String>
+}
+interface KitchenUseCase << interface >> {
+  + decomposeOrder(int): void
+  + getOrderItemsDisplay(int): List<String>
+  + splitMixedOrdersIfNeeded(): void
+  + loadPreferences(String): KitchenPreferences
+  + loadFilteredOrders(String): List<Order>
+  + markOrderAsReady(int): void
+  + updateOrderStatus(int, String): boolean
+  + loadActiveOrders(): List<Order>
+}
+class KitchenUser {
+   welcomeMessage: String
+}
+class KitchenView
+class Launcher {
+  + main(String[]): void
+}
+class LoggerService {
+  + info(String): void
+  + severe(String): void
+  + severe(String, Throwable): void
+  + getLogger(Class<?>): Logger
+  + warning(String): void
+   logger: Logger
+}
+class LoginController {
+  - showError(): void
+  - resetStyle(): void
+  - openDBConfigPopup(): void
+  - navigateToRole(String): void
+  + initialize(): void
+  - handleLogin(): void
+  - updateDbStatusIndicator(): void
+   FXMLView: Parent
+}
+class LoginView
+class MainApp {
+  + main(String[]): void
+  + start(Stage): void
+   logo: Stage
+}
+class ManagerController {
+  - handleProfileMenu(MouseEvent): void
+  - goToMenu(): void
+  + initialize(): void
+  - goToFinancial(): void
+}
+class ManagerService {
+  + loadAllUsers(): List<User>
+  + deleteUser(String): boolean
+}
+interface ManagerUseCase << interface >> {
+  + loadAllUsers(): List<User>
+  + deleteUser(String): boolean
+}
+class ManagerUser {
+   welcomeMessage: String
+}
+class ManagerView
+class MenuController {
+  - loadProductRow(MenuProduct): Parent
+  - renderCategoriesWithProducts(Map<String, List<MenuProduct>>): void
+  - goBack(): void
+  - filterProducts(String): List<MenuProduct>
+  - reload(): void
+  - createErrorLabel(): Label
+  - renderProductsForCategory(List<MenuProduct>): void
+  - loadDataFromDB(): void
+  - setupSearchListener(): void
+  + initialize(): void
+  - renderCategoryHeader(String): void
+  - matchesSearchQuery(MenuProduct, String): boolean
+  - openProductDetail(MenuProduct): void
+  + onAddProduct(): void
+  - renderEmptyState(): void
+  - filterAndRender(String): void
+  - matchesCategory(MenuProduct, String): boolean
+  - matchesName(MenuProduct, String): boolean
+  - setupEventHandlers(): void
+  - renderMenu(List<MenuProduct>): void
+  - normalizeSearchQuery(String): String
+  - validateFXMLInjections(): void
+  - groupProductsByCategory(List<MenuProduct>): Map<String, List<MenuProduct>>
+   menuUseCase: MenuUseCase
+}
+class MenuProduct {
+  + hashCode(): int
+  + toString(): String
+  + idProperty(): IntegerProperty
+  + equals(Object): boolean
+  + tipologiaProperty(): StringProperty
+  + nomeProperty(): StringProperty
+  - readObject(ObjectInputStream): void
+  - writeObject(ObjectOutputStream): void
+   nome: String
+   id: int
+   percentualeMargine: int
+   costoRealizzazione: BigDecimal
+   margine: BigDecimal
+   tipologia: String
+   prezzoVendita: BigDecimal
+   allergeni: String
+}
+class MenuService {
+  + updateProduct(MenuProduct): boolean
+  + getProductById(int): MenuProduct
+  + addProduct(MenuProduct): boolean
+  + loadAllProducts(): List<MenuProduct>
+  + loadCategories(): List<String>
+}
+interface MenuUseCase << interface >> {
+  + addProduct(MenuProduct): boolean
+  + updateProduct(MenuProduct): boolean
+  + loadAllProducts(): List<MenuProduct>
+  + loadCategories(): List<String>
+  + getProductById(int): MenuProduct
+}
+class MenuView
+class Order {
+  + hasNote(): boolean
+  + toString(): String
+  - writeObject(ObjectOutputStream): void
+  - readObject(ObjectInputStream): void
+   note: String
+   dataOra: LocalDateTime
+   displayItems: List<String>
+   id: int
+   status: String
+   username: String
+   totale: BigDecimal
+   tavolo: int
+}
+class OrderBean {
+  + addItem(OrderItemBean): void
+  + hashCode(): int
+  + toString(): String
+  + removeItem(OrderItemBean): void
+  + hasNote(): boolean
+  + equals(Object): boolean
+   note: String
+   dataOra: LocalDateTime
+   id: int
+   status: String
+   username: String
+   totale: BigDecimal
+   tavolo: int
+   items: List<OrderItemBean>
+}
+interface OrderDAO << interface >> {
+  + hasPendingOrders(int): boolean
+  + getQuantitySoldInDateRange(int, LocalDateTime, LocalDateTime): long
+  + getPendingOrderIds(int): List<Integer>
+  + findById(int): Order
+  + getOrderItemsForDisplay(int): List<String>
+  + setOrderStatus(int, String): boolean
+  + getOrderItemsDetailed(int): List<OrderItem>
+  + getOrdersByStatus(String): List<Order>
+  + markOrderAsDelivered(int): boolean
+  + markOrderAsPaid(int): boolean
+  + decomposeOrderIfNeeded(int): boolean
+  + createOrder(List<OrderItem>, Integer, String, User): boolean
+  + removeOrderItem(int, int): boolean
+   allOrdersWithTotal: List<Order>
+   ordersToPay: List<Order>
+   kitchenActiveOrders: List<Order>
+   tablesWithPendingOrders: Set<Integer>
+   allOrderItemsForDisplay: Map<Integer, List<String>>
+   readyOrdersForWaiter: List<Order>
+}
+class OrderDAOFile {
+  + findById(int): Order
+  - saveOrderItems(int, List<OrderItem>): void
+  + decomposeOrderIfNeeded(int): boolean
+  + removeOrderItem(int, int): boolean
+  - calculateOrderTotal(int): BigDecimal
+  + getOrdersByStatus(String): List<Order>
+  + getOrderItemsDetailed(int): List<OrderItem>
+  + markOrderAsPaid(int): boolean
+  + hasPendingOrders(int): boolean
+  + setOrderStatus(int, String): boolean
+  + createOrder(List<OrderItem>, Integer, String, User): boolean
+  + getPendingOrderIds(int): List<Integer>
+  - initializeFiles(): void
+  - calculateNextOrderId(): int
+  + getQuantitySoldInDateRange(int, LocalDateTime, LocalDateTime): long
+  - updateMaxIdFromLine(int, String, int): int
+  + markOrderAsDelivered(int): boolean
+  + getOrderItemsForDisplay(int): List<String>
+   allOrdersWithTotal: List<Order>
+   ordersToPay: List<Order>
+   kitchenActiveOrders: List<Order>
+   tablesWithPendingOrders: Set<Integer>
+   allOrderItemsForDisplay: Map<Integer, List<String>>
+   readyOrdersForWaiter: List<Order>
+}
+class OrderDAOPostgres {
+  + decomposeOrderIfNeeded(int): boolean
+  + getOrdersByStatus(String): List<Order>
+  - deleteOriginalOrder(Connection, int): void
+  - insertOrderAndGetId(PreparedStatement, String, Integer, String): int
+  + getOrderItemsForDisplay(int): List<String>
+  + markOrderAsPaid(int): boolean
+  + getPendingOrderIds(int): List<Integer>
+  + findById(int): Order
+  + getQuantitySoldInDateRange(int, LocalDateTime, LocalDateTime): long
+  - executeDecomposition(Connection, int, List<OrderItem>): boolean
+  + setOrderStatus(int, String): boolean
+  - mapOrderItem(ResultSet): OrderItem
+  + hasPendingOrders(int): boolean
+  - createCategoryOrders(Connection, Map<String, List<OrderItem>>, String, Integer, String): void
+  - executeCreateOrderTransaction(PreparedStatement, PreparedStatement, String, Integer, String, List<OrderItem>): boolean
+  + createOrder(List<OrderItem>, Integer, String, User): boolean
+  + getOrderItemsDetailed(int): List<OrderItem>
+  - mapOrder(ResultSet): Order
+  + removeOrderItem(int, int): boolean
+  - commitOrRollback(Connection, TransactionalOperation): boolean
+  + markOrderAsDelivered(int): boolean
+   connection: Connection
+   allOrderItemsForDisplay: Map<Integer, List<String>>
+   readyOrdersForWaiter: List<Order>
+   allOrdersWithTotal: List<Order>
+   ordersToPay: List<Order>
+   kitchenActiveOrders: List<Order>
+   tablesWithPendingOrders: Set<Integer>
+}
+class OrderDetailController {
+  - createNoteLabel(String): Label
+  - goBack(): void
+  - createEmptyItemsLabel(): Label
+  - createItemsSection(): VBox
+  - createTotalLabel(String): Label
+  + loadOrder(int): void
+  - createTotalValue(String): Label
+  - capitalizeFirst(String): String
+  - determineOrderStatus(): OrderStatus
+  - render(): void
+  - createTotalsSection(): VBox
+  - addNoteInfo(VBox): void
+  - addDateInfo(VBox): void
+  - createItemLabel(String): Label
+  - createTableValue(String): Label
+  - createNoteValue(String): Label
+  - createBulletLabel(): Label
+  - loadOrderItems(): List<String>
+  - createInfoLabel(String): Label
+  - createInfoValue(String): Label
+  - clearContent(): void
+  - createTotalRow(): HBox
+  - addTableInfo(VBox): void
+  + initialize(): void
+  - updateTitle(): void
+  - formatDateTime(): String
+  - validateFXMLInjections(): void
+  - createItemsList(List<String>): VBox
+  - createStatusSection(): VBox
+  - createInfoSection(): VBox
+  - createSectionHeader(String): Label
+  - showError(String): void
+  - createItemRow(String): HBox
+  - addUserInfo(VBox): void
+  - renderSections(): void
+  - createStatusBadge(): HBox
+   order: Order
+   orderUseCase: OrderUseCase
+}
+class OrderDetailView {
+   order: Order
+   root: Parent
+}
+class OrderDetailsFactory {
+  + create(Order, DoubleConsumer): VBox
+}
+class OrderItem {
+  + toString(): String
+   prezzoSnapshot: BigDecimal
+   id: int
+   costoSnapshot: BigDecimal
+   product: MenuProduct
+   status: String
+   nomeSnapshot: String
+   displayName: String
+   quantita: int
+}
+class OrderItemBean {
+  + hashCode(): int
+  + toString(): String
+  + equals(Object): boolean
+   subtotale: BigDecimal
+   orderId: int
+   menuItemId: int
+   costoRealizzazioneSnapshot: BigDecimal
+   nomeProdottoSnapshot: String
+   quantita: int
+   prezzoVenditaSnapshot: BigDecimal
+}
+class OrderReviewDialog {
+  + show(Stage, Integer, List<OrderItem>, String, Consumer<OrderReviewResult>): void
+  - populateProducts(): void
+  - handleConfirm(): void
+  - handleCancel(): void
+  - initialize(Integer, List<OrderItem>, String, Consumer<OrderReviewResult>): void
+}
+class OrderRowController {
+  + setOrder(Order, Consumer<Order>): void
+  - onHover(): void
+  - updateUI(): void
+  - onClick(): void
+  - onExit(): void
+}
+class OrderRowFactory {
+  + create(Order, Consumer<Order>): HBox
+}
+class OrderRowItemController {
+  + setOrder(Order, Consumer<Order>): void
+  - onExit(): void
+  - onHover(): void
+  - updateTitle(): void
+  - updateUI(): void
+  - updateStyle(): void
+  - onClick(): void
+  - updateSubtitle(): void
+   isSelected: boolean
+   order: Order
+}
+class OrderService {
+  + createOrder(List<OrderItem>, Integer, String, User): boolean
+  + getOrderById(int): Order
+  + markOrderAsDelivered(int): boolean
+  + loadOrderItemsForDisplay(int): List<String>
+  + loadReadyOrdersForWaiter(): List<Order>
+}
+class OrderService {
+  + getByStatus(String): List<Order>
+  + markDelivered(int): boolean
+  + setStatus(int, String): boolean
+  + getItemsForDisplay(int): List<String>
+  + hasPendingOrders(int): boolean
+  + getItemsDetailed(int): List<OrderItem>
+  - dao(): OrderDAO
+  + findById(int): Order
+  + create(List<OrderItem>, Integer, String, User): boolean
+  + decomposeIfNeeded(int): boolean
+  + usePostgres(): void
+  + markPaid(int): boolean
+  + getPendingOrderIds(int): List<Integer>
+  + removeOrderItem(int, int): boolean
+  + useFileSystem(String): void
+  + getQuantitySoldInRange(int, LocalDateTime, LocalDateTime): long
+   allItemsForDisplay: Map<Integer, List<String>>
+   kitchenActive: List<Order>
+   toPay: List<Order>
+   tablesWithPendingOrders: Set<Integer>
+   readyForWaiter: List<Order>
+   allWithTotal: List<Order>
+}
+interface OrderUseCase << interface >> {
+  + loadOrderItemsForDisplay(int): List<String>
+  + createOrder(List<OrderItem>, Integer, String, User): boolean
+  + markOrderAsDelivered(int): boolean
+  + getOrderById(int): Order
+  + loadReadyOrdersForWaiter(): List<Order>
+}
+class PreferencesConstants
+class PreferencesSerializer {
+  - parseBoolean(String): boolean
+  + deserialize(String, String): KitchenPreferences
+  - parseCategories(String): Set<String>
+  + serialize(KitchenPreferences): String
+  - createDefaultPreferences(String): KitchenPreferences
+  - parsePair(String, KitchenPreferences): void
+}
+class ProductBean {
+  + toString(): String
+  + hashCode(): int
+  + equals(Object): boolean
+   nome: String
+   id: int
+   percentualeMargine: BigDecimal
+   costoRealizzazione: BigDecimal
+   margine: BigDecimal
+   tipologia: String
+   prezzoVendita: BigDecimal
+   allergeni: String
+}
+interface ProductDAO << interface >> {
+  + save(MenuProduct): boolean
+  + getQuantitySold(String): long
+  + findAll(): List<MenuProduct>
+  + findById(int): MenuProduct
+  + delete(Long): boolean
+}
+class ProductDetailController {
+  - addDetailSection(ProductStatistics): void
+  - onDelete(): void
+  - addSeparator(): void
+  - calculateMargin(): BigDecimal
+  - onBack(): void
+  - formatCurrency(BigDecimal): String
+  - calculateStatistics(): ProductStatistics
+  - onEdit(): void
+  - render(): void
+  + initialize(): void
+  - formatPercentage(double): String
+  - setupEventHandlers(): void
+  - reloadProduct(): void
+  - addRow(String, String): void
+   product: MenuProduct
+}
+class ProductLoadingService {
+  # createTask(): Task<List<MenuProduct>>
+}
+class ProductRowController {
+  - onDotsClick(MouseEvent): void
+  - onClick(MouseEvent): void
+  + setProduct(MenuProduct, Runnable): void
+  - setupContextMenu(): void
+  - onHover(): void
+  + setProduct(MenuProduct, Runnable, Consumer<MenuProduct>): void
+  - onExit(): void
+}
+class ProductRowFactory {
+  + row(String, String, String, int, Runnable, Runnable): HBox
+}
+class SceneManager {
+  - cacheKey(String): String
+  + clearViewCache(): void
+  + showLogin(): void
+  + showUsers(): void
+  + showMenu(): void
+  + init(Stage): void
+  - configureStage(): void
+  + showTakeOrder(int): void
+  - ensureInitialized(): void
+  + showManager(): void
+  + showWaiter(): void
+  + showFinancial(): void
+  - getOrCreateView(String): View
+  + showView(String): void
+   scene: Parent
+   root: Parent
+}
+class SecurityService {
+  + registerUser(String, String, String): boolean
+  + authenticate(String, String): String
+  + changePassword(String, String, String): boolean
+}
+class SimpleGraphicsManager {
+   einkMode: boolean
+}
+class TableSelectionUtils {
+  + parseTableString(String): Set<Integer>
+}
+class TakeOrderController {
+  - loadProductsSync(): void
+  - sendOrderToDatabase(List<OrderItem>, String): void
+  - showSearchStatus(int, String): void
+  - clearCart(): void
+  - handleOrderFailure(): void
+  - showOrderReviewDialog(): void
+  - showLoadingIndicator(boolean): void
+  - updateProductList(List<MenuProduct>): void
+  - addFallbackOverlay(): void
+  - showInfoAlert(String, String): void
+  - addLoadingIndicatorToLayout(): void
+  - handleSend(): void
+  - performSearch(): void
+  - initLoadingIndicator(): void
+  - updateTitle(): void
+  - handleDecrementProduct(MenuProduct): void
+  - renderProducts(List<MenuProduct>): void
+  - formatPrice(BigDecimal): String
+  - findStackPaneParent(Parent): Parent
+  - addToStackPane(StackPane): void
+  - getCurrentQuantity(int): int
+  - createLoadingIndicator(): void
+  - initProductLoadingService(): void
+  - setupSearch(): void
+  + cleanup(): void
+  - calculateTotalItems(): int
+  - createOrderItem(MenuProduct, int): OrderItem
+  - createProductRow(MenuProduct): HBox
+  - handleIncrementProduct(MenuProduct): void
+  - handleOrderSuccess(): void
+  + init(int): void
+  - handleCancel(): void
+  - showErrorAlert(String, String): void
+  - matchesSearch(MenuProduct, String): boolean
+  - createLoadingOverlay(): void
+  - decrementProductQuantity(MenuProduct): void
+  - updateSendButton(): void
+  - loadProductsAsync(): void
+  - loadProducts(): void
+  - incrementProductQuantity(MenuProduct): void
+   stage: Stage?
+}
+class TakeOrderEinkView {
+   root: Parent
+}
+class TakeOrderView {
+   root: Parent
+}
+class TavoloBean {
+  + toString(): String
+  + equals(Object): boolean
+  + hashCode(): int
+   status: String
+   capienza: int
+   note: String
+   free: boolean
+   numero: int
+   occupied: boolean
+}
+class User {
+   welcomeMessage: String
+   username: String
+   role: String
+}
+class UserAccountController {
+  + changePassword(String, String, String): boolean
+}
+interface UserAccountUseCase << interface >> {
+  + changePassword(String, String, String): boolean
+}
+class UserBean {
+  + toString(): String
+  + equals(Object): boolean
+  + hashCode(): int
+   passwordHash: String
+   cashier: boolean
+   kitchenPreferences: String
+   waiter: boolean
+   username: String
+   manager: boolean
+   role: String
+   kitchen: boolean
+}
+interface UserDAO << interface >> {
+  + findCredentials(String): UserCredentials
+  + findAll(): List<User>
+  + delete(String): boolean
+  + insert(String, String, String): boolean
+  + updatePassword(String, String): boolean
+}
+class UserSession {
+  + isTableManaged(int): boolean
+  + cleanUserSession(): void
+  + getInstance(User): UserSession
+  + clearInstanceForTesting(): void
+   instanceForTesting: User
+   managedTables: Set<Integer>
+   instance: UserSession
+   user: User
+}
+class UsersController {
+  - handleDelete(): void
+  - goBack(): void
+  + initialize(): void
+  - loadData(): void
+  - showAlert(String, String): void
+  - handleAdd(): void
+}
+class UsersFactory {
+  + createUser(String, String): User
+}
+class UsersView
+interface View << interface >> {
+   root: Parent
+}
+class ViewFactory {
+  + forRole(String): View
+  + forTakeOrder(int): View
+  + create(String, Object[]): View
+   loginView: View
+}
+class ViewNotFoundException
+class WaiterController {
+  - handleNewOrder(): void
+  - setupUserSession(): void
+  + initialize(): void
+  + stopPolling(): void
+  - startPolling(): void
+  - showTableFilterDialog(): void
+  - refreshNotifications(): void
+  - handleProfileMenu(MouseEvent): void
+}
+class WaiterEinkView
+interface WaiterNotificationCardFactory << interface >> {
+  + createNotificationCard(Order, Runnable): Node
+}
+class WaiterNotificationCardFactoryClassic {
+  + createNotificationCard(Order, Runnable): Node
+}
+class WaiterNotificationCardFactoryEink {
+  + createNotificationCard(Order, Runnable): Node
+}
+class WaiterUser {
+   welcomeMessage: String
+}
+class WaiterView
+
+AbstractView                          -[#008200,dashed]-^  View
+AddProductDialog                      -[#595959,dashed]->  MenuProduct
+AddProductDialog                      -[#595959,dashed]->  MenuService                          : "«create»"
+AddProductDialog                     "1" *-[#595959,plain]-> "menuUseCase\n1" MenuUseCase
+ChangePasswordDialog                  -[#595959,dashed]->  ChangePasswordDialogController
+ChangePasswordDialogController        -[#595959,dashed]->  User
+ChangePasswordDialogController        -[#595959,dashed]->  UserAccountController                : "«create»"
+ChangePasswordDialogController       "1" *-[#595959,plain]-> "accountService\n1" UserAccountUseCase
+ChangePasswordDialogController        -[#595959,dashed]->  UserSession
+CliApp                                -[#595959,dashed]->  AuthenticationException
+CliApp                                -[#595959,dashed]->  ConnectionManager
+CliApp                                -[#595959,dashed]->  DatabaseProductDAO                   : "«create»"
+CliApp                                -[#595959,dashed]->  FinancialService                     : "«create»"
+CliApp                               "1" *-[#595959,plain]-> "financialUseCase\n1" FinancialUseCase
+CliApp                                -[#595959,dashed]->  ManagerService                       : "«create»"
+CliApp                               "1" *-[#595959,plain]-> "managerUseCase\n1" ManagerUseCase
+CliApp                                -[#595959,dashed]->  MenuProduct                          : "«create»"
+CliApp                                -[#595959,dashed]->  MenuService                          : "«create»"
+CliApp                               "1" *-[#595959,plain]-> "menuUseCase\n1" MenuUseCase
+CliApp                                -[#595959,dashed]->  Order
+CliApp                                -[#595959,dashed]->  OrderItem
+CliApp                                -[#595959,dashed]->  OrderService
+CliApp                               "1" *-[#595959,plain]-> "productDAO\n1" ProductDAO
+CliApp                                -[#595959,dashed]->  SecurityService
+CliApp                                -[#595959,dashed]->  User
+ConnectionManager                     -[#595959,dashed]->  DBConfigStore
+ConnectionManager                     -[#595959,dashed]->  OrderService
+DBConfigController                    -[#595959,dashed]->  ConnectionManager
+DBConfigController                    -[#595959,dashed]->  DBConfigStore
+DBConfigController                    -[#008200,dashed]-^  DBConfigUseCase
+DBConfigPopupController               -[#595959,dashed]->  DBConfigController                   : "«create»"
+DBConfigPopupController              "1" *-[#595959,plain]-> "configService\n1" DBConfigUseCase
+DBConfigPopupController               -[#595959,dashed]->  DemoModeManager
+DBConfigPopupController               -[#595959,dashed]->  SimpleGraphicsManager
+DBConfigStore                         -[#595959,dashed]->  DemoModeManager
+DatabaseCategoryDAO                   -[#008200,dashed]-^  CategoryDAO
+DatabaseCategoryDAO                   -[#595959,dashed]->  ConnectionManager
+DatabaseKitchenPreferencesDAO         -[#595959,dashed]->  ConnectionManager
+DatabaseKitchenPreferencesDAO         -[#595959,dashed]->  DemoModeManager
+DatabaseKitchenPreferencesDAO         -[#595959,dashed]->  KitchenPreferences                   : "«create»"
+DatabaseKitchenPreferencesDAO         -[#008200,dashed]-^  KitchenPreferencesDAO
+DatabaseKitchenPreferencesDAO         -[#595959,dashed]->  PreferencesConstants
+DatabaseKitchenPreferencesDAO         -[#595959,dashed]->  PreferencesSerializer
+DatabaseProductDAO                    -[#595959,dashed]->  ConnectionManager
+DatabaseProductDAO                    -[#595959,dashed]->  MenuProduct                          : "«create»"
+DatabaseProductDAO                    -[#008200,dashed]-^  ProductDAO
+DatabaseUserDAO                       -[#595959,dashed]->  ConnectionManager
+DatabaseUserDAO                       -[#595959,dashed]->  User
+DatabaseUserDAO                       -[#008200,dashed]-^  UserDAO
+DatabaseUserDAO                       -[#595959,dashed]->  UsersFactory
+EarningController                     -[#595959,dashed]->  ChangePasswordDialog
+EarningController                     -[#595959,dashed]->  EarningService                       : "«create»"
+EarningController                    "1" *-[#595959,plain]-> "earningUseCase\n1" EarningUseCase
+EarningController                     -[#595959,dashed]->  MenuProduct
+EarningController                    "1" *-[#595959,plain]-> "allOrders\n*" Order
+EarningController                     -[#595959,dashed]->  OrderItem
+EarningController                     -[#595959,dashed]->  OrderService
+EarningController                     -[#595959,dashed]->  SceneManager
+EarningController                     -[#595959,dashed]->  User
+EarningController                     -[#595959,dashed]->  UserSession
+EarningEinkView                       -[#000082,plain]-^  AbstractView
+EarningService                        -[#008200,dashed]-^  EarningUseCase
+EarningService                        -[#595959,dashed]->  Order
+EarningService                        -[#595959,dashed]->  OrderItem
+EarningService                        -[#595959,dashed]->  OrderService
+EarningUseCase                        -[#595959,dashed]->  Order
+EarningUseCase                        -[#595959,dashed]->  OrderItem
+EarningView                           -[#000082,plain]-^  AbstractView
+FinancialController                   -[#595959,dashed]->  FinancialService                     : "«create»"
+FinancialController                  "1" *-[#595959,plain]-> "financialUseCase\n1" FinancialUseCase
+FinancialController                   -[#595959,dashed]->  LoggerService
+FinancialController                  "1" *-[#595959,plain]-> "allOrdersMaster\n*" Order
+FinancialController                   -[#595959,dashed]->  SceneManager
+FinancialService                      -[#008200,dashed]-^  FinancialUseCase
+FinancialService                      -[#595959,dashed]->  LoggerService
+FinancialService                      -[#595959,dashed]->  Order
+FinancialService                      -[#595959,dashed]->  OrderService
+FinancialUseCase                      -[#595959,dashed]->  Order
+FinancialView                         -[#000082,plain]-^  AbstractView
+KitchenController                     -[#595959,dashed]->  ChangePasswordDialog
+KitchenController                    "1" *-[#595959,plain]-> "cardFactory\n1" KitchenOrderCardFactory
+KitchenController                     -[#595959,dashed]->  KitchenOrderCardFactoryClassic       : "«create»"
+KitchenController                     -[#595959,dashed]->  KitchenOrderCardFactoryEink          : "«create»"
+KitchenController                     -[#595959,dashed]->  KitchenPreferences
+KitchenController                     -[#595959,dashed]->  KitchenPreferencesDialog
+KitchenController                     -[#595959,dashed]->  KitchenService                       : "«create»"
+KitchenController                    "1" *-[#595959,plain]-> "kitchenUseCase\n1" KitchenUseCase
+KitchenController                     -[#595959,dashed]->  Order
+KitchenController                     -[#595959,dashed]->  SceneManager
+KitchenController                     -[#595959,dashed]->  SimpleGraphicsManager
+KitchenController                     -[#595959,dashed]->  User
+KitchenController                     -[#595959,dashed]->  UserSession
+KitchenEinkView                       -[#000082,plain]-^  AbstractView
+KitchenOrderCardFactory               -[#595959,dashed]->  Order
+KitchenOrderCardFactoryClassic        -[#008200,dashed]-^  KitchenOrderCardFactory
+KitchenOrderCardFactoryClassic       "1" *-[#595959,plain]-> "kitchenUseCase\n1" KitchenUseCase
+KitchenOrderCardFactoryClassic        -[#595959,dashed]->  Order
+KitchenOrderCardFactoryEink           -[#008200,dashed]-^  KitchenOrderCardFactory
+KitchenOrderCardFactoryEink          "1" *-[#595959,plain]-> "kitchenUseCase\n1" KitchenUseCase
+KitchenOrderCardFactoryEink           -[#595959,dashed]->  Order
+KitchenPreferencesController          -[#595959,dashed]->  DatabaseKitchenPreferencesDAO        : "«create»"
+KitchenPreferencesController          -[#595959,dashed]->  KitchenPreferences
+KitchenPreferencesController         "1" *-[#595959,plain]-> "dao\n1" KitchenPreferencesDAO
+KitchenPreferencesController          -[#008200,dashed]-^  KitchenPreferencesUseCase
+KitchenPreferencesDAO                 -[#595959,dashed]->  KitchenPreferences
+KitchenPreferencesDialog             "1" *-[#595959,plain]-> "categoryDAO\n1" CategoryDAO
+KitchenPreferencesDialog              -[#595959,dashed]->  DatabaseCategoryDAO                  : "«create»"
+KitchenPreferencesDialog             "1" *-[#595959,plain]-> "currentPreferences\n1" KitchenPreferences
+KitchenPreferencesDialog              -[#595959,dashed]->  KitchenPreferencesController         : "«create»"
+KitchenPreferencesDialog             "1" *-[#595959,plain]-> "prefsService\n1" KitchenPreferencesUseCase
+KitchenPreferencesUseCase             -[#595959,dashed]->  KitchenPreferences
+KitchenService                        -[#595959,dashed]->  DatabaseKitchenPreferencesDAO        : "«create»"
+KitchenService                        -[#595959,dashed]->  KitchenPreferences
+KitchenService                        -[#595959,dashed]->  KitchenPreferences
+KitchenService                       "1" *-[#595959,plain]-> "preferencesDAO\n1" KitchenPreferencesDAO
+KitchenService                        -[#595959,dashed]->  KitchenService
+KitchenService                        -[#008200,dashed]-^  KitchenUseCase
+KitchenService                        -[#595959,dashed]->  MenuProduct
+KitchenService                        -[#595959,dashed]->  Order
+KitchenService                        -[#595959,dashed]->  Order
+KitchenService                        -[#595959,dashed]->  OrderItem
+KitchenService                        -[#595959,dashed]->  OrderService
+KitchenService                        -[#595959,dashed]->  OrderService
+KitchenUseCase                        -[#595959,dashed]->  KitchenPreferences
+KitchenUseCase                        -[#595959,dashed]->  Order
+KitchenUser                           -[#000082,plain]-^  User
+KitchenView                           -[#000082,plain]-^  AbstractView
+Launcher                              -[#595959,dashed]->  MainApp
+LoginController                       -[#595959,dashed]->  AppStatus
+LoginController                       -[#595959,dashed]->  AuthenticationException
+LoginController                       -[#595959,dashed]->  ConnectionManager
+LoginController                       -[#595959,dashed]->  SceneManager
+LoginController                       -[#595959,dashed]->  SecurityService
+LoginController                       -[#595959,dashed]->  User
+LoginController                       -[#595959,dashed]->  UserSession
+LoginController                       -[#595959,dashed]->  UsersFactory
+LoginView                             -[#000082,plain]-^  AbstractView
+MainApp                               -[#595959,dashed]->  AppStatus
+MainApp                               -[#595959,dashed]->  ConnectionManager
+MainApp                               -[#595959,dashed]->  LoginController
+MainApp                               -[#595959,dashed]->  SceneManager
+ManagerController                     -[#595959,dashed]->  ChangePasswordDialog
+ManagerController                     -[#595959,dashed]->  SceneManager
+ManagerController                     -[#595959,dashed]->  SimpleGraphicsManager
+ManagerController                     -[#595959,dashed]->  User
+ManagerController                     -[#595959,dashed]->  UserSession
+ManagerService                        -[#595959,dashed]->  DatabaseUserDAO                      : "«create»"
+ManagerService                        -[#008200,dashed]-^  ManagerUseCase
+ManagerService                        -[#595959,dashed]->  User
+ManagerService                       "1" *-[#595959,plain]-> "userDAO\n1" UserDAO
+ManagerUseCase                        -[#595959,dashed]->  User
+ManagerUser                           -[#000082,plain]-^  User
+ManagerView                           -[#000082,plain]-^  AbstractView
+MenuController                        -[#595959,dashed]->  AddProductDialog
+MenuController                       "1" *-[#595959,plain]-> "allProductsMaster\n*" MenuProduct
+MenuController                        -[#595959,dashed]->  MenuService                          : "«create»"
+MenuController                       "1" *-[#595959,plain]-> "menuUseCase\n1" MenuUseCase
+MenuController                        -[#595959,dashed]->  ProductDetailController
+MenuController                        -[#595959,dashed]->  ProductRowController
+MenuController                        -[#595959,dashed]->  View
+MenuController                        -[#595959,dashed]->  ViewFactory
+MenuService                          "1" *-[#595959,plain]-> "categoryDAO\n1" CategoryDAO
+MenuService                           -[#595959,dashed]->  DatabaseCategoryDAO                  : "«create»"
+MenuService                           -[#595959,dashed]->  DatabaseProductDAO                   : "«create»"
+MenuService                           -[#595959,dashed]->  MenuProduct
+MenuService                           -[#008200,dashed]-^  MenuUseCase
+MenuService                          "1" *-[#595959,plain]-> "productDAO\n1" ProductDAO
+MenuUseCase                           -[#595959,dashed]->  MenuProduct
+MenuView                              -[#000082,plain]-^  AbstractView
+Order                                 -[#595959,dashed]->  OrderService
+OrderBean                            "1" *-[#595959,plain]-> "items\n*" OrderItemBean
+OrderDAO                              -[#595959,dashed]->  Order
+OrderDAO                              -[#595959,dashed]->  OrderItem
+OrderDAO                              -[#595959,dashed]->  User
+OrderDAOFile                          -[#595959,dashed]->  MenuProduct                          : "«create»"
+OrderDAOFile                          -[#595959,dashed]->  Order                                : "«create»"
+OrderDAOFile                          -[#008200,dashed]-^  OrderDAO
+OrderDAOFile                          -[#595959,dashed]->  OrderItem                            : "«create»"
+OrderDAOFile                          -[#595959,dashed]->  User
+OrderDAOPostgres                      -[#595959,dashed]->  ConnectionManager
+OrderDAOPostgres                      -[#595959,dashed]->  MenuProduct                          : "«create»"
+OrderDAOPostgres                      -[#595959,dashed]->  Order                                : "«create»"
+OrderDAOPostgres                      -[#008200,dashed]-^  OrderDAO
+OrderDAOPostgres                      -[#595959,dashed]->  OrderItem                            : "«create»"
+OrderDAOPostgres                      -[#595959,dashed]->  User
+OrderDetailController                "1" *-[#595959,plain]-> "order\n1" Order
+OrderDetailController                 -[#595959,dashed]->  OrderService                         : "«create»"
+OrderDetailController                "1" *-[#595959,plain]-> "orderUseCase\n1" OrderUseCase
+OrderDetailController                 -[#595959,dashed]->  SceneManager
+OrderDetailView                      "1" *-[#595959,plain]-> "order\n1" Order
+OrderDetailView                       -[#595959,dashed]->  OrderDetailController
+OrderDetailView                       -[#008200,dashed]-^  View
+OrderDetailsFactory                   -[#595959,dashed]->  Order
+OrderItem                            "1" *-[#595959,plain]-> "product\n1" MenuProduct
+OrderReviewDialog                     -[#595959,dashed]->  MenuProduct
+OrderReviewDialog                    "1" *-[#595959,plain]-> "items\n*" OrderItem
+OrderRowController                   "1" *-[#595959,plain]-> "order\n1" Order
+OrderRowFactory                       -[#595959,dashed]->  Order
+OrderRowItemController               "1" *-[#595959,plain]-> "order\n1" Order
+OrderRowItemController                -[#595959,dashed]->  OrderService
+OrderService                          -[#595959,dashed]->  Order
+OrderService                          -[#595959,dashed]->  Order
+OrderService                          -[#595959,dashed]->  OrderDAO
+OrderService                          -[#595959,dashed]->  OrderDAOFile                         : "«create»"
+OrderService                          -[#595959,dashed]->  OrderDAOPostgres                     : "«create»"
+OrderService                          -[#595959,dashed]->  OrderItem
+OrderService                          -[#595959,dashed]->  OrderItem
+OrderService                          -[#595959,dashed]->  OrderService
+OrderService                          -[#008200,dashed]-^  OrderUseCase
+OrderService                          -[#595959,dashed]->  User
+OrderService                          -[#595959,dashed]->  User
+OrderUseCase                          -[#595959,dashed]->  Order
+OrderUseCase                          -[#595959,dashed]->  OrderItem
+OrderUseCase                          -[#595959,dashed]->  User
+PreferencesSerializer                 -[#595959,dashed]->  KitchenPreferences                   : "«create»"
+PreferencesSerializer                 -[#595959,dashed]->  PreferencesConstants
+ProductDAO                            -[#595959,dashed]->  MenuProduct
+ProductDetailController               -[#595959,dashed]->  AddProductDialog
+ProductDetailController               -[#595959,dashed]->  DatabaseProductDAO                   : "«create»"
+ProductDetailController              "1" *-[#595959,plain]-> "productDAO\n1" DatabaseProductDAO
+ProductDetailController              "1" *-[#595959,plain]-> "product\n1" MenuProduct
+ProductDetailController               -[#595959,dashed]->  OrderService
+ProductDetailController               -[#595959,dashed]->  View
+ProductDetailController               -[#595959,dashed]->  ViewFactory
+ProductLoadingService                 -[#595959,dashed]->  MenuProduct
+ProductLoadingService                "1" *-[#595959,plain]-> "menuUseCase\n1" MenuUseCase
+ProductRowController                  -[#595959,dashed]->  DatabaseProductDAO                   : "«create»"
+ProductRowController                 "1" *-[#595959,plain]-> "product\n1" MenuProduct
+ProductRowController                 "1" *-[#595959,plain]-> "productDAO\n1" ProductDAO
+SceneManager                          -[#595959,dashed]->  SimpleGraphicsManager
+SceneManager                         "1" *-[#595959,plain]-> "viewCache\n*" View
+SceneManager                          -[#595959,dashed]->  ViewFactory
+SecurityService                       -[#595959,dashed]->  AuthenticationException              : "«create»"
+SecurityService                       -[#595959,dashed]->  DatabaseUserDAO                      : "«create»"
+SecurityService                      "1" *-[#595959,plain]-> "userDAO\n1" UserDAO
+TakeOrderController                  "1" *-[#595959,plain]-> "allProductsCache\n*" MenuProduct
+TakeOrderController                   -[#595959,dashed]->  MenuService                          : "«create»"
+TakeOrderController                  "1" *-[#595959,plain]-> "menuUseCase\n1" MenuUseCase
+TakeOrderController                   -[#595959,dashed]->  OrderItem                            : "«create»"
+TakeOrderController                  "1" *-[#595959,plain]-> "carrello\n*" OrderItem
+TakeOrderController                   -[#595959,dashed]->  OrderReviewDialog
+TakeOrderController                   -[#595959,dashed]->  OrderService                         : "«create»"
+TakeOrderController                  "1" *-[#595959,plain]-> "orderUseCase\n1" OrderUseCase
+TakeOrderController                   -[#595959,dashed]->  ProductLoadingService                : "«create»"
+TakeOrderController                  "1" *-[#595959,plain]-> "productLoadingService\n1" ProductLoadingService
+TakeOrderController                   -[#595959,dashed]->  ProductRowFactory
+TakeOrderController                   -[#595959,dashed]->  SceneManager
+TakeOrderController                   -[#595959,dashed]->  SimpleGraphicsManager
+TakeOrderController                  "1" *-[#595959,plain]-> "currentUser\n1" User
+TakeOrderController                   -[#595959,dashed]->  UserSession
+TakeOrderEinkView                     -[#595959,dashed]->  TakeOrderController
+TakeOrderEinkView                     -[#008200,dashed]-^  View
+TakeOrderView                         -[#595959,dashed]->  TakeOrderController
+TakeOrderView                         -[#008200,dashed]-^  View
+UserAccountController                 -[#595959,dashed]->  SecurityService
+UserAccountController                 -[#008200,dashed]-^  UserAccountUseCase
+UserDAO                               -[#595959,dashed]->  User
+UserSession                           -[#595959,dashed]->  InvalidUserSessionException          : "«create»"
+UserSession                           -[#595959,dashed]->  SceneManager
+UserSession                          "1" *-[#595959,plain]-> "user\n1" User
+UsersController                       -[#595959,dashed]->  ManagerService                       : "«create»"
+UsersController                      "1" *-[#595959,plain]-> "managerUseCase\n1" ManagerUseCase
+UsersController                       -[#595959,dashed]->  SceneManager
+UsersController                       -[#595959,dashed]->  SecurityService
+UsersController                       -[#595959,dashed]->  User
+UsersFactory                          -[#595959,dashed]->  KitchenUser                          : "«create»"
+UsersFactory                          -[#595959,dashed]->  ManagerUser                          : "«create»"
+UsersFactory                          -[#595959,dashed]->  User
+UsersFactory                          -[#595959,dashed]->  WaiterUser                           : "«create»"
+UsersView                             -[#000082,plain]-^  AbstractView
+ViewFactory                           -[#595959,dashed]->  EarningEinkView                      : "«create»"
+ViewFactory                           -[#595959,dashed]->  EarningView                          : "«create»"
+ViewFactory                           -[#595959,dashed]->  FinancialView                        : "«create»"
+ViewFactory                           -[#595959,dashed]->  KitchenEinkView                      : "«create»"
+ViewFactory                           -[#595959,dashed]->  KitchenView                          : "«create»"
+ViewFactory                           -[#595959,dashed]->  LoginView                            : "«create»"
+ViewFactory                           -[#595959,dashed]->  ManagerView                          : "«create»"
+ViewFactory                           -[#595959,dashed]->  MenuView                             : "«create»"
+ViewFactory                           -[#595959,dashed]->  SimpleGraphicsManager
+ViewFactory                           -[#595959,dashed]->  TakeOrderEinkView                    : "«create»"
+ViewFactory                           -[#595959,dashed]->  TakeOrderView                        : "«create»"
+ViewFactory                           -[#595959,dashed]->  UsersView                            : "«create»"
+ViewFactory                           -[#595959,dashed]->  View
+ViewFactory                           -[#595959,dashed]->  ViewNotFoundException                : "«create»"
+ViewFactory                           -[#595959,dashed]->  WaiterEinkView                       : "«create»"
+ViewFactory                           -[#595959,dashed]->  WaiterView                           : "«create»"
+WaiterController                      -[#595959,dashed]->  ChangePasswordDialog
+WaiterController                      -[#595959,dashed]->  Order
+WaiterController                      -[#595959,dashed]->  OrderService                         : "«create»"
+WaiterController                     "1" *-[#595959,plain]-> "orderUseCase\n1" OrderUseCase
+WaiterController                      -[#595959,dashed]->  SceneManager
+WaiterController                      -[#595959,dashed]->  SimpleGraphicsManager
+WaiterController                      -[#595959,dashed]->  TableSelectionUtils
+WaiterController                      -[#595959,dashed]->  User
+WaiterController                      -[#595959,dashed]->  UserSession
+WaiterController                     "1" *-[#595959,plain]-> "cardFactory\n1" WaiterNotificationCardFactory
+WaiterController                      -[#595959,dashed]->  WaiterNotificationCardFactoryClassic : "«create»"
+WaiterController                      -[#595959,dashed]->  WaiterNotificationCardFactoryEink    : "«create»"
+WaiterEinkView                        -[#000082,plain]-^  AbstractView
+WaiterNotificationCardFactory         -[#595959,dashed]->  Order
+WaiterNotificationCardFactoryClassic  -[#595959,dashed]->  Order
+WaiterNotificationCardFactoryClassic "1" *-[#595959,plain]-> "orderUseCase\n1" OrderUseCase
+WaiterNotificationCardFactoryClassic  -[#008200,dashed]-^  WaiterNotificationCardFactory
+WaiterNotificationCardFactoryEink     -[#595959,dashed]->  Order
+WaiterNotificationCardFactoryEink    "1" *-[#595959,plain]-> "orderUseCase\n1" OrderUseCase
+WaiterNotificationCardFactoryEink     -[#008200,dashed]-^  WaiterNotificationCardFactory
+WaiterUser                            -[#000082,plain]-^  User
+WaiterView                            -[#000082,plain]-^  AbstractView
+@enduml

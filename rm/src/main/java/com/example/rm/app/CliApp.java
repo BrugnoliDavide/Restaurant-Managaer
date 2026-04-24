@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
+import java.util.function.Consumer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Formatter;
 import java.util.logging.Level;
@@ -31,10 +32,6 @@ import java.util.logging.Logger;
  * <p>
  * Consente al <strong>manager</strong> di eseguire le operazioni principali
  * senza avviare l'interfaccia grafica JavaFX.
- * <p>
- * L'output verso il terminale avviene tramite un {@link Logger} dedicato
- * con un {@link Formatter} che produce testo pulito (senza timestamp né
- * livello di log), in conformità alla regola SonarCloud java:S106.
  */
 public class CliApp {
 
@@ -49,8 +46,8 @@ public class CliApp {
         ConsoleHandler handler = new ConsoleHandler();
         handler.setFormatter(new Formatter() {
             @Override
-            public String format(LogRecord record) {
-                return record.getMessage() + System.lineSeparator();
+            public String format(LogRecord logEntry) {                  // S1219: no 'record'
+                return logEntry.getMessage() + System.lineSeparator();
             }
         });
         handler.setLevel(Level.ALL);
@@ -58,39 +55,37 @@ public class CliApp {
         CLI.addHandler(handler);
     }
 
-    /** Logger applicativo (diagnostica, non output utente). */
     private static final Logger APP_LOG = Logger.getLogger(CliApp.class.getName());
 
     // =====================================================================
-    //  Costanti di formattazione
+    //  Costanti
     // =====================================================================
 
     private static final DateTimeFormatter DTF =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    private static final String SEPARATOR =
+    private static final String SEP =
             "════════════════════════════════════════════════════════════════";
-    private static final String THIN_SEP =
+    private static final String THIN =
             "────────────────────────────────────────────────────────────────";
-    private static final String LINE_35  = "─".repeat(35);
-    private static final String LINE_73  = "─".repeat(73);
-    private static final String LINE_98  = "─".repeat(98);
-    private static final String BOX_BAR  = "══════════════════════════════════════════";
+    private static final String L35  = "─".repeat(35);
+    private static final String L73  = "─".repeat(73);
+    private static final String L98  = "─".repeat(98);
+    private static final String BBAR = "══════════════════════════════════════════";
 
-    private static final String OK_PREFIX    = "  ✔ ";
-    private static final String ERR_PREFIX   = "  ✖ ";
-    private static final String WARN_PREFIX  = "  ⚠ ";
-
-    private static final String CHOICE             = "  Scelta: ";
-    private static final String MSG_INVALID_CHOICE = WARN_PREFIX + "Scelta non valida.";
-    private static final String MSG_OP_CANCELLED   = "  Operazione annullata.";
-    private static final String MSG_INVALID_ID     = ERR_PREFIX + "ID non valido.";
-    private static final String MSG_INVALID_VALUE  = ERR_PREFIX + "Valore non valido.";
+    private static final String CHOICE           = "  Scelta: ";
+    private static final String BAD_CHOICE       = "  ⚠ Scelta non valida.";
+    private static final String OP_CANCELLED     = "  Operazione annullata.";
+    private static final String BAD_ID           = "  ✖ ID non valido.";
+    private static final String BAD_VALUE        = "  ✖ Valore non valido.";
+    private static final String NO_ORDERS        = "  Nessun ordine trovato.";
+    private static final String PRODUCT_NOT_FOUND = "  ✖ Prodotto con ID {0} non trovato.";
 
     private static final int MAX_LOGIN_ATTEMPTS = 3;
+    private static final int MIN_PASSWORD_LEN   = 6;
 
     // =====================================================================
-    //  Servizi (riuso del layer esistente)
+    //  Servizi
     // =====================================================================
 
     private final ManagerUseCase   managerUseCase;
@@ -99,7 +94,7 @@ public class CliApp {
     private final ProductDAO       productDAO;
 
     // =====================================================================
-    //  Stato della sessione
+    //  Stato sessione
     // =====================================================================
 
     private String loggedUsername;
@@ -116,7 +111,6 @@ public class CliApp {
         this.productDAO       = new DatabaseProductDAO();
     }
 
-    /** Costruttore per test e dependency injection. */
     CliApp(ManagerUseCase mu, MenuUseCase meu, FinancialUseCase fu, ProductDAO pd) {
         this.managerUseCase   = mu;
         this.menuUseCase      = meu;
@@ -129,9 +123,6 @@ public class CliApp {
     // =====================================================================
 
     public static void main(String[] args) {
-        System.setProperty("java.util.logging.SimpleFormatter.format",
-                "[%1$tF %1$tT] [%4$-7s] %5$s %n");
-
         new CliApp().run();
     }
 
@@ -141,13 +132,12 @@ public class CliApp {
             configureDatabase(sc);
 
             if (!login(sc)) {
-                CLI.info(ERR_PREFIX + "Autenticazione fallita. Uscita.");
+                CLI.info("  ✖ Autenticazione fallita. Uscita.");
                 return;
             }
 
             if (!"manager".equalsIgnoreCase(loggedRole)) {
-                CLI.info(WARN_PREFIX + "Questa CLI è riservata al ruolo manager.");
-                CLI.info("  Il tuo ruolo corrente è: " + loggedRole);
+                CLI.log(Level.INFO, "  ⚠ Questa CLI è riservata al ruolo manager. Ruolo corrente: {0}", loggedRole);
                 return;
             }
 
@@ -161,9 +151,9 @@ public class CliApp {
     // =====================================================================
 
     private static void printBanner() {
-        CLI.info(SEPARATOR);
+        CLI.info(SEP);
         CLI.info("     RESTAURANT MANAGER — Interfaccia CLI");
-        CLI.info(SEPARATOR);
+        CLI.info(SEP);
         CLI.info("");
     }
 
@@ -176,12 +166,12 @@ public class CliApp {
         tryLoadSavedPreferences();
 
         if (safeTestConnection()) {
-            CLI.info(OK_PREFIX + "Connessione al database riuscita (configurazione salvata).\n");
+            CLI.info("  ✔ Connessione al database riuscita (configurazione salvata).\n");
             return;
         }
 
         CLI.info("Nessuna configurazione valida trovata. Inserire i parametri:\n");
-        promptDatabaseParams(sc);
+        promptDatabaseUntilConnected(sc);
     }
 
     private static void tryLoadSavedPreferences() {
@@ -192,47 +182,48 @@ public class CliApp {
         }
     }
 
-    private static void promptDatabaseParams(Scanner sc) {
-        boolean connected = false;
-        while (!connected) {
-            String host   = promptWithDefault(sc, "  Host [localhost]: ", "localhost");
-            String port   = promptWithDefault(sc, "  Porta [5432]: ", "5432");
-            String dbName = prompt(sc, "  Nome database: ");
-            String dbUser = prompt(sc, "  Username DB: ");
-            String dbPass = prompt(sc, "  Password DB: ");
-
-            if (dbName.isEmpty() || dbUser.isEmpty() || dbPass.isEmpty()) {
-                CLI.info(ERR_PREFIX + "Nome database, username e password sono obbligatori.\n");
-                continue;
-            }
-
-            ConnectionManager.configure(host, port, dbName, dbUser, dbPass);
-
-            if (safeTestConnection()) {
-                CLI.info(OK_PREFIX + "Connessione al database riuscita.\n");
-                connected = true;
-            } else {
-                printConnectionError();
-                if (!confirm(sc, "  Riprovare? (s/n): ")) {
-                    CLI.info("  Il programma prosegue, ma le operazioni su DB falliranno.\n");
-                    break;
-                }
-                CLI.info("");
-            }
+    /**
+     * Ripete la richiesta dei parametri DB finché la connessione non riesce.
+     * Nessun {@code break} né {@code continue}: il ciclo termina solo con
+     * {@code return} in caso di successo.
+     */
+    private static void promptDatabaseUntilConnected(Scanner sc) {
+        while (!attemptDatabaseConnection(sc)) {
+            CLI.info("  ✖ Connessione fallita. Riprovare.\n");
         }
     }
 
-    private static void printConnectionError() {
+    /**
+     * Esegue un singolo tentativo di connessione.
+     *
+     * @return {@code true} se la connessione è riuscita
+     */
+    private static boolean attemptDatabaseConnection(Scanner sc) {
+        String host   = promptWithDefault(sc, "  Host [localhost]: ", "localhost");
+        String port   = promptWithDefault(sc, "  Porta [5432]: ", "5432");
+        String dbName = prompt(sc, "  Nome database: ");
+        String dbUser = prompt(sc, "  Username DB: ");
+        String dbPass = prompt(sc, "  Password DB: ");
+
+        if (dbName.isEmpty() || dbUser.isEmpty() || dbPass.isEmpty()) {
+            CLI.info("  ✖ Nome database, username e password sono obbligatori.\n");
+            return false;
+        }
+
+        ConnectionManager.configure(host, port, dbName, dbUser, dbPass);
+
+        if (safeTestConnection()) {
+            CLI.info("  ✔ Connessione al database riuscita.\n");
+            return true;
+        }
+
         String err = ConnectionManager.getLastConnectionError();
-        CLI.info(ERR_PREFIX + "Connessione fallita: "
-                + (err != null ? err : "errore sconosciuto"));
+        if (err != null) {
+            CLI.log(Level.INFO, "  ✖ Dettaglio errore: {0}", err);
+        }
+        return false;
     }
 
-    /**
-     * Invoca {@link ConnectionManager#testConnection()} intercettando
-     * l'eventuale {@code IllegalStateException} dovuta al difetto noto
-     * in {@code ConnectionManager.isConfigured()}.
-     */
     private static boolean safeTestConnection() {
         try {
             return ConnectionManager.testConnection();
@@ -263,14 +254,14 @@ public class CliApp {
             String role = SecurityService.authenticate(user, pass);
             loggedUsername = user;
             loggedRole = role;
-            CLI.info(OK_PREFIX + "Benvenuto, " + user + " [" + role + "]");
+            CLI.log(Level.INFO, "  ✔ Benvenuto, {0} [{1}]", new Object[]{user, role});
             return true;
         } catch (AuthenticationException e) {
-            CLI.info(ERR_PREFIX + e.getUserMessage()
-                    + " (tentativo " + attempt + "/" + MAX_LOGIN_ATTEMPTS + ")\n");
+            CLI.log(Level.INFO, "  ✖ {0} (tentativo {1}/{2})\n",
+                    new Object[]{e.getUserMessage(), attempt, MAX_LOGIN_ATTEMPTS});
         } catch (Exception e) {
-            CLI.info(ERR_PREFIX + "Errore imprevisto: " + e.getMessage()
-                    + " (tentativo " + attempt + "/" + MAX_LOGIN_ATTEMPTS + ")\n");
+            CLI.log(Level.INFO, "  ✖ Errore imprevisto: {0} (tentativo {1}/{2})\n",
+                    new Object[]{e.getMessage(), attempt, MAX_LOGIN_ATTEMPTS});
         }
         return false;
     }
@@ -289,22 +280,22 @@ public class CliApp {
                 case "3" -> ordersMenu(sc);
                 case "4" -> changePassword(sc);
                 case "0" -> running = false;
-                default  -> CLI.info(MSG_INVALID_CHOICE);
+                default  -> CLI.info(BAD_CHOICE);
             }
         }
     }
 
     private void printMainMenu() {
         CLI.info("");
-        CLI.info(SEPARATOR);
-        CLI.info("  MENU PRINCIPALE — " + loggedUsername);
-        CLI.info(SEPARATOR);
+        CLI.info(SEP);
+        CLI.log(Level.INFO, "  MENU PRINCIPALE — {0}", loggedUsername);
+        CLI.info(SEP);
         CLI.info("  1. Gestione Staff");
         CLI.info("  2. Gestione Menù");
         CLI.info("  3. Ordini e Report");
         CLI.info("  4. Cambia Password");
         CLI.info("  0. Esci");
-        CLI.info(THIN_SEP);
+        CLI.info(THIN);
         CLI.info(CHOICE);
     }
 
@@ -316,15 +307,13 @@ public class CliApp {
         boolean back = false;
         while (!back) {
             printSubMenu("GESTIONE STAFF",
-                    "1. Elenco utenti",
-                    "2. Aggiungi utente",
-                    "3. Elimina utente");
+                    "1. Elenco utenti", "2. Aggiungi utente", "3. Elimina utente");
             switch (sc.nextLine().trim()) {
                 case "1" -> listUsers();
                 case "2" -> addUser(sc);
                 case "3" -> deleteUser(sc);
                 case "0" -> back = true;
-                default  -> CLI.info(MSG_INVALID_CHOICE);
+                default  -> CLI.info(BAD_CHOICE);
             }
         }
     }
@@ -336,12 +325,12 @@ public class CliApp {
             CLI.info("  Nessun utente registrato.");
             return;
         }
-        CLI.info(String.format("  %-20s %-15s", "USERNAME", "RUOLO"));
-        CLI.info("  " + LINE_35);
+        logf("  %-20s %-15s", "USERNAME", "RUOLO");
+        CLI.log(Level.INFO, "  {0}", L35);
         for (User u : users) {
-            CLI.info(String.format("  %-20s %-15s", u.getUsername(), u.getRole()));
+            logf("  %-20s %-15s", u.getUsername(), u.getRole());
         }
-        CLI.info("  Totale: " + users.size() + " utenti.");
+        CLI.log(Level.INFO, "  Totale: {0} utenti.", users.size());
     }
 
     private void addUser(Scanner sc) {
@@ -352,18 +341,20 @@ public class CliApp {
         String r = prompt(sc, "  Ruolo: ").toLowerCase();
 
         if (u.isEmpty() || p.isEmpty() || r.isEmpty()) {
-            CLI.info(ERR_PREFIX + "Tutti i campi sono obbligatori.");
+            CLI.info("  ✖ Tutti i campi sono obbligatori.");
             return;
         }
         if (!List.of("manager", "cameriere", "cucina", "cassiere").contains(r)) {
-            CLI.info(ERR_PREFIX + "Ruolo non valido.");
+            CLI.info("  ✖ Ruolo non valido.");
             return;
         }
 
         boolean ok = SecurityService.registerUser(u, p, r);
-        CLI.info(ok
-                ? OK_PREFIX + "Utente «" + u + "» creato con ruolo «" + r + "»."
-                : ERR_PREFIX + "Impossibile creare l'utente (username già esistente?).");
+        if (ok) {
+            CLI.log(Level.INFO, "  ✔ Utente «{0}» creato con ruolo «{1}».", new Object[]{u, r});
+        } else {
+            CLI.info("  ✖ Impossibile creare l''utente (username già esistente?).");
+        }
     }
 
     private void deleteUser(Scanner sc) {
@@ -372,22 +363,24 @@ public class CliApp {
         String target = prompt(sc, "  Username da eliminare: ");
 
         if (target.isEmpty()) {
-            CLI.info(ERR_PREFIX + "Username non fornito.");
+            CLI.info("  ✖ Username non fornito.");
             return;
         }
         if (target.equalsIgnoreCase(loggedUsername)) {
-            CLI.info(ERR_PREFIX + "Non è possibile eliminare l'utente attualmente collegato.");
+            CLI.info("  ✖ Non è possibile eliminare l''utente attualmente collegato.");
             return;
         }
         if (!confirm(sc, "  Conferma eliminazione di «" + target + "»? (s/n): ")) {
-            CLI.info(MSG_OP_CANCELLED);
+            CLI.info(OP_CANCELLED);
             return;
         }
 
         boolean ok = managerUseCase.deleteUser(target);
-        CLI.info(ok
-                ? OK_PREFIX + "Utente «" + target + "» eliminato."
-                : ERR_PREFIX + "Utente non trovato o errore durante l'eliminazione.");
+        if (ok) {
+            CLI.log(Level.INFO, "  ✔ Utente «{0}» eliminato.", target);
+        } else {
+            CLI.info("  ✖ Utente non trovato o errore durante l''eliminazione.");
+        }
     }
 
     // =====================================================================
@@ -398,17 +391,15 @@ public class CliApp {
         boolean back = false;
         while (!back) {
             printSubMenu("GESTIONE MENÙ",
-                    "1. Elenco prodotti",
-                    "2. Aggiungi prodotto",
-                    "3. Modifica prodotto",
-                    "4. Elimina prodotto");
+                    "1. Elenco prodotti", "2. Aggiungi prodotto",
+                    "3. Modifica prodotto", "4. Elimina prodotto");
             switch (sc.nextLine().trim()) {
                 case "1" -> listProducts();
                 case "2" -> addProduct(sc);
                 case "3" -> editProduct(sc);
                 case "4" -> deleteProduct(sc);
                 case "0" -> back = true;
-                default  -> CLI.info(MSG_INVALID_CHOICE);
+                default  -> CLI.info(BAD_CHOICE);
             }
         }
     }
@@ -421,35 +412,35 @@ public class CliApp {
             return;
         }
 
-        CLI.info(String.format("  %-5s %-25s %-15s %10s %10s %8s  %-20s",
-                "ID", "NOME", "CATEGORIA", "PREZZO", "COSTO", "MARG.%", "ALLERGENI"));
-        CLI.info("  " + LINE_98);
+        logf("  %-5s %-25s %-15s %10s %10s %8s  %-20s",
+                "ID", "NOME", "CATEGORIA", "PREZZO", "COSTO", "MARG.%", "ALLERGENI");
+        CLI.log(Level.INFO, "  {0}", L98);
 
         for (MenuProduct p : products) {
-            CLI.info(String.format("  %-5d %-25s %-15s %10.2f %10.2f %7d%%  %-20s",
+            logf("  %-5d %-25s %-15s %10.2f %10.2f %7d%%  %-20s",
                     p.getId(),
                     truncate(p.getNome(), 25),
                     truncate(p.getTipologia(), 15),
                     p.getPrezzoVendita(),
                     p.getCostoRealizzazione(),
                     p.getPercentualeMargine(),
-                    truncate(p.getAllergeni(), 20)));
+                    truncate(p.getAllergeni(), 20));
         }
-        CLI.info("  Totale: " + products.size() + " prodotti.");
+        CLI.log(Level.INFO, "  Totale: {0} prodotti.", products.size());
     }
 
     private void addProduct(Scanner sc) {
         CLI.info("\n  ─── Nuovo prodotto ───");
 
         String nome = prompt(sc, "  Nome: ");
-        if (nome.isEmpty()) { CLI.info(ERR_PREFIX + "Nome obbligatorio."); return; }
+        if (nome.isEmpty()) { CLI.info("  ✖ Nome obbligatorio."); return; }
 
         List<String> categorie = menuUseCase.loadCategories();
         if (!categorie.isEmpty()) {
-            CLI.info("  Categorie esistenti: " + String.join(", ", categorie));
+            CLI.log(Level.INFO, "  Categorie esistenti: {0}", String.join(", ", categorie));
         }
         String tipologia = prompt(sc, "  Categoria (tipologia): ");
-        if (tipologia.isEmpty()) { CLI.info(ERR_PREFIX + "Categoria obbligatoria."); return; }
+        if (tipologia.isEmpty()) { CLI.info("  ✖ Categoria obbligatoria."); return; }
 
         BigDecimal prezzo = readBigDecimal(sc, "  Prezzo di vendita (€): ");
         if (prezzo == null) return;
@@ -461,20 +452,22 @@ public class CliApp {
 
         MenuProduct product = new MenuProduct(nome, tipologia, prezzo, costo, allergeni);
         boolean ok = menuUseCase.addProduct(product);
-        CLI.info(ok
-                ? OK_PREFIX + "Prodotto «" + nome + "» aggiunto al menù."
-                : ERR_PREFIX + "Errore durante l'inserimento.");
+        if (ok) {
+            CLI.log(Level.INFO, "  ✔ Prodotto «{0}» aggiunto al menù.", nome);
+        } else {
+            CLI.info("  ✖ Errore durante l''inserimento.");
+        }
     }
 
     private void editProduct(Scanner sc) {
         listProducts();
         CLI.info("");
         int id = readInt(sc, "  ID del prodotto da modificare: ");
-        if (id <= 0) { CLI.info(MSG_INVALID_ID); return; }
+        if (id <= 0) { CLI.info(BAD_ID); return; }
 
         MenuProduct existing = menuUseCase.getProductById(id);
         if (existing == null) {
-            CLI.info(ERR_PREFIX + "Prodotto con ID " + id + " non trovato.");
+            CLI.log(Level.INFO, PRODUCT_NOT_FOUND, id);
             return;
         }
 
@@ -485,11 +478,11 @@ public class CliApp {
         applyIfNotEmpty(prompt(sc, "  Categoria [" + existing.getTipologia() + "]: "),
                 existing::setTipologia);
 
-        if (!editBigDecimalField(sc, "  Prezzo vendita [" + existing.getPrezzoVendita() + "]: ",
+        if (!editBigDecimalField(sc, existing.getPrezzoVendita(), "Prezzo vendita",
                 existing::setPrezzoVendita)) {
             return;
         }
-        if (!editBigDecimalField(sc, "  Costo realizzazione [" + existing.getCostoRealizzazione() + "]: ",
+        if (!editBigDecimalField(sc, existing.getCostoRealizzazione(), "Costo realizzazione",
                 existing::setCostoRealizzazione)) {
             return;
         }
@@ -498,24 +491,22 @@ public class CliApp {
                 existing::setAllergeni);
 
         boolean ok = menuUseCase.updateProduct(existing);
-        CLI.info(ok ? OK_PREFIX + "Prodotto aggiornato."
-                : ERR_PREFIX + "Errore durante l'aggiornamento.");
+        if (ok) {
+            CLI.info("  ✔ Prodotto aggiornato.");
+        } else {
+            CLI.info("  ✖ Errore durante l''aggiornamento.");
+        }
     }
 
-    /**
-     * Legge un campo BigDecimal opzionale; se l'utente preme Invio,
-     * il campo non viene modificato. Restituisce {@code false} se
-     * il valore inserito non è valido.
-     */
-    private static boolean editBigDecimalField(Scanner sc, String message,
-                                               java.util.function.Consumer<BigDecimal> setter) {
-        String raw = prompt(sc, message);
+    private static boolean editBigDecimalField(Scanner sc, BigDecimal current,
+                                               String label, Consumer<BigDecimal> setter) {
+        String raw = prompt(sc, "  " + label + " [" + current + "]: ");
         if (raw.isEmpty()) {
-            return true; // campo non modificato
+            return true;
         }
         BigDecimal val = parseBigDecimalOrNull(raw);
         if (val == null) {
-            CLI.info(MSG_INVALID_VALUE);
+            CLI.info(BAD_VALUE);
             return false;
         }
         setter.accept(val);
@@ -526,21 +517,24 @@ public class CliApp {
         listProducts();
         CLI.info("");
         int id = readInt(sc, "  ID del prodotto da eliminare: ");
-        if (id <= 0) { CLI.info(MSG_INVALID_ID); return; }
+        if (id <= 0) { CLI.info(BAD_ID); return; }
 
         MenuProduct existing = menuUseCase.getProductById(id);
         if (existing == null) {
-            CLI.info(ERR_PREFIX + "Prodotto con ID " + id + " non trovato.");
+            CLI.log(Level.INFO, PRODUCT_NOT_FOUND, id);
             return;
         }
         if (!confirm(sc, "  Conferma eliminazione di «" + existing.getNome() + "»? (s/n): ")) {
-            CLI.info(MSG_OP_CANCELLED);
+            CLI.info(OP_CANCELLED);
             return;
         }
 
         boolean ok = productDAO.delete((long) id);
-        CLI.info(ok ? OK_PREFIX + "Prodotto eliminato."
-                : ERR_PREFIX + "Errore durante l'eliminazione.");
+        if (ok) {
+            CLI.info("  ✔ Prodotto eliminato.");
+        } else {
+            CLI.info("  ✖ Errore durante l''eliminazione.");
+        }
     }
 
     // =====================================================================
@@ -551,17 +545,15 @@ public class CliApp {
         boolean back = false;
         while (!back) {
             printSubMenu("ORDINI E REPORT",
-                    "1. Tutti gli ordini (con totale)",
-                    "2. Dettaglio di un ordine",
-                    "3. Ordini da pagare",
-                    "4. Ordini attivi in cucina");
+                    "1. Tutti gli ordini (con totale)", "2. Dettaglio di un ordine",
+                    "3. Ordini da pagare", "4. Ordini attivi in cucina");
             switch (sc.nextLine().trim()) {
                 case "1" -> listAllOrders();
                 case "2" -> orderDetail(sc);
                 case "3" -> listOrdersToPay();
                 case "4" -> listKitchenActive();
                 case "0" -> back = true;
-                default  -> CLI.info(MSG_INVALID_CHOICE);
+                default  -> CLI.info(BAD_CHOICE);
             }
         }
     }
@@ -580,81 +572,82 @@ public class CliApp {
     }
 
     private static void printOrderTable(List<Order> orders, String title) {
-        CLI.info("\n  " + title);
-        CLI.info("  " + "─".repeat(title.length()));
+        CLI.log(Level.INFO, "\n  {0}", title);
+        CLI.log(Level.INFO, "  {0}", "─".repeat(title.length()));
 
         if (orders.isEmpty()) {
-            CLI.info("  Nessun ordine trovato.");
+            CLI.info(NO_ORDERS);
             return;
         }
 
-        CLI.info(String.format("  %-6s %-18s %-8s %-15s %-12s %10s",
-                "ID", "DATA/ORA", "TAVOLO", "CAMERIERE", "STATO", "TOTALE €"));
-        CLI.info("  " + LINE_73);
+        logf("  %-6s %-18s %-8s %-15s %-12s %10s",
+                "ID", "DATA/ORA", "TAVOLO", "CAMERIERE", "STATO", "TOTALE €");
+        CLI.log(Level.INFO, "  {0}", L73);
 
         BigDecimal grandTotal = BigDecimal.ZERO;
         for (Order o : orders) {
-            CLI.info(String.format("  %-6d %-18s %-8d %-15s %-12s %10.2f",
+            logf("  %-6d %-18s %-8d %-15s %-12s %10.2f",
                     o.getId(),
                     o.getDataOra().format(DTF),
                     o.getTavolo(),
                     truncate(o.getUsername(), 15),
                     o.getStatus(),
-                    o.getTotale()));
+                    o.getTotale());
             grandTotal = grandTotal.add(o.getTotale());
         }
-        CLI.info("  " + LINE_73);
-        CLI.info(String.format("  %d ordini — Totale complessivo: €%.2f",
-                orders.size(), grandTotal));
+        CLI.log(Level.INFO, "  {0}", L73);
+        logf("  %d ordini — Totale complessivo: €%.2f", orders.size(), grandTotal);
     }
 
     private static void orderDetail(Scanner sc) {
         CLI.info("");
         int id = readInt(sc, "  ID ordine: ");
-        if (id <= 0) { CLI.info(MSG_INVALID_ID); return; }
+        if (id <= 0) { CLI.info(BAD_ID); return; }
 
         Order order = com.example.rm.service.OrderService.findById(id);
         if (order == null) {
-            CLI.info(ERR_PREFIX + "Ordine #" + id + " non trovato.");
+            CLI.log(Level.INFO, "  ✖ Ordine #{0} non trovato.", id);
             return;
         }
 
-        printOrderDetailBox(order);
+        printOrderHeader(order);
+        printOrderItems(order.getId());
+        CLI.log(Level.INFO, "  ╚{0}╝", BBAR);
     }
 
-    private static void printOrderDetailBox(Order order) {
+    private static void printOrderHeader(Order order) {
         CLI.info("");
-        CLI.info("  ╔" + BOX_BAR + "╗");
-        CLI.info(String.format("  ║  ORDINE #%-33d║", order.getId()));
-        CLI.info("  ╠" + BOX_BAR + "╣");
-        CLI.info(String.format("  ║  Data:      %-30s║", order.getDataOra().format(DTF)));
-        CLI.info(String.format("  ║  Tavolo:    %-30d║", order.getTavolo()));
-        CLI.info(String.format("  ║  Cameriere: %-30s║", order.getUsername()));
-        CLI.info(String.format("  ║  Stato:     %-30s║", order.getStatus()));
-        CLI.info(String.format("  ║  Totale:    €%-29.2f║", order.getTotale()));
+        CLI.log(Level.INFO, "  ╔{0}╗", BBAR);
+        logf("  ║  ORDINE #%-33d║", order.getId());
+        CLI.log(Level.INFO, "  ╠{0}╣", BBAR);
+        logf("  ║  Data:      %-30s║", order.getDataOra().format(DTF));
+        logf("  ║  Tavolo:    %-30d║", order.getTavolo());
+        logf("  ║  Cameriere: %-30s║", order.getUsername());
+        logf("  ║  Stato:     %-30s║", order.getStatus());
+        logf("  ║  Totale:    €%-29.2f║", order.getTotale());
         if (order.hasNote()) {
-            CLI.info(String.format("  ║  Note:      %-30s║", truncate(order.getNote(), 30)));
+            logf("  ║  Note:      %-30s║", truncate(order.getNote(), 30));
         }
-        CLI.info("  ╠" + BOX_BAR + "╣");
+        CLI.log(Level.INFO, "  ╠{0}╣", BBAR);
         CLI.info("  ║  ARTICOLI                                ║");
-        CLI.info("  ╠" + BOX_BAR + "╣");
+        CLI.log(Level.INFO, "  ╠{0}╣", BBAR);
+    }
 
+    private static void printOrderItems(int orderId) {
         List<OrderItem> items =
-                com.example.rm.service.OrderService.getItemsDetailed(order.getId());
+                com.example.rm.service.OrderService.getItemsDetailed(orderId);
 
         if (items.isEmpty()) {
             CLI.info("  ║  (nessun articolo)                       ║");
-        } else {
-            for (OrderItem item : items) {
-                String line = String.format("%dx %s — €%.2f",
-                        item.getQuantita(),
-                        item.getDisplayName(),
-                        item.getPrezzoSnapshot()
-                                .multiply(BigDecimal.valueOf(item.getQuantita())));
-                CLI.info(String.format("  ║  • %-39s║", truncate(line, 39)));
-            }
+            return;
         }
-        CLI.info("  ╚" + BOX_BAR + "╝");
+        for (OrderItem item : items) {
+            BigDecimal lineTotal = item.getPrezzoSnapshot()
+                    .multiply(BigDecimal.valueOf(item.getQuantita()));
+            logf("  ║  • %-39s║",
+                    truncate(item.getQuantita() + "x "
+                            + item.getDisplayName() + " — €" + lineTotal, 39));
+        }
     }
 
     // =====================================================================
@@ -667,18 +660,21 @@ public class CliApp {
         String newPass = prompt(sc, "  Nuova password (min 6 caratteri): ");
         String conf    = prompt(sc, "  Conferma nuova password: ");
 
-        if (newPass.length() < 6) {
-            CLI.info(ERR_PREFIX + "La password deve essere di almeno 6 caratteri.");
+        if (newPass.length() < MIN_PASSWORD_LEN) {
+            CLI.info("  ✖ La password deve essere di almeno 6 caratteri.");
             return;
         }
         if (!newPass.equals(conf)) {
-            CLI.info(ERR_PREFIX + "Le password non corrispondono.");
+            CLI.info("  ✖ Le password non corrispondono.");
             return;
         }
 
         boolean ok = SecurityService.changePassword(loggedUsername, current, newPass);
-        CLI.info(ok ? OK_PREFIX + "Password aggiornata con successo."
-                : ERR_PREFIX + "Password attuale errata o errore durante l'aggiornamento.");
+        if (ok) {
+            CLI.info("  ✔ Password aggiornata con successo.");
+        } else {
+            CLI.info("  ✖ Password attuale errata o errore durante l''aggiornamento.");
+        }
     }
 
     // =====================================================================
@@ -712,11 +708,11 @@ public class CliApp {
         String raw = prompt(sc, message).replace(",", ".");
         BigDecimal val = parseBigDecimalOrNull(raw);
         if (val == null) {
-            CLI.info(ERR_PREFIX + "Valore numerico non valido.");
+            CLI.info("  ✖ Valore numerico non valido.");
             return null;
         }
         if (val.compareTo(BigDecimal.ZERO) < 0) {
-            CLI.info(ERR_PREFIX + "Il valore non può essere negativo.");
+            CLI.info("  ✖ Il valore non può essere negativo.");
             return null;
         }
         return val;
@@ -734,13 +730,23 @@ public class CliApp {
     //  Utilità — formattazione
     // =====================================================================
 
+    /**
+     * Scrive un messaggio formattato (stile {@code printf}) sul logger CLI.
+     * La costruzione della stringa avviene solo se il livello INFO è attivo,
+     * in conformità a SonarCloud S2629.
+     */
+    private static void logf(String format, Object... args) {
+        if (CLI.isLoggable(Level.INFO)) {
+            CLI.info(String.format(format, args));
+        }
+    }
+
     private static String truncate(String s, int max) {
         if (s == null) return "";
         return s.length() <= max ? s : s.substring(0, max - 1) + "…";
     }
 
-    private static void applyIfNotEmpty(String value,
-                                        java.util.function.Consumer<String> setter) {
+    private static void applyIfNotEmpty(String value, Consumer<String> setter) {
         if (!value.isEmpty()) {
             setter.accept(value);
         }
@@ -748,11 +754,11 @@ public class CliApp {
 
     private static void printSubMenu(String title, String... options) {
         CLI.info("");
-        CLI.info(THIN_SEP);
-        CLI.info("  " + title);
-        CLI.info(THIN_SEP);
+        CLI.info(THIN);
+        CLI.log(Level.INFO, "  {0}", title);
+        CLI.info(THIN);
         for (String opt : options) {
-            CLI.info("  " + opt);
+            CLI.log(Level.INFO, "  {0}", opt);
         }
         CLI.info("  0. Indietro");
         CLI.info(CHOICE);
