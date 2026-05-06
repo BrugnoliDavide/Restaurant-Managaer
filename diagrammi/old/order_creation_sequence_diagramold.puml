@@ -1,0 +1,146 @@
+@startuml Creazione Ordine - Restaurant Manager
+
+skinparam backgroundColor #FEFEFE
+skinparam sequence {
+    ArrowColor #2C3E50
+    ActorBorderColor #2C3E50
+    LifeLineBorderColor #34495E
+    LifeLineBackgroundColor #ECF0F1
+    
+    ParticipantBorderColor #2C3E50
+    ParticipantBackgroundColor #ECF0F1
+    
+    BoxBorderColor #34495E
+}
+
+actor waiter as waiter
+participant "TakeOrderController" as controller
+participant "ProductLoadingService" as productService
+participant "MenuService" as menuService
+participant "OrderReviewDialog" as dialog
+participant "OrderService" as orderService
+participant "DatabaseService" as dbService
+participant "OrderDAOPostgres" as orderDAO
+database "PostgreSQL DB" as db
+
+== Inizializzazione Vista Presa Ordine ==
+
+waiter -> controller: handleTakeOrder(numeroTavolo)
+activate controller
+
+controller -> controller: init(numeroTavolo)
+controller -> controller: initProductLoadingService()
+controller -> controller: setupSearch()
+
+controller ->> productService: start()
+activate productService
+note right of productService: Caricamento asincrono
+
+productService -> menuService: loadAllProducts()
+activate menuService
+
+menuService -> dbService: getAllProducts()
+activate dbService
+
+dbService -> db: SELECT * FROM menu_items
+db --> dbService: ResultSet prodotti
+dbService --> menuService: List<MenuProduct>
+deactivate dbService
+
+menuService --> productService: List<MenuProduct>
+deactivate menuService
+
+productService -->> controller: setOnSucceeded(products)
+deactivate productService
+
+controller -> controller: updateProductList(products)
+controller -> controller: renderProducts()
+
+controller --> waiter: Vista prodotti caricata
+deactivate controller
+
+== Selezione Prodotti ==
+
+loop Per ogni prodotto selezionato
+    waiter -> controller: handleIncrementProduct(prodotto)
+    activate controller
+    
+    controller -> controller: incrementProductQuantity(prodotto)
+    note right of controller: Aggiornamento carrello locale\n(Map<Integer, OrderItem>)
+    
+    controller -> controller: createOrderItem(prodotto, quantità)
+    controller -> controller: updateSendButton()
+    
+    controller --> waiter: Quantità aggiornata
+    deactivate controller
+end
+
+== Invio Ordine ==
+
+waiter -> controller: handleSend()
+activate controller
+
+alt Modalità E-ink
+    controller -> controller: sendOrderToDatabase(items, "")
+else Modalità Standard
+    controller -> dialog: show(stage, numeroTavolo, items)
+    activate dialog
+    
+    dialog --> waiter: Mostra riepilogo ordine
+    waiter -> dialog: conferma(note)
+    
+    dialog -> controller: callback(result)
+    deactivate dialog
+    
+    controller -> controller: sendOrderToDatabase(items, note)
+end
+
+== Persistenza Ordine ==
+
+controller -> orderService: createOrder(items, numeroTavolo, note, user)
+activate orderService
+
+orderService -> dbService: createOrder(items, numeroTavolo, note, user)
+activate dbService
+
+dbService -> orderDAO: createOrder(items, numeroTavolo, note, user)
+activate orderDAO
+
+orderDAO -> orderDAO: validateOrder(items, user)
+
+orderDAO -> db: BEGIN TRANSACTION
+activate db
+
+orderDAO -> db: INSERT INTO orders\n(username, tavolo, note, status)\nVALUES (?, ?, ?, 'todo')
+db --> orderDAO: order_id generato
+
+loop Per ogni OrderItem
+    orderDAO -> db: INSERT INTO order_items\n(order_id, menu_item_id, quantita,\nprezzo_vendita_snapshot,\ncosto_realizzazione_snapshot,\nnome_prodotto_snapshot)\nVALUES (?, ?, ?, ?, ?, ?)
+    db --> orderDAO: inserimento completato
+end
+
+orderDAO -> db: COMMIT TRANSACTION
+db --> orderDAO: transazione completata
+deactivate db
+
+orderDAO --> dbService: true
+deactivate orderDAO
+
+dbService --> orderService: true
+deactivate dbService
+
+orderService --> controller: true
+deactivate orderService
+
+== Completamento e Notifica ==
+
+controller -> controller: handleOrderSuccess()
+controller -> controller: clearCart()
+controller -> controller: showInfoAlert("Successo", "Ordine inviato con successo!")
+
+controller -> controller: SceneManager.showWaiter()
+
+controller --> waiter: Ordine creato, ritorno a vista cameriere
+deactivate controller
+
+@enduml

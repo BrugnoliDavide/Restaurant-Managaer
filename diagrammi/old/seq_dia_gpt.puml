@@ -1,0 +1,72 @@
+@startuml
+actor "Cameriere / Utente" as Waiter
+
+participant "TakeOrderController\n(UI)" as UI
+participant "OrderReviewDialog" as Review
+participant "OrderService\n(use-case)" as OrderSvc
+participant "DatabaseService\n(facade)" as DBSvc
+participant "OrderDAO\n(Postgres / File)" as DAO
+participant "KitchenService" as Kitchen
+participant "ProductLoadingService\n(JavaFX Service)" as ProdService
+participant "SearchExecutor\n(ScheduledExecutorService)" as SearchExec
+participant "WaiterPoller\n(Timeline 5s)" as Poller
+participant "JavaFX Thread\n(Platform.runLater)" as FXThread
+
+== Flusso principale: creazione ordine ==
+Waiter -> UI : Seleziona prodotti\nClick Send
+alt E-ink mode
+    UI -> UI : skip review\nsendOrderToDatabase(items)
+else Standard mode
+    UI -> Review : mostra dialog di conferma (modal)
+    Review --> UI : conferma con note
+end
+
+UI -> OrderSvc : createOrder(items, tavolo, note, user)
+OrderSvc -> DBSvc : createOrder(items, tavolo, note, user)
+activate DBSvc
+DBSvc -> DAO : createOrder(items, tavolo, note, user)
+activate DAO
+DAO --> DBSvc : orderCreated (id / success)
+deactivate DAO
+
+note right of DBSvc
+  Durante la persistenza:
+  - inserisce record su orders e order_items
+  - può scomporre l'ordine per categoria (decomposeOrderIfNeeded)
+end note
+
+DBSvc --> OrderSvc : success / failure
+deactivate DBSvc
+OrderSvc --> UI : true / false
+
+alt success
+    UI -> FXThread : mostra alert di successo\n(via Platform.runLater)
+    FXThread --> UI : UI aggiornata (clear cart, navigate)
+else failure
+    UI -> FXThread : mostra alert di errore
+end
+
+== Scomposizione / post-processing (DAO) ==
+DBSvc -> DAO : decomposeOrderIfNeeded(orderId)
+DAO --> DBSvc : decomposeResult
+note left: impl. SQL: crea nuovi ordini per categoria e elimina l'originale.
+note left: (operazione sincrona nel DAO ma logica complessa). 
+== Polling e notifiche camerieri (asincrono) ==
+Poller -> OrderSvc : loadReadyOrdersForWaiter() [every 5s]  -> (async)
+OrderSvc -> DBSvc : getReadyOrdersForWaiter()
+DBSvc --> OrderSvc : List<Order>
+OrderSvc -> FXThread : update notifications UI (Platform.runLater)
+FXThread --> UI : mostra card notifiche
+
+== Caricamento prodotti & ricerca (background) ==
+ProdService -> ProdService : background load (Worker)
+ProdService -> FXThread : onSucceeded (handler)
+FXThread --> UI : updateProductList(...)  <!-- aggiornamento UI asincrono -->
+SearchExec -> SearchExec : execute(searchTask)  <!-- Task eseguito su executor -->
+SearchExec -> FXThread : searchTask.onSucceeded -> updateProductList(...)
+
+== Possibile chiamata di split da KitchenService (ad es. scheduler) ==
+Kitchen -> DBSvc : splitMixedOrdersIfNeeded()  [batch]
+DBSvc -> DAO : decomposeOrderIfNeeded(orderId)  <!-- riusa DAO -->
+
+@enduml

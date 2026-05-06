@@ -1,0 +1,160 @@
+@startuml
+title Sequence Diagram - Creazione Ordine (Versione Semplificata)
+
+actor Cameriere
+participant "WaiterController" as WC
+participant "SceneManager" as SM
+participant "TakeOrderController" as TOC
+participant "ProductLoadingService" as PLS
+participant "MenuUseCase" as MU
+participant "DatabaseService" as DS
+participant "OrderReviewDialog" as ORD
+participant "OrderUseCase" as OU
+participant "OrderService" as OS
+database "PostgreSQL" as DB
+
+== Inizializzazione Presa Ordine ==
+
+Cameriere -> WC: handleNewOrder()
+activate WC
+WC -> SM: showTakeOrder(numeroTavolo)
+activate SM
+SM -> TOC**: create & init(numeroTavolo)
+activate TOC
+
+TOC -> TOC: initLoadingIndicator()
+note right: Setup ProgressIndicator\ne overlay UI
+
+TOC -> PLS**: create service
+activate PLS
+TOC -> PLS: configure callbacks\n(onSucceeded, onFailed)
+deactivate PLS
+
+TOC -> TOC: setupSearch()
+note right: Debouncing 300ms\nThread dedicato ricerca
+
+TOC -> TOC: loadProductsAsync()
+
+SM --> WC: void
+deactivate SM
+deactivate WC
+
+== Caricamento Asincrono Prodotti ==
+
+TOC -> TOC: showLoadingIndicator(true)
+TOC -> PLS: start()
+activate PLS
+
+PLS -> PLS: createTask() in background
+note right: Thread separato\nper operazioni DB
+
+PLS -> MU: loadAllProducts()
+activate MU
+MU -> DS: getAllProducts()
+activate DS
+DS -> DB: SELECT * FROM menu_items
+activate DB
+DB --> DS: ResultSet
+deactivate DB
+DS --> MU: List<MenuProduct>
+deactivate DS
+MU --> PLS: List<MenuProduct>
+deactivate MU
+
+PLS -> TOC: onSucceeded callback
+deactivate PLS
+
+TOC -> TOC: Platform.runLater:\nupdateProductList(products)
+note right: Aggiorna UI con\nprodotti raggruppati\nper categoria
+
+TOC -> TOC: showLoadingIndicator(false)
+
+deactivate TOC
+
+== Ricerca Prodotti (con Debouncing) ==
+
+Cameriere -> TOC: type in searchField
+activate TOC
+TOC -> TOC: debounce timer (300ms)
+
+... attesa 300ms ...
+
+TOC -> TOC: performSearch() in background
+note right: Filtra cache prodotti\nper nome/categoria/allergeni
+
+TOC -> TOC: Platform.runLater:\nupdateProductList(filtered)
+note right: Visual feedback:\nbordo verde/rosso,\ntooltip, animazione
+
+deactivate TOC
+
+== Selezione Prodotti ==
+
+Cameriere -> TOC: click increment prodotto
+activate TOC
+TOC -> TOC: incrementProductQuantity()
+note right: Aggiorna carrello\nMap<productId, OrderItem>
+
+TOC -> TOC: updateSendButton()
+note right: "Send Order (N)"
+
+TOC -> TOC: loadProductsAsync()
+note right: Refresh UI mostra\nquantità aggiornate
+
+deactivate TOC
+
+== Invio Ordine ==
+
+Cameriere -> TOC: click Send Order
+activate TOC
+
+alt carrello vuoto
+    TOC -> Cameriere: Alert "Carrello vuoto"
+else modalità E-Ink
+    TOC -> OU: createOrder(items, tavolo, "", user)
+    note right: Invio diretto\nsenza dialog review
+else modalità Standard
+    TOC -> ORD**: show review dialog
+    activate ORD
+    ORD -> ORD: display items, calcola totale
+    ORD --> Cameriere: mostra dialog
+    
+    Cameriere -> ORD: conferma
+    ORD -> TOC: callback(note)
+    deactivate ORD
+    
+    TOC -> OU: createOrder(items, tavolo, note, user)
+end
+
+activate OU
+OU -> OS: createOrder()
+activate OS
+OS -> DB: BEGIN TRANSACTION
+activate DB
+OS -> DB: INSERT INTO orders
+OS -> DB: INSERT INTO order_items (loop)
+OS -> DB: COMMIT
+DB --> OS: success
+deactivate DB
+OS --> OU: true
+deactivate OS
+OU --> TOC: true
+deactivate OU
+
+TOC -> TOC: clearCart()
+TOC -> SM: showWaiter()
+activate SM
+SM --> TOC: void
+deactivate SM
+
+TOC --> Cameriere: "Successo"
+
+deactivate TOC
+
+== Cleanup (al cambio schermata) ==
+
+TOC -> TOC: cleanup()
+activate TOC
+note right: Shutdown executor ricerca\nCancel service caricamento
+deactivate TOC
+
+@enduml

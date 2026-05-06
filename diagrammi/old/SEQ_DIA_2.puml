@@ -1,0 +1,213 @@
+@startuml
+title Sequence Diagram - Creazione Ordine (Completo con Async e Review Dialog)
+
+actor Cameriere
+participant "WaiterController" as WC
+participant "SceneManager" as SM
+participant "ViewFactory" as VF
+participant "TakeOrderView" as TOV
+participant "TakeOrderController" as TOC
+participant "MenuUseCase" as MU
+participant "MenuService" as MS
+participant "ProductLoadingService" as PLS
+participant "DatabaseService" as DS
+participant "DatabaseConnection" as DBC
+participant "OrderReviewDialog" as ORD
+participant "OrderUseCase" as OU
+participant "OrderService" as OS
+participant "OrderDAO" as ODAO
+participant "OrderDAOPostgres" as ODAOP
+database "PostgreSQL" as DB
+participant "UserSession" as US
+participant "UsersFactory" as UF
+
+== Inizializzazione Presa Ordine ==
+
+Cameriere -> WC: handleNewOrder()
+activate WC
+WC -> WC: parse numeroTavolo from txtTable
+WC -> SM: showTakeOrder(numeroTavolo)
+activate SM
+SM -> VF: forTakeOrder(numeroTavolo)
+activate VF
+VF -> TOV: create(numeroTavolo)
+activate TOV
+TOV -> TOC: load FXML & create controller
+activate TOC
+
+TOV -> TOC: init(numeroTavolo)
+TOC -> TOC: updateTitle()
+TOC -> TOC: startProductLoading()
+
+' Caricamento asincrono prodotti
+TOC -> PLS: new ProductLoadingService(menuUseCase)
+activate PLS
+PLS -> MU: loadAllProducts()
+activate MU
+MU -> MS: loadAllProducts()
+activate MS
+MS -> DS: getAllProducts()
+activate DS
+DS -> DB: SELECT menu_items
+DB --> DS: ResultSet
+DS --> MS: List<MenuProduct>
+deactivate DS
+MS --> MU: List<MenuProduct>
+deactivate MS
+MU --> PLS: List<MenuProduct>
+deactivate MU
+
+PLS --> TOC: prodotti caricati
+deactivate PLS
+
+loop for each MenuProduct
+    TOC -> TOC: createProductRow(prodotto)
+    TOC -> TOC: add productRow to productsContainer
+end
+
+TOC -> TOC: setupAutoRefresh() 
+TOC -> TOC: startPolling()
+
+VF --> SM: TakeOrderView
+deactivate VF
+deactivate TOV
+SM -> SM: setRoot(view.getRoot())
+SM --> WC: void
+deactivate SM
+deactivate WC
+
+== Selezione Prodotti (con chiamate async) ==
+
+Cameriere -> TOC: click su prodotto / increment
+activate TOC
+TOC -> TOC: handleIncrementProduct(prodotto)
+TOC -> TOC: incrementProductQuantity(prodotto)
+TOC -> TOC: createOrderItem(prodotto, quantità)
+TOC -> TOC: carrello.put(productId, OrderItem)
+
+' Calcolo totale in background
+TOC -> TOC: calculateTotalAsync()
+TOC -> TOC: updateSendButton()
+
+deactivate TOC
+
+== Invio Ordine (con dialog di revisione) ==
+
+Cameriere -> TOC: handleSend()
+activate TOC
+
+TOC -> TOC: validateOrder()
+alt validazione fallita
+    TOC -> TOC: showValidationError()
+    return
+end
+
+TOC -> ORD: show(stage, tavolo, items, note)
+activate ORD
+
+ORD -> ORD: loadOrderDetails()
+ORD -> OU: getOrderItemsForDisplay(items)
+activate OU
+OU -> OS: loadOrderItemsForDisplay()
+activate OS
+OS -> DS: getOrderItemsForDisplay()
+activate DS
+DS -> ODAO: getOrderItemsForDisplay()
+activate ODAO
+ODAO -> ODAOP: getOrderItemsForDisplay()
+activate ODAOP
+ODAOP -> DB: query dettagli ordine
+DB --> ODAOP: dati
+ODAOP --> ODAO: List<String>
+deactivate ODAOP
+ODAO --> DS: List<String>
+deactivate ODAO
+DS --> OS: List<String>
+deactivate DS
+OS --> OU: List<String>
+deactivate OS
+OU --> ORD: List<String>
+deactivate OU
+
+ORD -> ORD: calculateTotalAsync()
+ORD -> ORD: populateReviewUI()
+ORD --> Cameriere: mostra dialog revisione
+
+Cameriere -> ORD: modifica note
+Cameriere -> ORD: conferma ordine
+ORD -> ORD: handleConfirm()
+ORD -> TOC: callback.accept(OrderReviewResult)
+deactivate ORD
+
+== Creazione Ordine nel Database ==
+
+TOC -> US: getInstance()
+activate US
+US --> TOC: UserSession
+deactivate US
+
+TOC -> UF: createUser(username, role)
+activate UF
+UF --> TOC: User object
+deactivate UF
+
+TOC -> OU: createOrder(items, tavolo, note, user)
+activate OU
+OU -> OS: createOrder(items, tavolo, note, user)
+activate OS
+OS -> DS: createOrder(items, tavolo, note, user)
+activate DS
+
+DS -> DBC: getConnection()
+activate DBC
+DBC -> DS: Connection
+deactivate DBC
+
+DS -> DS: beginTransaction()
+DS -> ODAO: createOrder(items, tavolo, note, user)
+activate ODAO
+ODAO -> ODAOP: createOrder(items, tavolo, note, user)
+activate ODAOP
+
+ODAOP -> DB: BEGIN TRANSACTION
+activate DB
+ODAOP -> DB: INSERT INTO orders
+DB --> ODAOP: orderId generato
+
+loop for each OrderItem
+    ODAOP -> DB: INSERT INTO order_items
+    DB --> ODAOP: success
+end
+
+ODAOP -> DB: COMMIT TRANSACTION
+deactivate DB
+
+ODAOP --> ODAO: true
+deactivate ODAOP
+ODAO --> DS: true
+deactivate ODAO
+
+DS -> DS: commitTransaction()
+DS -> DS: closeConnection()
+DS --> OS: true
+deactivate DS
+OS --> OU: true
+deactivate OS
+OU --> TOC: true
+deactivate OU
+
+== Notifiche e Pulizia ==
+
+TOC -> TOC: handleOrderSuccess()
+TOC -> TOC: showSuccessAnimation()
+TOC -> TOC: clearCartAsync()
+TOC -> TOC: stopPolling()
+TOC -> SM: showWaiter()
+activate SM
+SM --> TOC: void
+deactivate SM
+
+TOC --> Cameriere: conferma operazione
+deactivate TOC
+
+@enduml

@@ -1,0 +1,172 @@
+@startuml Restaurant Manager - VOPC (View Of Participant Classes)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 100
+
+' === PRESENTATION LAYER ===
+package "Presentation Layer" #E8F5E9 {
+    class SceneManager <<Coordinator>> {
+        +showLogin()
+        +showMenu()
+        +showWaiter()
+        +showKitchen()
+        +showManager()
+    }
+    
+    interface View {
+        +getRoot()
+    }
+    
+    class ViewFactory <<Factory>> {
+        +forRole(String)
+        +forTakeOrder(int)
+    }
+    
+    class "Controllers\n(LoginController,\nWaiterController,\nKitchenController,\nMenuController,\nManagerController,\netc.)" as Controllers
+}
+
+' === APPLICATION LAYER ===
+package "Application Layer" #E3F2FD {
+    class UserSession <<Singleton>> {
+        -User user
+        +getInstance()
+        +getUser()
+        +cleanUserSession()
+    }
+    
+    class UsersFactory <<Factory>> {
+        +createUser(String, String)
+    }
+}
+
+' === BUSINESS LAYER ===
+package "Business Layer" #FFF3E0 {
+    interface "UseCases\n(MenuUseCase,\nOrderUseCase,\nKitchenUseCase,\netc.)" as UseCases {
+        +businessOperations()
+    }
+    
+    class "Services\n(MenuService,\nOrderService,\nKitchenService,\netc.)" as Services
+    
+    class SecurityService {
+        +authenticate()
+        +registerUser()
+        +changePassword()
+    }
+}
+
+' === DOMAIN LAYER ===
+package "Domain Layer" #FCE4EC {
+    abstract class User {
+        #username
+        #role
+        +getWelcomeMessage()
+    }
+    
+    class "User Types\n(ManagerUser,\nWaiterUser,\nKitchenUser)" as UserTypes
+    
+    class MenuProduct {
+        -nome
+        -tipologia
+        -prezzoVendita
+        -costoRealizzazione
+    }
+    
+    class Order {
+        -id
+        -tavolo
+        -dataOra
+        -status
+        -totale
+    }
+    
+    class OrderItem {
+        -product
+        -quantita
+        -prezzoSnapshot
+    }
+    
+    class KitchenPreferences {
+        -username
+        -selectedCategories
+        -splitMixedOrders
+    }
+}
+
+' === DATA ACCESS LAYER ===
+package "Data Access Layer" #F3E5F5 {
+    class DatabaseService {
+        +getAllProducts()
+        +createOrder()
+        +getAllOrders()
+        +getKitchenPreferences()
+    }
+    
+    interface "DAOs\n(OrderDAO,\nProductDAO,\nCategoryDAO,\netc.)" as DAOs {
+        +dataOperations()
+    }
+    
+    class "DAO Implementations\n(OrderDAOPostgres,\nOrderDAOFile,\netc.)" as DAOImpl
+}
+
+' === INFRASTRUCTURE ===
+package "Infrastructure" #F1F8E9 {
+    class DBConfigStore {
+        +save()
+        +getHost()
+        +getPassword()
+    }
+    
+    class "Preferences\n(SimpleGraphicsManager,\nDemoModeManager)" as Preferences
+}
+
+' === RELATIONSHIPS ===
+
+' Presentation to Application
+SceneManager --> ViewFactory : creates
+ViewFactory ..> View : creates
+Controllers --> UserSession : uses
+Controllers --> UseCases : delegates to
+
+' Application to Business
+UserSession --> User : holds
+UsersFactory ..> UserTypes : creates
+Services ..|> UseCases : implements
+
+' Business to Domain
+Services --> Order : manages
+Services --> MenuProduct : manages
+Services --> KitchenPreferences : manages
+SecurityService --> User : authenticates
+
+' Business to Data Access
+Services --> DatabaseService : uses
+DatabaseService --> DAOs : delegates
+DAOs <|.. DAOImpl : implements
+
+' Domain relationships
+Order "1" *-- "*" OrderItem
+OrderItem "*" --> "1" MenuProduct
+UserTypes --|> User
+
+' Infrastructure
+DatabaseService --> DBConfigStore : configured by
+Controllers --> Preferences : reads
+
+' Key flows
+SceneManager ..> Controllers : manages
+Controllers ..> SecurityService : login flow
+
+note right of SceneManager
+  Coordina la navigazione
+  tra le varie schermate
+end note
+
+
+note right of UseCases
+  Business logic
+  disaccoppiata dalla View
+end note
+
+@enduml

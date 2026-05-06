@@ -365,6 +365,7 @@ public class TakeOrderController {
     }
     @FXML
     private void handleCancel() {
+        cleanup();
         try {
             SceneManager.showWaiter();
         } catch (Exception e) {
@@ -438,6 +439,7 @@ public class TakeOrderController {
     private void handleOrderSuccess() {
         logger.log(Level.INFO, "Ordine inviato con successo per tavolo {0}", numeroTavolo);
         showInfoAlert("Successo", "Ordine inviato con successo!");
+        cleanup();
         clearCart();
         SceneManager.showWaiter();
     }

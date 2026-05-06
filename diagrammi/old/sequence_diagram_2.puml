@@ -1,0 +1,45 @@
+SEQUENCE DIAGRAM - CREAZIONE ORDINE
+
+1. INIZIALIZZAZIONE
+   Cameriere → WaiterController: handleNewOrder()
+   WaiterController → SceneManager: showTakeOrder(numeroTavolo)
+   SceneManager → ViewFactory: forTakeOrder(numeroTavolo)
+   ViewFactory → TakeOrderView: create()
+   
+   [CARICAMENTO ASINCRONO PRODOTTI]
+   TakeOrderController → ProductLoadingService: new()
+   ProductLoadingService → MenuUseCase: loadAllProducts()
+   MenuUseCase → MenuService: loadAllProducts()
+   MenuService → DatabaseService: getAllProducts()
+   DatabaseService → PostgreSQL: SELECT menu_items
+   [RITORNO DATI...]
+
+2. SELEZIONE PRODOTTI
+   [LOOP per ogni interazione]
+   Cameriere → TakeOrderController: click prodotto
+   TakeOrderController → [CALCOLO ASINCRONO]: update cart
+   TakeOrderController → [ANIMAZIONE]: update UI
+
+3. REVISIONE ORDINE
+   Cameriere → TakeOrderController: handleSend()
+   TakeOrderController → OrderReviewDialog: show()
+   OrderReviewDialog → [CARICAMENTO ASINCRONO]: dettagli ordine
+   Cameriere → OrderReviewDialog: conferma
+
+4. CREAZIONE DATABASE
+   TakeOrderController → UserSession: getInstance()
+   TakeOrderController → UsersFactory: createUser()
+   TakeOrderController → OrderUseCase: createOrder()
+   
+   [TRANSAZIONE DATABASE]
+   OrderService → DatabaseService: createOrder()
+   DatabaseService → OrderDAO: createOrder()
+   OrderDAO → OrderDAOPostgres: createOrder()
+   OrderDAOPostgres → PostgreSQL: BEGIN TRANSACTION
+   [INSERT orders + order_items]
+   OrderDAOPostgres → PostgreSQL: COMMIT
+
+5. CONFERMA E PULIZIA
+   TakeOrderController → [ANIMAZIONE]: successo
+   TakeOrderController → SceneManager: showWaiter()
+   [NOTIFICA ASINCRONA]: notifyKitchen()

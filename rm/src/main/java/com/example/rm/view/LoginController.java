@@ -32,7 +32,7 @@ public class LoginController {
     @FXML private PasswordField passField;
     @FXML private Circle dbStatusCircle;
 
-    public static final Logger logger = Logger.getLogger(LoginController.class.getName());
+    private static final Logger logger = Logger.getLogger(LoginController.class.getName());
 
     @FXML
     public void initialize() {

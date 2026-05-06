@@ -40,6 +40,9 @@ public class CliApp {
     // =====================================================================
 
     private static final Logger CLI = Logger.getLogger("cli.output");
+    private static final String space0STR = "  {0}";
+    private static final String spaceBAR0STR = "  ╠{0}╣";
+
 
     static {
         CLI.setUseParentHandlers(false);
@@ -326,7 +329,7 @@ public class CliApp {
             return;
         }
         logf("  %-20s %-15s", "USERNAME", "RUOLO");
-        CLI.log(Level.INFO, "  {0}", L35);
+        CLI.log(Level.INFO, space0STR, L35);
         for (User u : users) {
             logf("  %-20s %-15s", u.getUsername(), u.getRole());
         }
@@ -414,7 +417,7 @@ public class CliApp {
 
         logf("  %-5s %-25s %-15s %10s %10s %8s  %-20s",
                 "ID", "NOME", "CATEGORIA", "PREZZO", "COSTO", "MARG.%", "ALLERGENI");
-        CLI.log(Level.INFO, "  {0}", L98);
+        CLI.log(Level.INFO, space0STR, L98);
 
         for (MenuProduct p : products) {
             logf("  %-5d %-25s %-15s %10.2f %10.2f %7d%%  %-20s",
@@ -573,7 +576,7 @@ public class CliApp {
 
     private static void printOrderTable(List<Order> orders, String title) {
         CLI.log(Level.INFO, "\n  {0}", title);
-        CLI.log(Level.INFO, "  {0}", "─".repeat(title.length()));
+        CLI.log(Level.INFO, space0STR, "─".repeat(title.length()));
 
         if (orders.isEmpty()) {
             CLI.info(NO_ORDERS);
@@ -582,7 +585,7 @@ public class CliApp {
 
         logf("  %-6s %-18s %-8s %-15s %-12s %10s",
                 "ID", "DATA/ORA", "TAVOLO", "CAMERIERE", "STATO", "TOTALE €");
-        CLI.log(Level.INFO, "  {0}", L73);
+        CLI.log(Level.INFO, space0STR, L73);
 
         BigDecimal grandTotal = BigDecimal.ZERO;
         for (Order o : orders) {
@@ -595,7 +598,7 @@ public class CliApp {
                     o.getTotale());
             grandTotal = grandTotal.add(o.getTotale());
         }
-        CLI.log(Level.INFO, "  {0}", L73);
+        CLI.log(Level.INFO, space0STR, L73);
         logf("  %d ordini — Totale complessivo: €%.2f", orders.size(), grandTotal);
     }
 
@@ -619,7 +622,7 @@ public class CliApp {
         CLI.info("");
         CLI.log(Level.INFO, "  ╔{0}╗", BBAR);
         logf("  ║  ORDINE #%-33d║", order.getId());
-        CLI.log(Level.INFO, "  ╠{0}╣", BBAR);
+        CLI.log(Level.INFO, spaceBAR0STR, BBAR);
         logf("  ║  Data:      %-30s║", order.getDataOra().format(DTF));
         logf("  ║  Tavolo:    %-30d║", order.getTavolo());
         logf("  ║  Cameriere: %-30s║", order.getUsername());
@@ -628,9 +631,9 @@ public class CliApp {
         if (order.hasNote()) {
             logf("  ║  Note:      %-30s║", truncate(order.getNote(), 30));
         }
-        CLI.log(Level.INFO, "  ╠{0}╣", BBAR);
+        CLI.log(Level.INFO, spaceBAR0STR, BBAR);
         CLI.info("  ║  ARTICOLI                                ║");
-        CLI.log(Level.INFO, "  ╠{0}╣", BBAR);
+        CLI.log(Level.INFO, spaceBAR0STR, BBAR);
     }
 
     private static void printOrderItems(int orderId) {
@@ -755,10 +758,10 @@ public class CliApp {
     private static void printSubMenu(String title, String... options) {
         CLI.info("");
         CLI.info(THIN);
-        CLI.log(Level.INFO, "  {0}", title);
+        CLI.log(Level.INFO, space0STR, title);
         CLI.info(THIN);
         for (String opt : options) {
-            CLI.log(Level.INFO, "  {0}", opt);
+            CLI.log(Level.INFO, space0STR, opt);
         }
         CLI.info("  0. Indietro");
         CLI.info(CHOICE);

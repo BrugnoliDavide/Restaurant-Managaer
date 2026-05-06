@@ -1,0 +1,147 @@
+@startuml
+title Sequence Diagram - Creazione Ordine
+
+actor Cameriere
+participant "WaiterController" as WC
+participant "SceneManager" as SM
+participant "ViewFactory" as VF
+participant "TakeOrderView" as TOV
+participant "TakeOrderController" as TOC
+participant "MenuUseCase" as MU
+participant "MenuService" as MS
+participant "DatabaseService" as DS
+participant "ProductRowFactory" as PRF
+participant "OrderReviewDialog" as ORD
+participant "OrderUseCase" as OU
+participant "OrderService" as OS
+participant "OrderDAO" as ODAO
+participant "OrderDAOPostgres" as ODAOP
+database "PostgreSQL" as DB
+
+== Inizializzazione Presa Ordine ==
+Cameriere -> WC: handleNewOrder()
+activate WC
+WC -> WC: parse numeroTavolo from txtTable
+WC -> SM: showTakeOrder(numeroTavolo)
+activate SM
+SM -> VF: forTakeOrder(numeroTavolo)
+activate VF
+VF -> TOV**: create(numeroTavolo)
+activate TOV
+TOV -> TOC**: load FXML & create controller
+activate TOC
+TOV -> TOC: init(numeroTavolo)
+TOC -> TOC: updateTitle()
+TOC -> TOC: loadProducts()
+TOC -> MU: loadAllProducts()
+activate MU
+MU -> MS: loadAllProducts()
+activate MS
+MS -> DS: getAllProducts()
+activate DS
+DS -> DB: SELECT * FROM menu_items
+DB --> DS: ResultSet
+DS --> MS: List<MenuProduct>
+deactivate DS
+MS --> MU: List<MenuProduct>
+deactivate MS
+MU --> TOC: List<MenuProduct>
+deactivate MU
+
+loop for each MenuProduct
+    TOC -> TOC: createProductRow(prodotto)
+    TOC -> PRF: row(nome, tipo, prezzo, quantità, onAdd, onRemove)
+    activate PRF
+    PRF --> TOC: HBox productRow
+    deactivate PRF
+    TOC -> TOC: add productRow to productsContainer
+end
+
+VF --> SM: TakeOrderView
+deactivate VF
+deactivate TOV
+SM -> SM: setRoot(view.getRoot())
+SM --> WC: void
+deactivate SM
+deactivate WC
+
+== Selezione Prodotti ==
+Cameriere -> TOC: click su prodotto / increment
+activate TOC
+TOC -> TOC: handleIncrementProduct(prodotto)
+TOC -> TOC: incrementProductQuantity(prodotto)
+TOC -> TOC: createOrderItem(prodotto, quantità)
+TOC -> TOC: carrello.put(productId, OrderItem)
+TOC -> TOC: updateSendButton()
+TOC -> TOC: loadProducts()
+note right: Ricarica UI per mostrare\nle quantità aggiornate
+deactivate TOC
+
+== Invio Ordine ==
+Cameriere -> TOC: handleSend()
+activate TOC
+
+alt modalità e-ink
+    TOC -> TOC: sendOrderToDatabase(items, "")
+else modalità standard
+    TOC -> ORD**: show(stage, tavolo, items, note, callback)
+    activate ORD
+    ORD -> ORD: initialize()
+    ORD -> ORD: populateProducts()
+    
+    loop for each OrderItem
+        ORD -> ORD: create product row display
+    end
+    
+    ORD -> ORD: calculate totale
+    ORD --> Cameriere: mostra dialog revisione
+    Cameriere -> ORD: conferma ordine
+    ORD -> ORD: handleConfirm()
+    ORD -> TOC: callback.accept(OrderReviewResult)
+    deactivate ORD
+    TOC -> TOC: sendOrderToDatabase(items, note)
+end
+
+TOC -> OU: createOrder(items, tavolo, note, user)
+activate OU
+OU -> OS: createOrder(items, tavolo, note, user)
+activate OS
+OS -> ODAO: createOrder(items, tavolo, note, user)
+activate ODAO
+ODAO -> ODAOP: createOrder(items, tavolo, note, user)
+activate ODAOP
+
+ODAOP -> DB: BEGIN TRANSACTION
+activate DB
+ODAOP -> DB: INSERT INTO orders\n(username, tavolo, note, status)\nVALUES (?, ?, ?, 'to-do')
+DB --> ODAOP: orderId generato
+
+loop for each OrderItem
+    ODAOP -> DB: INSERT INTO order_items\n(order_id, menu_item_id, quantita,\nprezzo_vendita_snapshot,\ncosto_realizzazione_snapshot,\nnome_prodotto_snapshot)\nVALUES (?, ?, ?, ?, ?, ?)
+    DB --> ODAOP: success
+end
+
+ODAOP -> DB: COMMIT TRANSACTION
+deactivate DB
+
+ODAOP --> ODAO: true
+deactivate ODAOP
+ODAO --> OS: true
+deactivate ODAO
+OS --> OU: true
+deactivate OS
+OU --> TOC: true
+deactivate OU
+
+TOC -> TOC: handleOrderSuccess()
+TOC -> TOC: showInfoAlert("Successo")
+TOC -> TOC: clearCart()
+TOC -> SM: showWaiter()
+activate SM
+SM --> TOC: void
+deactivate SM
+
+TOC --> Cameriere: conferma operazione
+deactivate TOC
+
+@enduml

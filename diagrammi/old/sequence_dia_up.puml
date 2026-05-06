@@ -1,0 +1,341 @@
+@startuml
+title Sequence Diagram - Creazione Ordine (Aggiornato con Chiamate Asincrone)
+
+actor Cameriere
+participant "WaiterController" as WC
+participant "SceneManager" as SM
+participant "ViewFactory" as VF
+participant "TakeOrderView" as TOV
+participant "TakeOrderController" as TOC
+participant "ProductLoadingService" as PLS
+participant "JavaFX Service Thread" as JST
+participant "ProgressIndicator" as PI
+participant "SearchExecutor" as SE
+participant "Task<MenuProduct>" as TASK
+participant "MenuUseCase" as MU
+participant "MenuService" as MS
+participant "DatabaseService" as DS
+participant "ProductRowFactory" as PRF
+participant "OrderReviewDialog" as ORD
+participant "OrderUseCase" as OU
+participant "OrderService" as OS
+participant "OrderDAO" as ODAO
+participant "OrderDAOPostgres" as ODAOP
+database "PostgreSQL" as DB
+
+== Inizializzazione Presa Ordine ==
+
+Cameriere -> WC: handleNewOrder()
+activate WC
+WC -> WC: parse numeroTavolo from txtTable
+WC -> SM: showTakeOrder(numeroTavolo)
+activate SM
+SM -> VF: forTakeOrder(numeroTavolo)
+activate VF
+VF -> TOV**: create(numeroTavolo)
+activate TOV
+TOV -> TOC**: load FXML & create controller
+activate TOC
+
+TOV -> TOC: init(numeroTavolo)
+TOC -> TOC: updateTitle()
+TOC -> TOC: initLoadingIndicator()
+TOC -> PI**: create ProgressIndicator
+activate PI
+TOC -> PI: setProgress(-1) // indeterminato
+TOC -> TOC: create loadingOverlay VBox
+TOC -> TOC: add to UI hierarchy
+deactivate PI
+
+TOC -> TOC: initProductLoadingService()
+TOC -> PLS**: create(menuUseCase)
+activate PLS
+TOC -> PLS: setOnSucceeded(event -> updateProductList)
+TOC -> PLS: setOnFailed(event -> showErrorAlert)
+TOC -> PLS: setOnCancelled(event -> hideLoading)
+deactivate PLS
+
+TOC -> TOC: setupSearch()
+TOC -> SE**: create SingleThreadScheduledExecutor
+activate SE
+note right of SE: Thread dedicato per ricerca\ncon debouncing 300ms
+TOC -> TOC: bind searchField.textProperty()
+TOC -> TOC: init allProductsCache (CopyOnWriteArrayList)
+deactivate SE
+
+TOC -> TOC: loadProducts()
+
+VF --> SM: TakeOrderView
+deactivate VF
+deactivate TOV
+SM -> SM: setRoot(view.getRoot())
+SM --> WC: void
+deactivate SM
+deactivate WC
+
+== Caricamento Asincrono Prodotti ==
+
+TOC -> TOC: loadProductsAsync()
+activate TOC
+
+alt loadingIndicator != null && service ready
+    TOC -> PI: showLoadingIndicator(true)
+    activate PI
+    PI -> PI: setVisible(true), setManaged(true)
+    deactivate PI
+    
+    TOC -> PLS: reset() [if needed]
+    activate PLS
+    TOC -> PLS: start()
+    
+    PLS -> JST**: createTask()
+    activate JST
+    note right of JST: JavaFX Service crea\nTask in background thread
+    
+    JST -> TASK**: create Task<List<MenuProduct>>
+    activate TASK
+    
+    TASK -> TASK: call()
+    TASK -> TASK: Thread.sleep(100) // simulazione
+    TASK -> MU: loadAllProducts()
+    activate MU
+    MU -> MS: loadAllProducts()
+    activate MS
+    MS -> DS: getAllProducts()
+    activate DS
+    DS -> DB: SELECT * FROM menu_items
+    activate DB
+    DB --> DS: ResultSet
+    deactivate DB
+    DS --> MS: List<MenuProduct>
+    deactivate DS
+    MS --> MU: List<MenuProduct>
+    deactivate MS
+    MU --> TASK: List<MenuProduct>
+    deactivate MU
+    
+    TASK --> JST: result
+    deactivate TASK
+    deactivate JST
+    
+    PLS -> PLS: trigger onSucceeded event
+    PLS -> TOC: Platform.runLater(updateProductList)
+    deactivate PLS
+    
+    TOC -> TOC: updateProductList(products)
+    TOC -> TOC: productsContainer.getChildren().clear()
+    TOC -> TOC: group by category (Stream API)
+    
+    loop for each category
+        TOC -> TOC: create category Label
+        loop for each MenuProduct in category
+            TOC -> TOC: createProductRow(prodotto)
+            TOC -> PRF: row(nome, tipo, prezzo, quantità, onAdd, onRemove)
+            activate PRF
+            PRF --> TOC: HBox productRow
+            deactivate PRF
+            TOC -> TOC: add to productsContainer
+        end
+        TOC -> TOC: add Separator
+    end
+    
+    TOC -> PI: showLoadingIndicator(false)
+    activate PI
+    PI -> PI: setVisible(false), setManaged(false)
+    deactivate PI
+    
+    TOC -> TOC: update allProductsCache
+    
+else service == null || loadingIndicator == null
+    note right of TOC: Fallback sincrono
+    TOC -> TOC: loadProductsSync()
+    TOC -> MU: loadAllProducts()
+    activate MU
+    MU --> TOC: List<MenuProduct>
+    deactivate MU
+    TOC -> TOC: renderProducts(prodotti)
+end
+
+deactivate TOC
+
+== Ricerca Prodotti con Debouncing ==
+
+Cameriere -> TOC: type in searchField
+activate TOC
+TOC -> TOC: searchField.textProperty() changed
+TOC -> TOC: searchDebounce.playFromStart()
+note right: PauseTransition 300ms\nper evitare troppe ricerche
+
+... 300ms delay ...
+
+TOC -> TOC: performSearch()
+TOC -> TOC: get searchText from property
+
+alt query empty or null
+    TOC -> TOC: Platform.runLater()
+    TOC -> TOC: updateProductList(allProductsCache)
+    TOC -> TOC: reset searchField style
+else query non empty
+    TOC -> TASK**: create Task<List<MenuProduct>>
+    activate TASK
+    
+    TASK -> TASK: call()
+    TASK -> TASK: filter allProductsCache.stream()
+    note right: Filtra per nome, categoria,\nallergeni (case-insensitive)
+    TASK --> TOC: filtered List<MenuProduct>
+    deactivate TASK
+    
+    TOC -> SE: execute(searchTask)
+    activate SE
+    SE -> TASK: execute in thread pool
+    activate TASK
+    
+    TASK -> TOC: setOnSucceeded event
+    deactivate TASK
+    deactivate SE
+    
+    TOC -> TOC: Platform.runLater()
+    TOC -> TOC: updateProductList(results)
+    TOC -> TOC: showSearchStatus(count, query)
+    
+    alt results.isEmpty()
+        TOC -> TOC: setStyle red border
+        TOC -> TOC: setTooltip "Nessun prodotto trovato"
+    else results not empty
+        TOC -> TOC: setStyle green border
+        TOC -> TOC: setTooltip "X prodotti trovati"
+        TOC -> TOC: FadeTransition animation
+    end
+end
+
+deactivate TOC
+
+== Selezione Prodotti ==
+
+Cameriere -> TOC: click su prodotto / increment
+activate TOC
+TOC -> TOC: handleIncrementProduct(prodotto)
+TOC -> TOC: incrementProductQuantity(prodotto)
+
+alt prodotto già in carrello
+    TOC -> TOC: get existing OrderItem
+    TOC -> TOC: createOrderItem(prodotto, quantità+1)
+else nuovo prodotto
+    TOC -> TOC: createOrderItem(prodotto, 1)
+end
+
+TOC -> TOC: carrello.put(productId, OrderItem)
+TOC -> TOC: updateSendButton()
+TOC -> TOC: calculate totalItems (Stream API)
+TOC -> TOC: setText("Send Order (X)")
+TOC -> TOC: loadProducts()
+note right: Ricarica UI asincrona\nper mostrare quantità aggiornate
+deactivate TOC
+
+== Invio Ordine ==
+
+Cameriere -> TOC: handleSend()
+activate TOC
+
+alt carrello.isEmpty()
+    TOC -> TOC: showInfoAlert("Carrello vuoto")
+else carrello non vuoto
+    TOC -> TOC: btnSend.setDisable(true)
+    
+    alt modalità e-ink (SimpleGraphicsManager.isEinkMode())
+        TOC -> TOC: create items from carrello.values()
+        TOC -> TOC: sendOrderToDatabase(items, "")
+        note right: Invio diretto senza dialog
+    else modalità standard
+        TOC -> TOC: showOrderReviewDialog()
+        TOC -> TOC: getStage()
+        TOC -> TOC: create items List from carrello
+        
+        TOC -> ORD**: show(stage, tavolo, items, note, callback)
+        activate ORD
+        ORD -> ORD: initialize()
+        ORD -> ORD: populateProducts()
+        
+        loop for each OrderItem
+            ORD -> ORD: create product row display
+        end
+        
+        ORD -> ORD: calculate totale (Stream API)
+        ORD --> Cameriere: mostra dialog revisione
+        
+        Cameriere -> ORD: conferma ordine
+        ORD -> ORD: handleConfirm()
+        ORD -> TOC: callback.accept(OrderReviewResult)
+        deactivate ORD
+        
+        TOC -> TOC: sendOrderToDatabase(items, result.getNote())
+    end
+    
+    TOC -> OU: createOrder(items, tavolo, note, currentUser)
+    activate OU
+    OU -> OS: createOrder(items, tavolo, note, currentUser)
+    activate OS
+    OS -> ODAO: createOrder(items, tavolo, note, currentUser)
+    activate ODAO
+    ODAO -> ODAOP: createOrder(items, tavolo, note, currentUser)
+    activate ODAOP
+    
+    ODAOP -> DB: BEGIN TRANSACTION
+    activate DB
+    ODAOP -> DB: INSERT INTO orders\n(username, tavolo, note, status)\nVALUES (?, ?, ?, 'to-do')
+    DB --> ODAOP: orderId generato
+    
+    loop for each OrderItem
+        ODAOP -> DB: INSERT INTO order_items\n(order_id, menu_item_id, quantita,\nprezzo_vendita_snapshot,\ncosto_realizzazione_snapshot,\nnome_prodotto_snapshot)\nVALUES (?, ?, ?, ?, ?, ?)
+        DB --> ODAOP: success
+    end
+    
+    ODAOP -> DB: COMMIT TRANSACTION
+    deactivate DB
+    
+    ODAOP --> ODAO: true
+    deactivate ODAOP
+    ODAO --> OS: true
+    deactivate ODAO
+    OS --> OU: true
+    deactivate OS
+    OU --> TOC: true
+    deactivate OU
+    
+    alt success
+        TOC -> TOC: handleOrderSuccess()
+        TOC -> TOC: showInfoAlert("Successo")
+        TOC -> TOC: clearCart()
+        TOC -> TOC: carrello.clear()
+        TOC -> TOC: updateSendButton()
+        TOC -> SM: showWaiter()
+        activate SM
+        SM --> TOC: void
+        deactivate SM
+    else failure
+        TOC -> TOC: handleOrderFailure()
+        TOC -> TOC: showErrorAlert("Impossibile inviare ordine")
+    end
+    
+    TOC --> Cameriere: conferma operazione
+end
+
+deactivate TOC
+
+== Cleanup Risorse ==
+
+note over TOC: Al termine sessione o\ncambio schermata
+
+TOC -> TOC: cleanup()
+activate TOC
+TOC -> SE: shutdownNow()
+activate SE
+SE --> TOC: void
+deactivate SE
+TOC -> PLS: cancel()
+activate PLS
+PLS --> TOC: void
+deactivate PLS
+deactivate TOC
+
+@enduml

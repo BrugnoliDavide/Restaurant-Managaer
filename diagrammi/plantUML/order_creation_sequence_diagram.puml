@@ -1,0 +1,152 @@
+@startuml Creazione Ordine - Restaurant Manager
+
+skinparam backgroundColor #FEFEFE
+skinparam sequence {
+    ArrowColor #2C3E50
+    ActorBorderColor #2C3E50
+    LifeLineBorderColor #34495E
+    LifeLineBackgroundColor #ECF0F1
+
+    ParticipantBorderColor #2C3E50
+    ParticipantBackgroundColor #ECF0F1
+
+    BoxBorderColor #34495E
+}
+
+actor Cameriere as waiter
+participant "WaiterController" as waiterCtrl
+participant "MenuPreloadService" as preloadService
+participant "ProductLoadingService" as productService
+participant "MenuService" as menuService
+participant "MenuCacheService" as cache
+
+participant "TakeOrderController" as controller
+participant "OrderReviewDialog" as dialog
+participant "OrderService" as orderService
+participant "OrderDAO" as orderDAO
+participant "productDAO" as PDAO
+
+
+
+== Dashboard Cameriere ==
+
+waiter -> waiterCtrl: openDashboard()
+activate waiterCtrl
+
+par UI Dashboard
+    waiterCtrl -> waiterCtrl: load ready orders
+
+    waiterCtrl -> waiter: show ready orders and fillable field for select table
+
+else Preload asincrono menu
+    waiterCtrl ->> preloadService: preloadMenu()
+    activate preloadService
+
+    preloadService ->> productService: start()
+    activate productService
+
+    productService -> menuService: loadAllProducts()
+    activate menuService
+
+
+
+
+    menuService -> PDAO: findAll()
+    activate PDAO
+    PDAO --> menuService: List<MenuProduct>
+    deactivate PDAO
+
+
+    menuService --> productService: List<MenuProduct>
+    deactivate menuService
+
+    productService -->> preloadService: completed(products)
+    deactivate productService
+
+    preloadService -> cache: store(products)
+    preloadService -->> waiterCtrl: cacheReady
+    deactivate preloadService
+end
+
+== Scelta Tavolo ==
+
+waiter -> waiterCtrl: seleziona tavolo
+waiterCtrl -> controller: handleTakeOrder(numeroTavolo)
+deactivate waiterCtrl
+activate controller
+
+== Inizializzazione Take Order (da cache) ==
+
+controller -> controller: init(numeroTavolo)
+controller -> cache: getProducts()
+activate cache
+cache --> controller: products
+deactivate cache
+
+controller -> controller: updateProductList(products)
+controller -> controller: renderProducts()
+
+controller --> waiter: Vista prodotti caricata
+deactivate controller
+
+== Selezione Prodotti ==
+
+loop Per ogni prodotto selezionato
+    waiter -> controller: handleIncrementProduct(prodotto)
+    activate controller
+
+    controller -> controller: incrementProductQuantity(prodotto)
+    note right of controller: Aggiornamento carrello locale\n(Map<Integer, OrderItem>)
+
+    controller -> controller: createOrderItem(prodotto, quantità)
+    controller -> controller: updateSendButton()
+
+    controller --> waiter: Quantità aggiornata
+    deactivate controller
+end
+
+== Invio Ordine ==
+
+waiter -> controller: handleSend()
+activate controller
+
+
+    controller -> dialog: show(stage, numeroTavolo, items)
+    activate dialog
+
+    dialog --> waiter: Mostra riepilogo ordine
+    waiter -> dialog: conferma(note)
+
+    dialog -> controller: callback(result)
+    deactivate dialog
+
+
+
+== Persistenza Ordine ==
+
+controller -> orderService: createOrder(items, numeroTavolo, note, user)
+activate orderService
+
+orderService -> orderDAO: createOrder(items, numeroTavolo, note, user)
+
+activate orderDAO
+
+
+orderDAO --> orderService: true
+deactivate orderDAO
+
+orderService --> controller: true
+deactivate orderService
+
+== Completamento e Notifica ==
+
+controller -> controller: handleOrderSuccess()
+controller -> controller: clearCart()
+controller -> controller: showInfoAlert("Successo", "Ordine inviato con successo!")
+
+controller -> controller: SceneManager.showWaiter()
+
+controller --> waiter: show succes message and return at the waiter dashboard
+deactivate controller
+
+@enduml

@@ -42,16 +42,17 @@ public final class KitchenService {
         KitchenPreferences prefs = getPreferences(username);
         List<Order> allOrders = OrderService.getKitchenActive();
 
-        if (prefs.isIncludeOtherCategories()) {
+        // Se nessuna categoria selezionata mostra tutto
+        if (prefs.isIncludeOtherCategories() || prefs.getSelectedCategories().isEmpty()) {
             return allOrders;
         }
 
-        Set<String> selected = prefs.getSelectedCategories();
         List<Order> filtered = new ArrayList<>();
-
         for (Order order : allOrders) {
             List<OrderItem> items = OrderService.getItemsDetailed(order.getId());
-            if (categoriesOf(items).stream().allMatch(selected::contains)) {
+            Set<String> orderCategories = categoriesOf(items);
+            // delega a KitchenPreferences che è il posto corretto per questa logica
+            if (prefs.shouldDisplayOrder(orderCategories)) {
                 filtered.add(order);
             }
         }

@@ -1,0 +1,173 @@
+@startuml Create Order - Activity Diagram
+
+skinparam backgroundColor #FEFEFE
+skinparam activity {
+    BackgroundColor #ECF0F1
+    BorderColor #2C3E50
+    StartColor #27AE60
+    EndColor #C0392B
+    DiamondBackgroundColor #F39C12
+    DiamondBorderColor #E67E22
+}
+
+skinparam note {
+    BackgroundColor #FFF9E6
+    BorderColor #F39C12
+}
+
+start
+
+repeat
+:Waiter selects table;
+
+
+fork
+    :Load products from database;
+fork again
+    :Initialize search filter\nwith debouncing;
+fork again
+    :Setup UI components;
+end fork
+
+
+repeat
+
+:Display menu\norganized by category;
+
+note right
+    Products display:
+    - Name and category
+    - Unit price
+    - Add/Remove controls
+end note
+
+partition "Order Composition" {
+
+    repeat
+
+        if (Search filter active?) then (yes)
+            :Enter search text;
+            :Wait 300ms\n(debounce delay); <<#palegreen>>
+
+            note right
+                sostituire con clessidra
+            end note
+
+            :System filters products;
+        else (no)
+            :Display all products;
+        endif
+
+        :Select product;
+
+        if (Operation?) then (Add)
+            if (Product already in cart?) then (yes)
+                :Increment quantity;
+            else (no)
+                :Add new item to cart\n(quantity = 1);
+            endif
+        else (Remove)
+            if (Quantity > 1?) then (yes)
+                :Decrement quantity;
+            else (no)
+                :Remove item from cart;
+
+                note right
+                    If the quantity is equal to zero,
+                    the "Remove" operation cannot
+                    be performed.
+                end note
+
+
+            endif
+        endif
+
+        :Update cart total;
+
+        :Refresh product list\nwith updated quantities;
+
+    repeat while (Continue selecting?) is (yes)
+    -> no;
+
+}
+
+repeat while (Cart empty?) is (yes)
+    -> no;
+
+
+
+
+    :Click "Send Order;
+
+
+
+    partition "Order Review" {
+
+
+        :Display order summary;
+
+        note right
+            Summary shows:
+            - Table number
+            - Item list with quantities and prices
+            - Total amount
+            - Optional notes field
+        end note
+
+    :Optional: add notes;
+
+}
+
+repeat while (Confirm order?) is (Close review dialog)
+    ->yes;
+
+
+
+
+
+partition "Database Persistence" #LightBlue {
+
+
+repeat
+
+    :Begin database transaction;
+
+    fork
+        :Prepare order insert statement;
+    fork again
+        :Prepare order items batch statement;
+    end fork
+
+    :Insert order record\n(table, user, notes, status='todo');
+
+
+repeat while (Insert successful?) is (no)
+
+    -> yes;
+
+    :Retrieve generated order ID;
+
+    repeat :Insert order item;
+        note right
+            Item snapshot includes:
+            - Sale price
+            - Product cost
+            - Product name
+        end note
+    repeat while (All items inserted?) is (no)
+    -> yes;
+
+
+
+    :Commit transaction;
+
+
+:Display success message;
+
+:Clear cart;
+
+:Navigate to waiter dashboard;
+
+stop
+
+@enduml

@@ -1,0 +1,173 @@
+@startuml Restaurant Manager - Use Case Diagram
+
+skinparam backgroundColor #FEFEFE
+skinparam packageStyle rectangle
+
+skinparam actor {
+    BackgroundColor #ECF0F1
+    BorderColor #2C3E50
+}
+
+skinparam usecase {
+    BackgroundColor #ECF0F1
+    BorderColor #2C3E50
+    ArrowColor #34495E
+}
+
+skinparam note {
+    BackgroundColor #FFF9E6
+    BorderColor #F39C12
+}
+
+left to right direction
+
+' === ATTORI ===
+actor "Manager" as manager
+actor "Cameriere" as waiter
+actor "Cucina" as kitchen
+
+' === SISTEMA ===
+rectangle "Restaurant Manager System" {
+    
+    ' === GESTIONE AUTENTICAZIONE ===
+    package "Autenticazione" #F8F9FA {
+        usecase "Autenticarsi" as UC_Login
+        usecase "Cambiare Password" as UC_ChangePassword
+        usecase "Logout" as UC_Logout
+    }
+    
+    ' === GESTIONE MENU ===
+    package "Gestione Menu" #E8F4F8 {
+        usecase "Visualizzare Menu" as UC_ViewMenu
+        usecase "Aggiungere Prodotto" as UC_AddProduct
+        usecase "Modificare Prodotto" as UC_EditProduct
+        usecase "Cercare Prodotto" as UC_SearchProduct
+    }
+    
+    ' === GESTIONE ORDINI ===
+    package "Gestione Ordini" #FFF3E0 {
+        usecase "Creare Ordine" as UC_CreateOrder
+        usecase "Visualizzare Ordini Pronti" as UC_ViewReadyOrders
+        usecase "Consegnare Ordine" as UC_DeliverOrder
+        usecase "Filtrare Tavoli Gestiti" as UC_FilterTables
+    }
+    
+    ' === GESTIONE CUCINA ===
+    package "Cucina" #E8F5E9 {
+        usecase "Visualizzare Ordini Attivi" as UC_ViewActiveOrders
+        usecase "Segnare Ordine Come Pronto" as UC_MarkOrderReady
+        usecase "Configurare Preferenze Cucina" as UC_ConfigKitchenPrefs
+        usecase "Filtrare Ordini per Categoria" as UC_FilterByCategory
+    }
+    
+    ' === GESTIONE PAGAMENTI ===
+    package "Gestione Pagamenti" #FCE4EC {
+        usecase "Visualizzare Conti Aperti" as UC_ViewOpenBills
+        usecase "Visualizzare Dettaglio Conto" as UC_ViewBillDetail
+        usecase "Registrare Pagamento" as UC_RegisterPayment
+        usecase "Cercare Tavolo" as UC_SearchTable
+    }
+    
+    ' === GESTIONE FINANZIARIA ===
+    package "Analisi Finanziaria" #F3E5F5 {
+        usecase "Visualizzare Storico Ordini" as UC_ViewOrderHistory
+        usecase "Visualizzare Dettaglio Ordine" as UC_ViewOrderDetail
+        usecase "Filtrare Ordini" as UC_FilterOrders
+    }
+    
+    ' === GESTIONE STAFF ===
+    package "Gestione Staff" #FFEBEE {
+        usecase "Visualizzare Utenti" as UC_ViewUsers
+        usecase "Eliminare Utente" as UC_DeleteUser
+    }
+    
+    ' === CONFIGURAZIONE SISTEMA ===
+    package "Configurazione" #E0F2F1 {
+        usecase "Configurare Database" as UC_ConfigDB
+        usecase "Testare Connessione DB" as UC_TestConnection
+    }
+}
+
+' === RELAZIONI ATTORI - USE CASES ===
+
+' --- MANAGER ---
+manager --> UC_Login
+manager --> UC_ChangePassword
+manager --> UC_Logout
+manager --> UC_ViewMenu
+manager --> UC_AddProduct
+manager --> UC_EditProduct
+manager --> UC_SearchProduct
+manager --> UC_ViewOrderHistory
+manager --> UC_ViewOrderDetail
+manager --> UC_FilterOrders
+manager --> UC_ViewUsers
+manager --> UC_DeleteUser
+
+' --- CAMERIERE ---
+waiter --> UC_Login
+waiter --> UC_ChangePassword
+waiter --> UC_Logout
+waiter --> UC_CreateOrder
+waiter --> UC_ViewReadyOrders
+waiter --> UC_DeliverOrder
+waiter --> UC_FilterTables
+waiter --> UC_ViewOpenBills
+waiter --> UC_ViewBillDetail
+waiter --> UC_RegisterPayment
+waiter --> UC_SearchTable
+
+' --- CUCINA ---
+kitchen --> UC_Login
+kitchen --> UC_ChangePassword
+kitchen --> UC_Logout
+kitchen --> UC_ViewActiveOrders
+kitchen --> UC_MarkOrderReady
+kitchen --> UC_ConfigKitchenPrefs
+kitchen --> UC_FilterByCategory
+
+' === RELAZIONI INCLUDE ===
+UC_CreateOrder .> UC_ViewMenu : <<include>>
+UC_CreateOrder .> UC_SearchProduct : <<include>>
+
+UC_ViewReadyOrders .> UC_ViewOrderDetail : <<include>>
+
+UC_ViewOpenBills .> UC_SearchTable : <<include>>
+UC_ViewOpenBills .> UC_ViewBillDetail : <<include>>
+
+UC_ViewOrderHistory .> UC_FilterOrders : <<include>>
+
+UC_ViewActiveOrders .> UC_FilterByCategory : <<include>>
+
+UC_ConfigDB .> UC_TestConnection : <<include>>
+
+' === RELAZIONI EXTEND ===
+UC_EditProduct ..> UC_ViewMenu : <<extend>>
+UC_DeleteUser ..> UC_ViewUsers : <<extend>>
+
+' === NOTE ESPLICATIVE ===
+note right of UC_CreateOrder
+    Include selezione prodotti
+    dal menu e conferma ordine
+    con snapshot prezzi
+end note
+
+note right of UC_ConfigKitchenPrefs
+    Permette di selezionare
+    categorie da visualizzare
+    e split ordini misti
+end note
+
+note bottom of UC_FilterTables
+    Permette al cameriere
+    di gestire solo specifici
+    tavoli (es: 1-5; 10; 12)
+end note
+
+note bottom of UC_RegisterPayment
+    Verifica che non ci siano
+    ordini pending prima
+    di permettere il pagamento
+end note
+
+@enduml

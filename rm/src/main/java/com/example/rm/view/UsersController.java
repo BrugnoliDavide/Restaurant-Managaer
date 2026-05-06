@@ -10,8 +10,8 @@ import javafx.scene.control.*;
 
 
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import static com.example.rm.view.LoginController.logger;
 import com.example.rm.controller.ManagerUseCase;
 import com.example.rm.controller.ManagerService;
 
@@ -24,6 +24,7 @@ public class UsersController {
     @FXML private Parent rootPane;
 
     private static final ManagerUseCase managerUseCase = new ManagerService();
+    private static final Logger logger = Logger.getLogger(UsersController.class.getName());
 
     @FXML
     public void initialize() {
@@ -69,12 +70,6 @@ public class UsersController {
         User selected = usersTable.getSelectionModel().getSelectedItem();
 
         if (selected != null) {
-
-
-
-
-
-
             boolean ok = managerUseCase.deleteUser(selected.getUsername());
             if (ok) {
                 loadData();

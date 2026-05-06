@@ -1,6 +1,7 @@
 package com.example.rm.app;
 
 import com.example.rm.service.ConnectionManager;
+import com.example.rm.view.EarningController;
 import com.example.rm.view.LoginController;
 import javafx.application.Application;
 import javafx.scene.Parent;
@@ -9,10 +10,13 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.logging.Logger;
 
-import static com.example.rm.view.LoginController.logger;
 
 public class MainApp extends Application {
+
+
+    private static final Logger logger = Logger.getLogger(MainApp.class.getName());
 
     @Override
     public void start(Stage primaryStage) throws IOException {

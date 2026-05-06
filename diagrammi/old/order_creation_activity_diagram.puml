@@ -1,0 +1,270 @@
+@startuml Creazione Ordine - Activity Diagram
+
+skinparam backgroundColor #FEFEFE
+skinparam activity {
+    BackgroundColor #ECF0F1
+    BorderColor #2C3E50
+    BarColor #3498DB
+    StartColor #27AE60
+    EndColor #C0392B
+    DiamondBackgroundColor #F39C12
+    DiamondBorderColor #E67E22
+}
+
+skinparam note {
+    BackgroundColor #FFF9E6
+    BorderColor #F39C12
+}
+
+|Cameriere|
+start
+
+:Seleziona tavolo dalla vista cameriere;
+
+|Sistema|
+:Carica TakeOrderView\nper il tavolo selezionato;
+
+:Inizializza ProductLoadingService;
+
+fork
+    :Avvia caricamento\nasincrono prodotti;
+fork again
+    :Setup sistema di ricerca\ncon debouncing (300ms);
+end fork
+
+|Background Thread|
+:MenuService.loadAllProducts();
+
+:DatabaseService.getAllProducts();
+
+:Query SQL:\nSELECT * FROM menu_items;
+
+|Sistema|
+:Riceve List<MenuProduct>;
+
+:Aggiorna cache prodotti locale;
+
+:Raggruppa prodotti per categoria;
+
+:Renderizza lista prodotti con UI\n(ProductRowFactory);
+
+|Cameriere|
+:Visualizza menu prodotti\nraggruppati per categoria;
+
+note right
+    Ogni prodotto mostra:
+    - Nome
+    - Tipologia
+    - Prezzo formattato
+    - Controlli +/-
+end note
+
+partition "Composizione Ordine" {
+    
+    repeat
+        
+        if (Usa ricerca?) then (Sì)
+            |Cameriere|
+            :Inserisce testo ricerca;
+            
+            |Sistema|
+            :Attende debounce (300ms);
+            
+            fork
+                :Filtra prodotti in background;
+            fork again
+                :Applica FadeTransition\nper feedback visivo;
+            end fork
+            
+            :Aggiorna lista prodotti filtrati;
+        else (No)
+            :Visualizza tutti i prodotti;
+        endif
+        
+        |Cameriere|
+        :Seleziona prodotto\n(click su +/-);
+        
+        |Sistema|
+        if (Operazione) then (Incremento)
+            if (Prodotto già nel carrello?) then (Sì)
+                :Recupera OrderItem esistente;
+                :Incrementa quantità;
+            else (No)
+                :Crea nuovo OrderItem;
+                :Imposta quantità = 1;
+            endif
+        else (Decremento)
+            if (Quantità > 1?) then (Sì)
+                :Decrementa quantità;
+            else (No)
+                :Rimuovi dal carrello;
+            endif
+        endif
+        
+        :Crea OrderItem con snapshot:\n- prezzoVendita\n- costoRealizzazione\n- nomeProdotto;
+        
+        :Aggiorna Map<Integer, OrderItem>\n(carrello locale);
+        
+        :Calcola totale items:\ncarrello.values().stream()\n.mapToInt(OrderItem::getQuantita)\n.sum();
+        
+        :Aggiorna pulsante Send\n"Send Order (N)";
+        
+        :Ricarica vista prodotti\ncon quantità aggiornate;
+        
+    repeat while (Continua a selezionare?) is (Sì)
+    -> No;
+    
+}
+
+|Cameriere|
+if (Carrello vuoto?) then (Sì)
+    |Sistema|
+    :Mostra alert:\n"Carrello vuoto.\nSeleziona almeno un prodotto.";
+    stop
+
+endif
+
+->  No;
+
+
+:Click su "Send Order";
+
+|Sistema|
+:Disabilita pulsante Send;
+
+:Converte carrello in\nList<OrderItem>;
+
+:Apre OrderReviewDialog;
+
+|OrderReviewDialog|
+:Mostra Stage modale\ncon riepilogo ordine;
+
+partition "Riepilogo Ordine" {
+    :Visualizza numero tavolo;
+    
+    :Mostra lista prodotti:\n- Quantità\n- Nome prodotto\n- Prezzo unitario\n- Subtotale;
+    
+    :Calcola e mostra totale ordine;
+    
+    :Fornisce campo note opzionale;
+}
+
+|Cameriere|
+if (Conferma ordine?) then (Annulla)
+    |Sistema|
+    :Chiude dialog;
+    :Riabilita pulsante Send;
+    stop
+else (Conferma)
+    :Inserisce note (opzionale);
+    :Click conferma;
+endif
+
+|Sistema|
+:Callback con OrderReviewResult\n(confirmed=true, note);
+
+:Chiude dialog;
+
+partition "Persistenza Database" #LightBlue {
+    
+    :OrderService.createOrder(\nitems, numeroTavolo, note, user);
+    
+    if (Validazione ordine) then (Non valido)
+        note right
+            Verifica:
+            - User non null
+            - Items non null/vuoto
+        end note
+        :Log warning;
+        :return false;
+        
+        |Sistema|
+        :handleOrderFailure();
+        :Mostra alert errore;
+        stop
+    else (Valido)
+    endif
+    
+    :DatabaseService.createOrder();
+    
+    :OrderDAOPostgres.createOrder();
+    
+    :Ottiene Connection al DB;
+    
+    :Inizia transazione:\nconn.setAutoCommit(false);
+    
+    fork
+        :Prepara PreparedStatement\nper tabella orders;
+    fork again
+        :Prepara PreparedStatement\nper tabella order_items;
+    end fork
+    
+    :INSERT INTO orders\n(username, tavolo, note, status)\nVALUES (?, ?, ?, 'todo');
+    
+    if (Insert riuscito?) then (No)
+        :Rollback transazione;
+        :Log errore;
+        :return false;
+        
+        |Sistema|
+        :handleOrderFailure();
+        :Mostra alert errore;
+        stop
+    else (Sì)
+    endif
+    
+    :Recupera order_id generato\n(RETURN_GENERATED_KEYS);
+    
+    repeat :Per ogni OrderItem;
+        :Aggiunge batch:\nINSERT INTO order_items\n(order_id, menu_item_id,\nquantita, prezzo_vendita_snapshot,\ncosto_realizzazione_snapshot,\nnome_prodotto_snapshot)\nVALUES (?, ?, ?, ?, ?, ?);
+        
+        note right
+            Snapshot per tracciabilità:
+            - Prezzo al momento ordine
+            - Costo al momento ordine
+            - Nome prodotto originale
+        end note
+        
+    repeat while (Altri items?) is (Sì)
+    -> No;
+    
+    :Esegue batch:\npstmtItem.executeBatch();
+    
+    if (Batch riuscito?) then (No)
+        :Rollback transazione;
+        :Log errore;
+        :return false;
+        
+        |Sistema|
+        :handleOrderFailure();
+        :Mostra alert errore;
+        stop
+    else (Sì)
+    endif
+    
+    :COMMIT transazione;
+    
+    :Log success con order_id\ne numero articoli;
+    
+    :return true;
+}
+
+|Sistema|
+:handleOrderSuccess();
+
+:Log: "Ordine inviato con successo\nper tavolo N";
+
+:Mostra alert informativo:\n"Ordine inviato con successo!";
+
+:Svuota carrello locale:\ncarrello.clear();
+
+:Aggiorna pulsante Send;
+
+:Naviga a WaiterView:\nSceneManager.showWaiter();
+
+|Cameriere|
+:Visualizza dashboard cameriere\ncon ordini attivi;
+
+stop
+
+@enduml

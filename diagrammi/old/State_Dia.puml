@@ -1,0 +1,158 @@
+@startuml Restaurant Manager - State Diagram (Order Lifecycle)
+
+skinparam state {
+    BackgroundColor<<new>> #E8F5E9
+    BackgroundColor<<preparing>> #FFF9C4
+    BackgroundColor<<ready>> #81D4FA
+    BackgroundColor<<delivered>> #CE93D8
+    BackgroundColor<<final>> #C5E1A5
+    BackgroundColor<<cancelled>> #FFCDD2
+    BorderColor Black
+    FontSize 13
+}
+
+title Order Lifecycle - Restaurant Management System
+
+[*] --> OrderCreation : Waiter creates order
+
+state OrderCreation <<new>> {
+    state "Collecting Items" as Collecting
+    state "Adding to Cart" as AddingCart
+    state "Review Order" as Review
+    
+    [*] --> Collecting
+    Collecting --> AddingCart : increment/decrement products
+    AddingCart --> Collecting : modify quantities
+    AddingCart --> Review : click "Send Order"
+    Review --> [*] : confirm
+}
+
+OrderCreation --> ToDo : OrderService.createOrder()
+
+state ToDo <<preparing>> {
+    state "Waiting in Queue" as Waiting
+    state "Being Prepared" as Preparing
+    state "May be Decomposed" as MayDecompose
+    
+    [*] --> Waiting
+    Waiting --> MayDecompose : KitchenService checks\nsplitMixedCategoryOrders
+    MayDecompose --> Preparing : single category\nOR split disabled
+    MayDecompose --> [*] : multiple categories\nAND split enabled\n(creates new orders)
+    Preparing --> [*]
+}
+
+ToDo --> Ready : KitchenController\nmarks as ready\n(updateOrderStatus)
+ToDo --> Cancelled : OrderService\nsetOrderStatus("canceled")
+
+state Ready <<ready>> {
+    state "In Kitchen" as InKitchen
+    state "Notifying Waiter" as Notifying
+    
+    [*] --> InKitchen
+    InKitchen --> Notifying : polling every 5s
+    Notifying --> [*]
+}
+
+Ready --> Delivered : WaiterController\nmarkOrderAsDelivered()
+
+state Delivered <<delivered>> {
+    state "Waiting Payment" as WaitingPayment
+    state "Grouped by Table" as GroupedByTable
+    state "Calculating Total" as CalculatingTotal
+    
+    [*] --> WaitingPayment
+    WaitingPayment --> GroupedByTable : EarningController\ngroups orders
+    GroupedByTable --> CalculatingTotal : user selects table
+    CalculatingTotal --> [*]
+}
+
+Delivered --> CheckPending : EarningController\nclick "Pay"
+
+state CheckPending <<choice>>
+CheckPending --> ConfirmPayment : no pending orders
+CheckPending --> HandlePending : has pending orders
+
+state HandlePending {
+    state "Show Alert" as ShowAlert
+    state "User Choice" as UserChoice
+    
+    [*] --> ShowAlert : display pending items
+    ShowAlert --> UserChoice
+    UserChoice --> [*] : cancel
+    UserChoice --> MarkCancelled : "Pay and cancel pending"
+    UserChoice --> MarkDelivered : "Mark as delivered and pay"
+    
+    state MarkCancelled {
+        [*] --> [*] : setOrderStatus("canceled")\nfor pending orders
+    }
+    
+    state MarkDelivered {
+        [*] --> [*] : setOrderStatus("delivered")\nfor pending orders
+    }
+}
+
+ConfirmPayment --> Closed : markOrderAsPaid()
+HandlePending --> Closed : after handling pending
+
+state Closed <<final>> {
+    state "Payment Recorded" as PaymentRecorded
+    state "Remove from View" as RemoveView
+    
+    [*] --> PaymentRecorded
+    PaymentRecorded --> RemoveView
+    RemoveView --> [*]
+}
+
+Closed --> [*]
+
+state Cancelled <<cancelled>> {
+    state "Removed from Queue" as RemovedQueue
+    [*] --> RemovedQueue
+    RemovedQueue --> [*]
+}
+
+Cancelled --> [*]
+
+note right of OrderCreation
+  **Actors:** Waiter
+  **Views:** TakeOrderController
+  **Business:** OrderService
+end note
+
+note right of ToDo
+  **Actors:** Kitchen Staff
+  **Views:** KitchenController
+  **Business:** KitchenService
+  **Key Feature:** Order decomposition
+  by category if enabled
+end note
+
+note right of Ready
+  **Actors:** Waiter
+  **Views:** WaiterController
+  **Business:** OrderService
+  **Polling:** Every 5 seconds
+end note
+
+note right of Delivered
+  **Actors:** Cashier
+  **Views:** EarningController
+  **Business:** EarningService
+  **Grouping:** By table number
+end note
+
+note bottom of CheckPending
+  **Validation:** Checks for
+  pending orders before payment
+  **Methods:**
+  - hasPendingOrders()
+  - getPendingOrderIds()
+end note
+
+note right of Closed
+  **Final State**
+  Order completed and paid
+  Removed from all active views
+end note
+
+@enduml

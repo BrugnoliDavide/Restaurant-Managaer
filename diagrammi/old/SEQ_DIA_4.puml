@@ -1,0 +1,69 @@
+@startuml
+
+title Caso d'uso: Creazione Ordine
+
+actor Cameriere as User
+participant "TakeOrder\nController" as Controller
+participant "OrderService" as Service
+participant "UserSession" as Session
+participant "DatabaseService" as DB
+participant "OrderDAOPostgres" as DAO
+participant "AsyncTaskManager" as Async
+participant "KitchenController" as Kitchen
+participant "FinancialController" as Financial
+
+User -> Controller: 1. Conferma ordine
+activate Controller
+
+Controller -> Controller: 2. Valida input
+Controller -> Service: 3. createOrder(...)
+activate Service
+
+Service -> Session: 4. getUser()
+activate Session
+Session --> Service: 5. User object
+deactivate Session
+
+Service -> DB: 6. createOrder(...)
+activate DB
+DB -> DAO: 7. createOrder(...)
+activate DAO
+DAO -> DAO: 8. Transaction.begin()
+DAO -> DAO: 9. Inserimento dati
+DAO -> DAO: 10. Transaction.commit()
+DAO --> DB: 11. true
+deactivate DAO
+DB --> Service: 12. true
+deactivate DB
+
+Service -> Async: 13. **fireNotifications(orderId)**
+activate Async
+Service --> Controller: 14. true (immediato)
+deactivate Service
+
+Controller --> User: 15. ✓ Conferma immediata
+deactivate Controller
+
+Async -> Kitchen: 16. notifyNewOrder(orderId)
+activate Kitchen
+Kitchen --> Async: 17. 
+deactivate Kitchen
+
+Async -> Financial: 18. updateCache(orderId)
+activate Financial
+Financial --> Async: 19. 
+deactivate Financial
+
+Async -> Async: 20. logOrderCreation(orderId)
+Async -> Async: 21. cleanUp()
+deactivate Async
+
+alt Errore Database
+    DAO -> DAO: rollback()
+    DAO --> DB: false
+    DB --> Service: false
+    Service --> Controller: false
+    Controller -> User: Mostra errore
+end
+
+@enduml

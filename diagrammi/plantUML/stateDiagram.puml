@@ -1,0 +1,35 @@
+@startuml
+title Order Lifecycle - Code Consistent
+
+[*] --> Preparing : createOrder()
+
+state Preparing {
+    [*] --> InPreparation
+    InPreparation --> [*]
+}
+
+Preparing --> Ready : mark as ready
+Preparing --> Canceled : cancel
+
+state Ready {
+    [*] --> Available
+    Available --> [*]
+}
+
+Ready --> Delivered : deliver order
+
+state Delivered {
+    [*] --> WaitingPayment
+    WaitingPayment --> [*]
+}
+
+Delivered --> Closed : pay
+Delivered --> Canceled : cancel (if allowed)
+
+state Closed
+state Canceled
+
+Closed --> [*]
+Canceled --> [*]
+
+@enduml

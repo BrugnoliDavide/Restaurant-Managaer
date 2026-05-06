@@ -1,0 +1,632 @@
+
+@startuml Restaurant Manager - Implementation Level Class Diagram (FIXED)
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
+
+' === PACKAGE APP ===
+package "com.example.rm.app" #E8F5E9 {
+    class MainApp {
+        +{static} void main(String[])
+        +void start(Stage)
+        +{static} void setLogo(Stage)
+    }
+    
+    class SceneManager {
+        -{static} Stage primaryStage
+        -{static} Scene currentScene
+        -{static} Map<String, View> viewCache
+        +{static} void init(Stage)
+        +{static} void showLogin()
+        +{static} void showMenu()
+        +{static} void showWaiter()
+        +{static} void showKitchen()
+        +{static} void showManager()
+        +{static} void showTakeOrder(int)
+        +{static} void clearViewCache()
+    }
+    
+    class UserSession <<Singleton>> {
+        -{static} UserSession instance
+        -User user
+        -Set<Integer> managedTables
+        +{static} UserSession getInstance(User)
+        +{static} UserSession getInstance()
+        +{static} void cleanUserSession()
+        +User getUser()
+        +boolean isTableManaged(int)
+    }
+    
+    class UsersFactory <<Factory>> {
+        +{static} User createUser(String, String)
+    }
+    
+    class AppStatus {
+        -{static} boolean dbConnectionOk
+        +{static} boolean isDbConnectionOk()
+        +{static} void setDbConnectionOk(boolean)
+    }
+}
+
+' === PACKAGE MODEL ===
+package "com.example.rm.model" #FFF3E0 {
+    abstract class User {
+        #String username
+        #String role
+        +String getUsername()
+        +String getRole()
+        +{abstract} String getWelcomeMessage()
+    }
+    
+    class ManagerUser extends User {
+        +String getWelcomeMessage()
+    }
+    
+    class WaiterUser extends User {
+        +String getWelcomeMessage()
+    }
+    
+    class KitchenUser extends User {
+        +String getWelcomeMessage()
+    }
+    
+    class MenuProduct {
+        -IntegerProperty id
+        -StringProperty nome
+        -StringProperty tipologia
+        -DoubleProperty prezzoVendita
+        -DoubleProperty costoRealizzazione
+        -StringProperty allergeni
+        +double getMargine()
+        +double getPercentualeMargine()
+    }
+    
+    class Order {
+        -IntegerProperty id
+        -ObjectProperty<LocalDateTime> dataOra
+        -IntegerProperty tavolo
+        -StringProperty username
+        -StringProperty note
+        -StringProperty status
+        -DoubleProperty totale
+        -List<String> displayItems
+        +List<String> getDisplayItems()
+        +boolean hasNote()
+    }
+    
+    class OrderItem {
+        -MenuProduct product
+        -int quantita
+        -double prezzoSnapshot
+        -double costoSnapshot
+        -String nomeSnapshot
+        +String getDisplayName()
+    }
+}
+
+' === PACKAGE CONTROLLER (USE CASES) ===
+package "com.example.rm.controller" #E3F2FD {
+    interface MenuUseCase {
+        +List<MenuProduct> loadAllProducts()
+        +List<String> loadCategories()
+        +boolean addProduct(MenuProduct)
+        +boolean updateProduct(MenuProduct)
+        +MenuProduct getProductById(int)
+    }
+    
+    class MenuService implements MenuUseCase {
+        -ProductDAO productDAO
+        -CategoryDAO categoryDAO
+    }
+    
+    interface OrderUseCase {
+        +List<Order> loadReadyOrdersForWaiter()
+        +List<String> loadOrderItemsForDisplay(int)
+        +boolean markOrderAsDelivered(int)
+        +boolean createOrder(List<OrderItem>, Integer, String, User)
+        +Order getOrderById(int)
+    }
+    
+    class OrderService implements OrderUseCase
+    
+    interface KitchenUseCase {
+        +KitchenPreferences loadPreferences(String)
+        +List<Order> loadFilteredOrders(String)
+        +void decomposeOrder(int)
+        +void markOrderAsReady(int)
+        +List<String> getOrderItemsDisplay(int)
+    }
+    
+    class KitchenService implements KitchenUseCase
+    
+    interface EarningUseCase {
+        +List<Order> loadOrdersToPay()
+        +List<OrderItem> getOrderItemsDetailed(int)
+        +boolean markOrderAsPaid(int)
+        +boolean hasPendingOrders(int)
+    }
+    
+    class EarningService implements EarningUseCase
+    
+    interface FinancialUseCase {
+        +List<Order> loadAllOrdersWithTotal()
+        +List<Order> loadAllOrdersWithDisplayItems()
+    }
+    
+    class FinancialService implements FinancialUseCase
+    
+    interface ManagerUseCase {
+        +List<User> loadAllUsers()
+        +boolean deleteUser(String)
+    }
+    
+    class ManagerService implements ManagerUseCase
+    
+    interface KitchenPreferencesUseCase {
+        +KitchenPreferences load(String)
+        +boolean save(KitchenPreferences)
+        +boolean reset(String)
+    }
+    
+    class KitchenPreferencesController implements KitchenPreferencesUseCase {
+        -KitchenPreferencesDAO dao
+    }
+}
+
+' === PACKAGE DAO ===
+package "com.example.rm.dao" #F3E5F5 {
+    interface OrderDAO {
+        +boolean createOrder(List<OrderItem>, Integer, String, User)
+        +List<Order> getAllOrdersWithTotal()
+        +List<Order> getOrdersByStatus(String)
+        +boolean setOrderStatus(int, String)
+        +List<String> getOrderItemsForDisplay(int)
+        +boolean decomposeOrderIfNeeded(int)
+    }
+    
+    class OrderDAOPostgres implements OrderDAO {
+        -String url
+        -String user
+        -String password
+        -Connection getConnection()
+    }
+    
+    class OrderDAOFile implements OrderDAO {
+        -Path ordersFilePath
+        -Path orderItemsDir
+        -int nextOrderId
+    }
+    
+    interface ProductDAO {
+        +boolean save(MenuProduct)
+        +boolean delete(Long)
+    }
+    
+    class DatabaseProductDAO implements ProductDAO
+    
+    interface CategoryDAO {
+        +List<String> getAllCategories()
+    }
+    
+    class DatabaseCategoryDAO implements CategoryDAO
+    
+    interface KitchenPreferencesDAO {
+        +KitchenPreferences loadByUsername(String)
+        +boolean save(KitchenPreferences)
+        +boolean deleteByUsername(String)
+    }
+    
+    class DatabaseKitchenPreferencesDAO implements KitchenPreferencesDAO
+}
+
+' === PACKAGE SERVICE ===
+package "com.example.rm.service" #FCE4EC {
+    class DatabaseService <<Singleton>> {
+        -{static} String url
+        -{static} String user
+        -{static} String pass
+        -{static} OrderDAO orderDAO
+        +{static} void setConnectionConfig(String, String, String, String, String)
+        +{static} List<MenuProduct> getAllProducts()
+        +{static} boolean createOrder(List<OrderItem>, Integer, String, User)
+        +{static} List<Order> getAllOrdersWithTotal()
+        +{static} KitchenPreferences getKitchenPreferences(String)
+        +{static} boolean saveKitchenPreferences(KitchenPreferences)
+        +{static} Connection getConnection()
+    }
+    
+    class SecurityService {
+        +{static} String authenticate(String, String)
+        +{static} boolean registerUser(String, String, String)
+        +{static} boolean changePassword(String, String, String)
+    }
+    
+    class DBConfigStore {
+        -{static} Preferences prefs
+        +{static} void save(String, String, String, String, String)
+        +{static} String getHost()
+        +{static} String getPassword()
+        -{static} String encrypt(String)
+        -{static} String decrypt(String)
+    }
+}
+
+' === PACKAGE VIEW ===
+package "com.example.rm.view" #FFF9C4 {
+    interface View {
+        +Parent getRoot()
+    }
+    
+    abstract class AbstractView implements View {
+        -Parent root
+        #AbstractView(String)
+    }
+    
+    class ViewFactory <<Factory>> {
+        +{static} View forRole(String)
+        +{static} View forTakeOrder(int)
+        +{static} View getLoginView()
+    }
+    
+    ' === CONTROLLERS ===
+    class LoginController {
+        @FXML TextField userField
+        @FXML PasswordField passField
+        @FXML Circle dbStatusCircle
+        -void handleLogin()
+        -void updateDbStatusIndicator()
+    }
+    
+    class ManagerController {
+        @FXML Label lblWelcomeTop
+        -void handleProfileMenu()
+        -void goToMenu()
+        -void goToFinancial()
+    }
+    
+    class WaiterController {
+        @FXML VBox notificationsContainer
+        @FXML TextField txtTable
+        -Timeline pollingTimeline
+        -WaiterNotificationCardFactory cardFactory
+        -void refreshNotifications()
+        -void handleNewOrder()
+        +void stopPolling()
+    }
+    
+    class KitchenController {
+        @FXML VBox ordersContainer
+        @FXML Label lblActiveFilters
+        -KitchenOrderCardFactory cardFactory
+        +void refreshData()
+        -void showPreferencesDialog()
+    }
+    
+    class TakeOrderController {
+        @FXML VBox productsContainer
+        @FXML Button btnSend
+        -int numeroTavolo
+        -Map<Integer, OrderItem> carrello
+        +void init(int)
+        -void handleSend()
+        -void renderProducts()
+    }
+    
+    class MenuController {
+        @FXML VBox menuContainer
+        @FXML TextField txtSearch
+        -List<MenuProduct> allProductsMaster
+        -void loadDataFromDB()
+        -void renderMenu(List<MenuProduct>)
+        +void onAddProduct()
+    }
+    
+    class FinancialController {
+        @FXML VBox ordersContainer
+        @FXML TextField txtSearch
+        -List<Order> allOrdersMaster
+        -void loadDataFromDB()
+        -void navigateToOrderDetail(Order)
+        -void renderOrders(List<Order>)
+    }
+    
+    class EarningController {
+        @FXML VBox ordersContainer
+        @FXML VBox detailsPane
+        @FXML TextField searchField
+        -List<Order> allOrders
+        -Map<Integer, List<Order>> ordersByTable
+        -Timeline pollingTimeline
+        -void loadOpenOrders()
+        -void markTableAsPaid(List<Order>)
+        +void stopPolling()
+    }
+    
+    class OrderDetailController {
+        @FXML Label lblTitle
+        @FXML VBox contentBox
+        -OrderUseCase orderUseCase
+        -Order order
+        +void setOrder(Order)
+        +void loadOrder(int)
+        -void render()
+    }
+    
+    class ProductDetailController {
+        @FXML Label lblName
+        @FXML VBox contentBox
+        @FXML Button btnEdit
+        @FXML Button btnDelete
+        -MenuProduct product
+        +void setProduct(MenuProduct)
+        -void render()
+    }
+    
+    class UsersController {
+        @FXML TableView<User> usersTable
+        @FXML TextField txtUser
+        @FXML ComboBox<String> comboRole
+        -void handleAdd()
+        -void handleDelete()
+    }
+}
+
+' === PACKAGE VIEW.SCREENS ===
+package "com.example.rm.view.screens" #E1F5FE {
+    class LoginView extends AbstractView
+    class ManagerView extends AbstractView
+    class WaiterView extends AbstractView
+    class KitchenView extends AbstractView
+    class MenuView extends AbstractView
+    class FinancialView extends AbstractView
+    class EarningView extends AbstractView
+    class UsersView extends AbstractView
+    class TakeOrderView implements View {
+        -Parent root
+        +int numeroTavolo
+    }
+    class OrderDetailView implements View {
+        -Parent root
+        -Order order
+    }
+}
+
+' === PACKAGE VIEW.EINKSCREEN ===
+package "com.example.rm.view.einkscreen" #B2DFDB {
+    class WaiterEinkView extends AbstractView
+    class KitchenEinkView extends AbstractView
+    class EarningEinkView extends AbstractView
+    class TakeOrderEinkView implements View {
+        -Parent root
+        +int numeroTavolo
+    }
+}
+
+' === PACKAGE VIEW.COMPONENT ===
+package "com.example.rm.view.component" #FFE0B2 {
+    interface KitchenOrderCardFactory {
+        +Node createOrderCard(Order, Runnable)
+    }
+    
+    class KitchenOrderCardFactoryClassic implements KitchenOrderCardFactory {
+        -KitchenUseCase kitchenUseCase
+    }
+    
+    class KitchenOrderCardFactoryEink implements KitchenOrderCardFactory {
+        -KitchenUseCase kitchenUseCase
+    }
+    
+    interface WaiterNotificationCardFactory {
+        +Node createNotificationCard(Order, Runnable)
+    }
+    
+    class WaiterNotificationCardFactoryClassic implements WaiterNotificationCardFactory {
+        -OrderUseCase orderUseCase
+    }
+    
+    class WaiterNotificationCardFactoryEink implements WaiterNotificationCardFactory {
+        -OrderUseCase orderUseCase
+    }
+    
+    class AddProductDialog {
+        -{static} MenuUseCase menuUseCase
+        +{static} void display()
+        +{static} void displayEdit(MenuProduct, Consumer<Boolean>)
+    }
+    
+    class OrderReviewDialog {
+        @FXML Label lblTavolo
+        @FXML VBox vboxProducts
+        +{static} void show(Stage, Integer, List<OrderItem>, String, Consumer)
+    }
+    
+    class KitchenPreferencesDialog {
+        @FXML CheckBox chkSplitOrders
+        @FXML VBox vboxCategories
+        -{static} KitchenPreferencesUseCase prefsService
+        +{static} void show(Stage, String, Consumer<Boolean>)
+    }
+    
+    class ChangePasswordDialog {
+        +{static} void show(Stage)
+    }
+    
+    class ChangePasswordDialogController {
+        @FXML PasswordField txtCurrentPassword
+        @FXML PasswordField txtNewPassword
+        -UserAccountUseCase accountService
+        -void handleSave()
+    }
+    
+    class DBConfigPopupController {
+        @FXML TextField addressField
+        @FXML CheckBox demoModeCheckBox
+        @FXML CheckBox chkEink
+        -DBConfigUseCase configService
+        -void handleSave()
+    }
+    
+    class OrderRowController {
+        @FXML HBox root
+        @FXML Label lblTitle
+        @FXML Label lblSubtitle
+        -Order order
+        +void setOrder(Order, Consumer<Order>)
+    }
+    
+    class ProductRowController {
+        @FXML HBox root
+        @FXML Label lblName
+        @FXML Label dots
+        -MenuProduct product
+        +void setProduct(MenuProduct, Runnable, Consumer)
+    }
+    
+    class DateHeaderController {
+        @FXML Label lblDate
+        +void setDateText(String)
+    }
+    
+    class ProductRowFactory <<Factory>> {
+        +{static} HBox row(String, String, String, int, Runnable, Runnable)
+    }
+}
+
+' === PACKAGE PREFERENCE ===
+package "com.example.rm.preference" #F1F8E9 {
+    class KitchenPreferences {
+        -String username
+        -boolean splitMixedCategoryOrders
+        -Set<String> selectedCategories
+        -boolean includeOtherCategories
+        +boolean shouldDisplayOrder(Set<String>)
+    }
+    
+    class SimpleGraphicsManager {
+        -{static} boolean einkMode
+        +{static} boolean isEinkMode()
+        +{static} void setEinkMode(boolean)
+    }
+    
+    class DemoModeManager {
+        -{static} boolean demoMode
+        +{static} boolean isDemoMode()
+        +{static} void setDemoMode(boolean)
+    }
+    
+    class PreferencesSerializer {
+        +{static} String serialize(KitchenPreferences)
+        +{static} KitchenPreferences deserialize(String, String)
+    }
+}
+
+' === PACKAGE EXCEPTION ===
+package "com.example.rm.exception" #FFEBEE {
+    class AuthenticationException extends RuntimeException {
+        -String userMessage
+        +String getUserMessage()
+    }
+    
+    class ViewNotFoundException extends RuntimeException
+    class InvalidUserSessionException extends RuntimeException
+    class DatabaseNotConfiguredException extends RuntimeException
+}
+
+' === RELATIONSHIPS ===
+
+' App relationships
+MainApp --> SceneManager : uses
+SceneManager --> ViewFactory : creates views
+
+UserSession --> User : holds
+UsersFactory --> User : creates
+UsersFactory ..> ManagerUser : creates
+UsersFactory ..> WaiterUser : creates
+UsersFactory ..> KitchenUser : creates
+
+' Model relationships
+Order "1" *-- "many" OrderItem : contains
+OrderItem "many" --> "1" MenuProduct : references
+
+' Controller relationships
+MenuService --> ProductDAO : uses
+MenuService --> CategoryDAO : uses
+OrderService --> DatabaseService : delegates
+KitchenService --> DatabaseService : delegates
+EarningService --> DatabaseService : delegates
+FinancialService --> DatabaseService : delegates
+ManagerService --> DatabaseService : delegates
+KitchenPreferencesController --> KitchenPreferencesDAO : uses
+
+' DAO relationships
+DatabaseService --> OrderDAO : manages
+DatabaseProductDAO --> DatabaseService : uses
+DatabaseCategoryDAO --> DatabaseService : uses
+DatabaseKitchenPreferencesDAO --> DatabaseService : uses
+DatabaseKitchenPreferencesDAO --> PreferencesSerializer : uses
+
+' Service relationships
+SecurityService --> DatabaseService : uses
+DBConfigStore --> DatabaseService : configures
+
+' View Factory relationships
+ViewFactory ..> LoginView : creates
+ViewFactory ..> ManagerView : creates
+ViewFactory ..> WaiterView : creates
+ViewFactory ..> KitchenView : creates
+ViewFactory ..> MenuView : creates
+ViewFactory ..> FinancialView : creates
+ViewFactory ..> EarningView : creates
+ViewFactory ..> UsersView : creates
+ViewFactory ..> TakeOrderView : creates
+ViewFactory ..> WaiterEinkView : creates
+ViewFactory ..> KitchenEinkView : creates
+ViewFactory ..> EarningEinkView : creates
+ViewFactory ..> TakeOrderEinkView : creates
+
+' Controller to UseCase relationships
+LoginController --> SecurityService : authenticates
+LoginController --> AppStatus : checks
+WaiterController --> WaiterNotificationCardFactory : uses
+WaiterController --> OrderUseCase : uses
+KitchenController --> KitchenOrderCardFactory : uses
+KitchenController --> KitchenUseCase : uses
+TakeOrderController --> OrderUseCase : uses
+TakeOrderController --> MenuUseCase : uses
+MenuController --> MenuUseCase : uses
+FinancialController --> FinancialUseCase : uses
+EarningController --> EarningUseCase : uses
+OrderDetailController --> OrderUseCase : uses
+ProductDetailController --> DatabaseService : uses
+UsersController --> ManagerUseCase : uses
+UsersController --> SecurityService : uses
+
+' Component Factory relationships
+KitchenController --> SimpleGraphicsManager : checks mode
+WaiterController --> SimpleGraphicsManager : checks mode
+KitchenOrderCardFactoryClassic --> KitchenUseCase : uses
+KitchenOrderCardFactoryEink --> KitchenUseCase : uses
+WaiterNotificationCardFactoryClassic --> OrderUseCase : uses
+WaiterNotificationCardFactoryEink --> OrderUseCase : uses
+
+' Dialog relationships
+AddProductDialog --> MenuUseCase : uses
+KitchenPreferencesDialog --> KitchenPreferencesUseCase : uses
+KitchenPreferencesDialog --> CategoryDAO : uses
+DBConfigPopupController --> DemoModeManager : updates
+DBConfigPopupController --> SimpleGraphicsManager : updates
+
+' Preference relationships
+KitchenPreferencesController --> KitchenPreferences : manages
+DatabaseService --> KitchenPreferences : loads/saves
+
+' Navigation flows
+LoginController ..> UserSession : creates
+LoginController ..> SceneManager : navigates
+WaiterController ..> SceneManager : navigates
+KitchenController ..> UserSession : reads
+TakeOrderController ..> UserSession : reads
+
+@enduml

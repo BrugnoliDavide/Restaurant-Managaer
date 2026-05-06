@@ -344,9 +344,56 @@ public class OrderDAOFile implements OrderDAO {
     }
 
     @Override
-    public boolean decomposeOrderIfNeeded(int orderId) {
-        logger.log(Level.INFO, "Scomposizione ordini non implementata per file system");
-        return true;
+    public synchronized boolean decomposeOrderIfNeeded(int orderId) {
+        List<OrderItem> allItems = getOrderItemsDetailed(orderId);
+        if (allItems.isEmpty()) return true;
+
+        // Raggruppa per categoria (tipologia)
+        Map<String, List<OrderItem>> byCategory = new HashMap<>();
+        for (OrderItem item : allItems) {
+            String cat = item.getProduct().getTipologia();
+            byCategory.computeIfAbsent(cat, k -> new ArrayList<>()).add(item);
+        }
+
+        if (byCategory.size() <= 1) return true;  // già mono-categoria, niente da fare
+
+        // Leggi metadati ordine originale
+        Order original = findById(orderId);
+        if (original == null) return false;
+
+        // Crea un ordine per ogni categoria
+        for (List<OrderItem> categoryItems : byCategory.values()) {
+            // Riusa createOrder con un User fittizio (username dal original)
+            com.example.rm.model.User fakeUser = new com.example.rm.model.ManagerUser(
+                    original.getUsername());
+            createOrder(categoryItems, original.getTavolo(), original.getNote(), fakeUser);
+        }
+
+        // Elimina ordine originale: sovrascrivi il file rimuovendo la riga
+        return deleteOrderById(orderId);
+    }
+
+    // metodo privato di supporto
+    private synchronized boolean deleteOrderById(int orderId) {
+        try {
+            List<String> lines = Files.readAllLines(ordersFilePath);
+            List<String> updated = new ArrayList<>();
+            updated.add(lines.get(0)); // header
+            for (int i = 1; i < lines.size(); i++) {
+                String[] parts = lines.get(i).split(CSV_SEPARATOR);
+                if (parts.length > 0 && Integer.parseInt(parts[0].trim()) != orderId) {
+                    updated.add(lines.get(i));
+                }
+            }
+            Files.write(ordersFilePath, updated);
+            // elimina anche il file degli articoli
+            Path itemsFile = orderItemsDir.resolve(orderString + orderId + ".csv");
+            Files.deleteIfExists(itemsFile);
+            return true;
+        } catch (IOException | NumberFormatException e) {
+            logger.log(Level.SEVERE, "Errore eliminazione ordine {0} da file", orderId);
+            return false;
+        }
     }
 
     @Override

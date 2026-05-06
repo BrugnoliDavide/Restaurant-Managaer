@@ -15,7 +15,7 @@ public final class PreferencesSerializer {
     private static final String KEY_VALUE_SEPARATOR = ":";
     private static final String CATEGORIES_SEPARATOR = ";";
 
-    public static final Logger logger = Logger.getLogger(PreferencesSerializer.class.getName());
+    private static final Logger logger = Logger.getLogger(PreferencesSerializer.class.getName());
 
 
     /**

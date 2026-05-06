@@ -16,7 +16,7 @@ public class TakeOrderEinkView implements View {
 
         try {
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/einkBN//TakeOrderView.fxml")
+                    getClass().getResource("/einkBN/TakeOrderView.fxml")
             );
             this.root = loader.load();
 
