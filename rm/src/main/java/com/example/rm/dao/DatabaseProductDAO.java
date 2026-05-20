@@ -1,6 +1,6 @@
 package com.example.rm.dao;
 
-import com.example.rm.model.MenuProduct;
+import com.example.rm.bean.ProductBean;
 import com.example.rm.service.ConnectionManager;
 
 import java.sql.*;
@@ -9,21 +9,32 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Implementazione PostgreSQL di {@link ProductDAO}.
+ *
+ * <p>Tutti i metodi di lettura restituiscono {@link ProductBean}; la conversione
+ * a {@code MenuProduct} (con JavaFX Properties) avviene nel layer Service
+ * tramite {@code BeanMapper}.</p>
+ */
 public class DatabaseProductDAO implements ProductDAO {
 
     private static final Logger logger = Logger.getLogger(DatabaseProductDAO.class.getName());
 
+    private static final String SELECT_COLS =
+            "SELECT id, nome, tipologia, prezzo_vendita, costo_realizzazione, allergeni";
 
+    // =========================================================================
+    //  Lettura — restituisce ProductBean
+    // =========================================================================
 
     @Override
-    public List<MenuProduct> findAll() {
-        List<MenuProduct> prodotti = new ArrayList<>();
-        String sql = "SELECT id, nome, tipologia, prezzo_vendita, "
-                + "costo_realizzazione, allergeni FROM menu_items";
+    public List<ProductBean> findAll() {
+        List<ProductBean> prodotti = new ArrayList<>();
+        String sql = SELECT_COLS + " FROM menu_items";
 
         try (Connection conn = ConnectionManager.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             Statement stmt  = conn.createStatement();
+             ResultSet rs    = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
                 prodotti.add(mapRow(rs));
@@ -35,9 +46,8 @@ public class DatabaseProductDAO implements ProductDAO {
     }
 
     @Override
-    public MenuProduct findById(int id) {
-        String sql = "SELECT id, nome, tipologia, prezzo_vendita, "
-                + "costo_realizzazione, allergeni FROM menu_items WHERE id = ?";
+    public ProductBean findById(int id) {
+        String sql = SELECT_COLS + " FROM menu_items WHERE id = ?";
 
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -62,20 +72,21 @@ public class DatabaseProductDAO implements ProductDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, nomeProdotto);
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) return rs.getLong(1);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) return rs.getLong(1);
+            }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore conteggio vendite", e);
         }
         return 0;
     }
 
-    // -------------------------------------------------------------------------
-    // Persistenza
-    // -------------------------------------------------------------------------
+    // =========================================================================
+    //  Scrittura — accetta ProductBean (conversione Model→Bean avviene nel Service)
+    // =========================================================================
 
     @Override
-    public boolean save(MenuProduct product) {
+    public boolean save(ProductBean product) {
         if (product == null) return false;
         return (product.getId() <= 0) ? insert(product) : update(product);
     }
@@ -85,17 +96,16 @@ public class DatabaseProductDAO implements ProductDAO {
         if (productId == null || productId <= 0) return false;
 
         logger.log(Level.INFO, "Tentativo eliminazione prodotto ID: {0}", productId);
-
         String sql = "DELETE FROM menu_items WHERE id = ?";
 
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setLong(1, productId);
-            int rowsAffected = pstmt.executeUpdate();
+            int rows = pstmt.executeUpdate();
 
-            if (rowsAffected > 0) {
-                logger.info("SUCCESSO: Prodotto eliminato.");
+            if (rows > 0) {
+                logger.info("Prodotto eliminato con successo.");
                 return true;
             } else {
                 logger.log(Level.WARNING, "Nessuna riga trovata con ID: {0}", productId);
@@ -107,17 +117,16 @@ public class DatabaseProductDAO implements ProductDAO {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Metodi privati
-    // -------------------------------------------------------------------------
+    // =========================================================================
+    //  Metodi privati
+    // =========================================================================
 
-    private boolean insert(MenuProduct p) {
+    private boolean insert(ProductBean p) {
         String sql = "INSERT INTO menu_items (nome, tipologia, prezzo_vendita, "
                 + "costo_realizzazione, allergeni) VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
             bindProduct(pstmt, p);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -126,13 +135,12 @@ public class DatabaseProductDAO implements ProductDAO {
         }
     }
 
-    private boolean update(MenuProduct p) {
-        String sql = "UPDATE menu_items SET nome = ?, tipologia = ?, prezzo_vendita = ?, "
-                + "costo_realizzazione = ?, allergeni = ? WHERE id = ?";
+    private boolean update(ProductBean p) {
+        String sql = "UPDATE menu_items SET nome=?, tipologia=?, prezzo_vendita=?, "
+                + "costo_realizzazione=?, allergeni=? WHERE id=?";
 
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
             bindProduct(pstmt, p);
             pstmt.setInt(6, p.getId());
             return pstmt.executeUpdate() > 0;
@@ -142,7 +150,7 @@ public class DatabaseProductDAO implements ProductDAO {
         }
     }
 
-    private void bindProduct(PreparedStatement pstmt, MenuProduct p) throws SQLException {
+    private void bindProduct(PreparedStatement pstmt, ProductBean p) throws SQLException {
         pstmt.setString(1, p.getNome());
         pstmt.setString(2, p.getTipologia());
         pstmt.setBigDecimal(3, p.getPrezzoVendita());
@@ -150,8 +158,9 @@ public class DatabaseProductDAO implements ProductDAO {
         pstmt.setString(5, p.getAllergeni());
     }
 
-    private MenuProduct mapRow(ResultSet rs) throws SQLException {
-        return new MenuProduct(
+    /** Mappa la riga corrente del ResultSet in un ProductBean. */
+    private ProductBean mapRow(ResultSet rs) throws SQLException {
+        return new ProductBean(
                 rs.getInt("id"),
                 rs.getString("nome"),
                 rs.getString("tipologia"),

@@ -5,6 +5,7 @@ import com.example.rm.dao.DatabaseProductDAO;
 import com.example.rm.dao.CategoryDAO;
 import com.example.rm.dao.DatabaseCategoryDAO;
 import com.example.rm.model.MenuProduct;
+import com.example.rm.util.BeanMapper;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,7 +31,8 @@ public class MenuService implements MenuUseCase {
     @Override
     public List<MenuProduct> loadAllProducts() {
         try {
-            return productDAO.findAll();
+            // DAO restituisce List<ProductBean> → mappiamo a List<MenuProduct>
+            return BeanMapper.toProductModels(productDAO.findAll());
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Errore caricamento prodotti", e);
             return Collections.emptyList();
@@ -38,22 +40,25 @@ public class MenuService implements MenuUseCase {
     }
 
     @Override
-    public List<String> loadCategories() {
-        return categoryDAO.getAllCategories();
-    }
-
-    @Override
     public boolean addProduct(MenuProduct product) {
-        return productDAO.save(product);
+        // Model → Bean prima di passare al DAO
+        return productDAO.save(BeanMapper.toBean(product));
     }
 
     @Override
     public boolean updateProduct(MenuProduct product) {
-        return productDAO.save(product);
+        return productDAO.save(BeanMapper.toBean(product));
     }
 
     @Override
     public MenuProduct getProductById(int id) {
-        return productDAO.findById(id);
+        // DAO restituisce ProductBean → mappiamo a MenuProduct
+        return BeanMapper.toModel(productDAO.findById(id));
+    }
+
+
+    @Override
+    public List<String> loadCategories() {
+        return categoryDAO.getAllCategories();
     }
 }

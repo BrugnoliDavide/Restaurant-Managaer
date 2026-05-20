@@ -1,0 +1,499 @@
+@startuml Restaurant_Manager_BCE_Pattern
+
+!pragma layout smetana
+
+!define BOUNDARY_COLOR #E3F2FD
+!define CONTROL_COLOR #E8F5E9
+!define ENTITY_COLOR #FFF3E0
+!define BEAN_COLOR #FCE4EC
+
+skinparam packageStyle rectangle
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 100
+skinparam ranksep 80
+
+
+
+title Restaurant Manager - BCE Pattern Architecture
+
+' ============================================================================
+' BOUNDARY LAYER - Interfacce con l'esterno
+' ============================================================================
+
+package "<<Boundary>>" <<Rectangle>> BOUNDARY_COLOR {
+
+    package "view" {
+
+        class LoginController <<boundary>> {
+            - txtUsername: TextField
+            - txtPassword: PasswordField
+            - btnLogin: Button
+            --
+            + initialize(): void
+            + handleLogin(ActionEvent): void
+            - navigateToRoleView(String): void
+        }
+
+        class KitchenController <<boundary>> {
+            - ordersContainer: VBox
+            - lblActiveFilters: Label
+            - profileBtn: StackPane
+            --
+            + initialize(): void
+            + refreshData(): void
+            + handleOrderStatusChange(): void
+            + handleProfileMenu(): void
+        }
+
+        class WaiterController <<boundary>> {
+            - notificationsContainer: VBox
+            - txtTable: TextField
+            - btnNewOrder: Button
+            --
+            + initialize(): void
+            + handleNewOrder(): void
+            + refreshData(): void
+            + handleProfileMenu(): void
+        }
+
+        class ManagerController <<boundary>> {
+            - tabPane: TabPane
+            --
+            + initialize(): void
+            + handleUserManagement(): void
+            + handleMenuManagement(): void
+            + handleFinancialReports(): void
+        }
+
+        class CashierController <<boundary>> {
+            - ordersTable: TableView
+            - txtTotal: TextField
+            --
+            + initialize(): void
+            + handleCheckout(): void
+            + processPayment(): void
+            + printReceipt(): void
+        }
+
+        class TakeOrderController <<boundary>> {
+            - productsContainer: VBox
+            - btnSend: Button
+            --
+            + initialize(): void
+            + handleSend(): void
+            + handleCancel(): void
+        }
+    }
+
+    package "app" {
+
+        class MainApp <<boundary>> {
+            - primaryStage: Stage
+            - currentScene: Scene
+            --
+            + start(Stage): void
+            + main(String[]): void
+            - initializeDatabase(): void
+            - showLoginView(): void
+        }
+
+
+    }
+}
+
+' ============================================================================
+' CONTROL LAYER - Logica di business e coordinamento
+' ============================================================================
+
+package "<<Control>>" <<Rectangle>> CONTROL_COLOR {
+
+    package "controller" {
+
+        interface ManagerUseCase <<control>> {
+            + getAllUsers(): List<UserBean>
+            + saveUser(UserBean): void
+            + deleteUser(String): void
+            + updateUser(UserBean): void
+            + getUserByUsername(String): UserBean
+        }
+
+        interface MenuUseCase <<control>> {
+            + getAllProducts(): List<ProductBean>
+            + saveProduct(ProductBean): void
+            + deleteProduct(int): void
+            + updateProduct(ProductBean): void
+            + getProductById(int): ProductBean
+        }
+
+        interface FinancialUseCase <<control>> {
+            + getAllOrders(): List<OrderBean>
+            + getOrdersByDateRange(LocalDate, LocalDate): List<OrderBean>
+            + getTotalRevenue(): BigDecimal
+            + getRevenueByPeriod(LocalDate, LocalDate): BigDecimal
+        }
+
+        class ManagerService <<control>> implements ManagerUseCase {
+            - userDAO: UserDAO
+            --
+            + getAllUsers(): List<UserBean>
+            + saveUser(UserBean): void
+            + deleteUser(String): void
+            + updateUser(UserBean): void
+            + getUserByUsername(String): UserBean
+        }
+
+        class MenuService <<control>> implements MenuUseCase {
+            - productDAO: ProductDAO
+            --
+            + getAllProducts(): List<ProductBean>
+            + saveProduct(ProductBean): void
+            + deleteProduct(int): void
+            + updateProduct(ProductBean): void
+            + getProductById(int): ProductBean
+        }
+
+        class FinancialService <<control>> implements FinancialUseCase {
+            - orderDAO: OrderDAO
+            --
+            + getAllOrders(): List<OrderBean>
+            + getOrdersByDateRange(LocalDate, LocalDate): List<OrderBean>
+            + getTotalRevenue(): BigDecimal
+            + getRevenueByPeriod(LocalDate, LocalDate): BigDecimal
+        }
+    }
+
+    package "service" {
+
+        class SecurityService <<control>> {
+            --
+            + {static} hashPassword(String): String
+            + {static} verifyPassword(String, String): boolean
+            + {static} authenticate(String, String): UserBean
+        }
+
+
+
+        class BeanMapper <<control>> {
+            --
+            + {static} toProductBean(MenuProduct): ProductBean
+            + {static} toMenuProduct(ProductBean): MenuProduct
+            + {static} toUserBean(User): UserBean
+            + {static} toUser(UserBean): User
+            + {static} toOrderBean(Order): OrderBean
+            + {static} toOrder(OrderBean): Order
+        }
+
+
+    }
+}
+
+' ============================================================================
+' ENTITY LAYER - Entità di dominio, bean e persistenza
+' ============================================================================
+
+package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
+
+    ' ========================================
+    ' Domain Model Entities
+    ' ========================================
+
+    package "model" {
+
+        class MenuProduct <<entity>> {
+            - id: int
+            - name: String
+            - category: String
+            - price: BigDecimal
+            - available: boolean
+            - description: String
+            --
+            + getId(): int
+            + setId(int): void
+            + getName(): String
+            + setName(String): void
+            + getCategory(): String
+            + setCategory(String): void
+            + getPrice(): BigDecimal
+            + setPrice(BigDecimal): void
+            + isAvailable(): boolean
+            + setAvailable(boolean): void
+        }
+
+        class Order <<entity>> {
+            - id: int
+            - tableNumber: int
+            - waiter: String
+            - timestamp: LocalDateTime
+            - status: String
+            - totalAmount: BigDecimal
+            - items: List<OrderItem>
+            - paymentMethod: String
+            --
+            + getId(): int
+            + getTableNumber(): int
+            + getStatus(): String
+            + getTotalAmount(): BigDecimal
+            + getItems(): List<OrderItem>
+            + addItem(OrderItem): void
+            + removeItem(OrderItem): void
+        }
+
+        class OrderItem <<entity>> {
+            - product: MenuProduct
+            - quantity: int
+            - notes: String
+            - subtotal: BigDecimal
+            --
+            + getProduct(): MenuProduct
+            + setProduct(MenuProduct): void
+            + getQuantity(): int
+            + setQuantity(int): void
+            + getNotes(): String
+            + setNotes(String): void
+            + calculateSubtotal(): BigDecimal
+        }
+
+        class User <<entity>> {
+            - username: String
+            - passwordHash: String
+            - role: String
+            - displayName: String
+            - active: boolean
+            --
+            + getUsername(): String
+            + setUsername(String): void
+            + getPasswordHash(): String
+            + setPasswordHash(String): void
+            + getRole(): String
+            + setRole(String): void
+            + getDisplayName(): String
+            + setDisplayName(String): void
+        }
+    }
+
+    ' ========================================
+    ' Java Beans (Data Transfer Objects)
+    ' ========================================
+
+    package "bean" <<Rectangle>> BEAN_COLOR {
+
+        class ProductBean <<bean>> {
+            - id: int
+            - name: String
+            - category: String
+            - price: BigDecimal
+            - available: boolean
+            - description: String
+            --
+            + getId(): int
+            + setId(int): void
+            + getName(): String
+            + setName(String): void
+            + getCategory(): String
+            + setCategory(String): void
+            + getPrice(): BigDecimal
+            + setPrice(BigDecimal): void
+        }
+
+        class OrderBean <<bean>> {
+            - id: int
+            - tableNumber: int
+            - waiter: String
+            - timestamp: LocalDateTime
+            - status: String
+            - totalAmount: BigDecimal
+            - items: List<OrderItemBean>
+            - paymentMethod: String
+            --
+            + getId(): int
+            + setId(int): void
+            + getTableNumber(): int
+            + setTableNumber(int): void
+            + getStatus(): String
+            + setStatus(String): void
+            + getTotalAmount(): BigDecimal
+            + setTotalAmount(BigDecimal): void
+        }
+
+        class OrderItemBean <<bean>> {
+            - productId: int
+            - productName: String
+            - quantity: int
+            - notes: String
+            - unitPrice: BigDecimal
+            - subtotal: BigDecimal
+            --
+            + getProductId(): int
+            + setProductId(int): void
+            + getQuantity(): int
+            + setQuantity(int): void
+            + getSubtotal(): BigDecimal
+            + setSubtotal(BigDecimal): void
+        }
+
+        class UserBean <<bean>> {
+            - username: String
+            - passwordHash: String
+            - role: String
+            - displayName: String
+            - active: boolean
+            --
+            + getUsername(): String
+            + setUsername(String): void
+            + getRole(): String
+            + setRole(String): void
+            + getDisplayName(): String
+            + setDisplayName(String): void
+        }
+
+
+    }
+
+    ' ========================================
+    ' Data Access Objects (DAO)
+    ' ========================================
+
+    package "dao" {
+
+        interface ProductDAO <<entity>> {
+            + findAll(): List<MenuProduct>
+            + findById(int): MenuProduct
+            + save(MenuProduct): void
+            + update(MenuProduct): void
+            + delete(int): void
+            + findByCategory(String): List<MenuProduct>
+        }
+
+        interface UserDAO <<entity>> {
+            + findAll(): List<User>
+            + findByUsername(String): User
+            + save(User): void
+            + update(User): void
+            + delete(String): void
+        }
+
+        interface OrderDAO <<entity>> {
+            + findAll(): List<Order>
+            + findById(int): Order
+            + save(Order): void
+            + update(Order): void
+            + delete(int): void
+            + findByDateRange(LocalDate, LocalDate): List<Order>
+            + findByStatus(String): List<Order>
+        }
+
+        class DatabaseProductDAO <<entity>> implements ProductDAO {
+            --
+            + findAll(): List<MenuProduct>
+            + findById(int): MenuProduct
+            + save(MenuProduct): void
+            + update(MenuProduct): void
+            + delete(int): void
+            - mapResultSetToProduct(ResultSet): MenuProduct
+        }
+
+        class DatabaseUserDAO <<entity>> implements UserDAO {
+            --
+            + findAll(): List<User>
+            + findByUsername(String): User
+            + save(User): void
+            + update(User): void
+            + delete(String): void
+            - mapResultSetToUser(ResultSet): User
+        }
+
+        class DatabaseOrderDAO <<entity>> implements OrderDAO {
+            --
+            + findAll(): List<Order>
+            + findById(int): Order
+            + save(Order): void
+            + update(Order): void
+            + delete(int): void
+            + findByDateRange(LocalDate, LocalDate): List<Order>
+            - mapResultSetToOrder(ResultSet): Order
+        }
+    }
+
+    ' ========================================
+    ' Supporting Entities
+    ' ========================================
+
+
+
+    package "exception" {
+        class AuthenticationException <<entity>> extends Exception {
+            --
+            + AuthenticationException(String): void
+        }
+    }
+}
+
+' ============================================================================
+' RELATIONSHIPS - BCE Pattern
+' ============================================================================
+
+' Boundary -> Control
+LoginController ..> SecurityService : authenticates with
+KitchenController ..> FinancialUseCase
+WaiterController ..> MenuUseCase
+WaiterController ..> FinancialUseCase
+ManagerController ..> ManagerUseCase
+ManagerController ..> MenuUseCase
+ManagerController ..> FinancialUseCase
+CashierController ..> FinancialUseCase
+MainApp ..> SecurityService
+
+
+
+' Control -> Control
+ManagerService ..> BeanMapper : converts
+MenuService ..> BeanMapper : converts
+FinancialService ..> BeanMapper : converts
+SecurityService ..> BeanMapper : converts
+
+' Control -> Entity (DAO)
+ManagerService --> UserDAO : uses
+MenuService --> ProductDAO : uses
+FinancialService --> OrderDAO : uses
+
+' Control <-> Bean
+ManagerUseCase ..> UserBean : transfers
+MenuUseCase ..> ProductBean : transfers
+FinancialUseCase ..> OrderBean : transfers
+FinancialUseCase ..> OrderItemBean : transfers
+BeanMapper ..> ProductBean : creates
+BeanMapper ..> UserBean : creates
+BeanMapper ..> OrderBean : creates
+BeanMapper ..> OrderItemBean : creates
+
+' Entity (DAO) -> Entity (Model)
+DatabaseProductDAO ..> MenuProduct : persists
+DatabaseUserDAO ..> User : persists
+DatabaseOrderDAO ..> Order : persists
+
+
+' Entity (Model) relationships
+Order *-- "1..*" OrderItem : contains
+OrderItem --> MenuProduct : references
+OrderBean *-- "1..*" OrderItemBean : contains
+
+' Bean <-> Entity mapping
+BeanMapper ..> MenuProduct : converts from
+BeanMapper ..> User : converts from
+BeanMapper ..> Order : converts from
+
+' Exceptions
+SecurityService ..> AuthenticationException : throws
+
+legend right
+  |<BOUNDARY_COLOR>| **Boundary** | Interfacce con l'esterno (View, CLI, Entry Points) |
+  |<CONTROL_COLOR>| **Control** | Logica di business e coordinamento |
+  |<ENTITY_COLOR>| **Entity** | Entità di dominio e persistenza |
+  |<BEAN_COLOR>| **Bean** | Data Transfer Objects (DTO) |
+endlegend
+
+@enduml

@@ -1,7 +1,6 @@
 package com.example.rm.dao;
 
-import com.example.rm.app.UsersFactory;
-import com.example.rm.model.User;
+import com.example.rm.bean.UserBean;
 import com.example.rm.service.ConnectionManager;
 
 import java.sql.*;
@@ -15,8 +14,8 @@ public class DatabaseUserDAO implements UserDAO {
     private static final Logger logger = Logger.getLogger(DatabaseUserDAO.class.getName());
 
     @Override
-    public List<User> findAll() {
-        List<User> list = new ArrayList<>();
+    public List<UserBean> findAll() {
+        List<UserBean> list = new ArrayList<>();
         String sql = "SELECT username, role FROM users ORDER BY role, username";
 
         try (Connection conn = ConnectionManager.getConnection();
@@ -24,16 +23,18 @@ public class DatabaseUserDAO implements UserDAO {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                User u = UsersFactory.createUser(
-                        rs.getString("username"), rs.getString("role"));
-                if (u != null) list.add(u);
+                // Ora mappiamo direttamente a Bean — nessuna dipendenza da UsersFactory qui
+                list.add(new UserBean(
+                        rs.getString("username"),
+                        null,           // passwordHash non caricato per sicurezza
+                        rs.getString("role")
+                ));
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero utenti", e);
         }
         return list;
     }
-
     @Override
     public boolean delete(String username) {
         String sql = "DELETE FROM users WHERE username = ?";

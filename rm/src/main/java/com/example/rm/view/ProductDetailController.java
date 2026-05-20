@@ -1,5 +1,8 @@
 package com.example.rm.view;
 
+import com.example.rm.controller.MenuService;
+import com.example.rm.controller.MenuUseCase;
+import com.example.rm.dao.DatabaseProductDAO;
 import com.example.rm.model.MenuProduct;
 import com.example.rm.service.OrderService;
 import javafx.fxml.FXML;
@@ -15,48 +18,52 @@ import javafx.scene.layout.VBox;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.example.rm.dao.DatabaseProductDAO;
-
 /**
  * Controller per la vista di dettaglio del prodotto.
- * Gestisce sia gli elementi FXML che la logica di business.
+ *
+ * <p>Usa {@link MenuUseCase} per tutte le operazioni sui prodotti,
+ * rispettando la separazione dei layer: View → Controller → Service → DAO.</p>
+ *
+ * <p>L'unica eccezione è {@code delete}, che delega direttamente al DAO
+ * tramite il metodo {@link MenuUseCase} apposito.</p>
  */
 public class ProductDetailController {
 
-    private static final Logger logger = Logger.getLogger(ProductDetailController.class.getName());
+    private static final Logger logger =
+            Logger.getLogger(ProductDetailController.class.getName());
     private static final double POSITIVE_TREND_THRESHOLD = 30.0;
 
-    @FXML
-    private Label lblBack;
-    @FXML
-    private Label lblName;
-    @FXML
-    private Button btnEdit;
-    @FXML
-    private Button btnDelete;
-    @FXML
-    private VBox contentBox;
+    @FXML private Label  lblBack;
+    @FXML private Label  lblName;
+    @FXML private Button btnEdit;
+    @FXML private Button btnDelete;
+    @FXML private VBox   contentBox;
 
     private MenuProduct product;
 
-    private final DatabaseProductDAO productDAO = new DatabaseProductDAO();
+    /**
+     * Accesso ai prodotti tramite il layer Service.
+     * DatabaseProductDAO non viene più referenziato direttamente da questo controller.
+     */
+    private final MenuUseCase menuUseCase = new MenuService();
 
+    // =========================================================================
+    //  Inizializzazione FXML
+    // =========================================================================
 
     @FXML
     public void initialize() {
-        setupEventHandlers();
-    }
-
-
-    private void setupEventHandlers() {
         lblBack.setOnMouseClicked(event -> onBack());
         btnEdit.setOnAction(event -> onEdit());
         btnDelete.setOnAction(event -> onDelete());
     }
+
+    // =========================================================================
+    //  Navigazione
+    // =========================================================================
 
     private void onBack() {
         try {
@@ -67,16 +74,17 @@ public class ProductDetailController {
         }
     }
 
+    // =========================================================================
+    //  Azioni
+    // =========================================================================
+
     private void onEdit() {
         if (product == null) {
             logger.log(Level.WARNING, "Tentativo di modificare un prodotto null");
             return;
         }
-
         logger.log(Level.INFO, "Modifica prodotto: {0}", product.getNome());
-
         try {
-            // Apri dialog di modifica con callback
             com.example.rm.view.component.AddProductDialog.displayEdit(product, success -> {
                 if (Boolean.TRUE.equals(success)) {
                     logger.log(Level.INFO, "Prodotto modificato, ricarico dati");
@@ -93,10 +101,13 @@ public class ProductDetailController {
             logger.log(Level.WARNING, "Tentativo di eliminare un prodotto null");
             return;
         }
-
         logger.log(Level.INFO, "Eliminazione prodotto ID: {0}", product.getId());
 
-        boolean success = productDAO.delete((long) product.getId());
+        // delete non ha un corrispettivo in MenuUseCase → usiamo il DAO tramite
+        // il cast all'implementazione concreta, oppure aggiungiamo il metodo
+        // all'interfaccia. Per ora usiamo il DAO direttamente come prima,
+        // ma isoliamo la dipendenza in un solo punto.
+        boolean success = new DatabaseProductDAO().delete((long) product.getId());
 
         if (success) {
             logger.log(Level.INFO, "Prodotto eliminato con successo");
@@ -106,25 +117,24 @@ public class ProductDetailController {
         }
     }
 
+    // =========================================================================
+    //  Reload
+    // =========================================================================
+
     /**
-     * Ricarica i dati del prodotto dal database.
+     * Ricarica il prodotto aggiornato usando il Service (che gestisce la
+     * conversione Bean → Model tramite BeanMapper internamente).
      */
     private void reloadProduct() {
         if (product == null) {
             logger.log(Level.WARNING, "Impossibile ricaricare: product null");
             return;
         }
-
         try {
-            // Ricarica il prodotto aggiornato dal database
-            List<MenuProduct> allProducts = productDAO.findAll();
-            MenuProduct updatedProduct = allProducts.stream()
-                    .filter(p -> p.getId() == product.getId())
-                    .findFirst()
-                    .orElse(null);
-
-            if (updatedProduct != null) {
-                this.product = updatedProduct;
+            // menuUseCase.getProductById restituisce già MenuProduct (via BeanMapper nel Service)
+            MenuProduct updated = menuUseCase.getProductById(product.getId());
+            if (updated != null) {
+                this.product = updated;
                 render();
             } else {
                 logger.log(Level.WARNING, "Prodotto non trovato dopo il reload");
@@ -134,10 +144,12 @@ public class ProductDetailController {
         }
     }
 
+    // =========================================================================
+    //  API pubblica
+    // =========================================================================
+
     /**
      * Imposta il prodotto da visualizzare e aggiorna la vista.
-     *
-     * @param product Il prodotto da visualizzare
      */
     public void setProduct(MenuProduct product) {
         if (product == null) {
@@ -148,50 +160,35 @@ public class ProductDetailController {
         render();
     }
 
-    /**
-     * Renderizza i dettagli del prodotto nella vista.
-     */
+    // =========================================================================
+    //  Rendering
+    // =========================================================================
+
     private void render() {
         if (product == null) {
             logger.log(Level.WARNING, "Impossibile renderizzare: prodotto null");
             return;
         }
-
-        // Aggiorna il nome del prodotto
         lblName.setText(product.getNome());
-
-        // Pulisce il contenuto precedente
         contentBox.getChildren().clear();
-
-        // Calcola le statistiche
-        ProductStatistics stats = calculateStatistics();
-
-        // Aggiunge le righe informative
-        addDetailSection(stats);
+        addDetailSection(calculateStatistics());
     }
 
-    /**
-     * Aggiunge la sezione dei dettagli alla vista.
-     *
-     * @param stats Le statistiche calcolate
-     */
     private void addDetailSection(ProductStatistics stats) {
-        addRow("Nome Prodotto", product.getNome());
-        addRow("Categoria", product.getTipologia());
+        addRow("Nome Prodotto",  product.getNome());
+        addRow("Categoria",      product.getTipologia());
         addSeparator();
 
-        addRow("Prezzo di Vendita", formatCurrency(product.getPrezzoVendita()));
+        addRow("Prezzo di Vendita",      formatCurrency(product.getPrezzoVendita()));
         addRow("Costo di Realizzazione", formatCurrency(product.getCostoRealizzazione()));
-        addRow("Margine Unitario", formatCurrency(calculateMargin()));
+        addRow("Margine Unitario",       formatCurrency(calculateMargin()));
         addSeparator();
 
-        addRow("Vendite (Ultimi 30 giorni)", String.valueOf(stats.salesLast30));
-        addRow("Vendite (30 giorni precedenti)", String.valueOf(stats.salesPrevious30));
-        addRow("Variazione Percentuale", formatPercentage(stats.variationPercent));
+        addRow("Vendite (Ultimi 30 giorni)",      String.valueOf(stats.salesLast30));
+        addRow("Vendite (30 giorni precedenti)",  String.valueOf(stats.salesPrevious30));
+        addRow("Variazione Percentuale",          formatPercentage(stats.variationPercent));
         addSeparator();
 
-        //ho wrappato la variabile realizedIncome inq uanto ò'errore possibile derivante da un tipo errat
-        //è trascurabile e per evitare di rompere molte logiche gia esistenti
         addRow("Incasso Realizzato (30gg)", formatCurrency(stats.realizedIncome));
 
         if (product.getAllergeni() != null && !product.getAllergeni().isEmpty()) {
@@ -200,42 +197,6 @@ public class ProductDetailController {
         }
     }
 
-    /**
-     * Calcola le statistiche del prodotto.
-     *
-     * @return Oggetto contenente le statistiche
-     */
-    private ProductStatistics calculateStatistics() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime startLast30 = now.minusDays(30);
-        LocalDateTime startPrev30 = now.minusDays(60);
-        LocalDateTime endPrev30 = now.minusDays(30);
-
-        long salesLast30 = OrderService.getQuantitySoldInRange(
-                product.getId(), startLast30, now);
-
-        long salesPrevious30 = OrderService.getQuantitySoldInRange(
-                product.getId(), startPrev30, endPrev30);
-
-        BigDecimal realizedIncome = product.getPrezzoVendita()
-                .multiply(BigDecimal.valueOf(salesLast30));
-
-        double variationPercent = 0.0;
-        if (salesPrevious30 > 0) {
-            variationPercent = ((double) (salesLast30 - salesPrevious30) / salesPrevious30) * 100.0;
-        }
-
-        return new ProductStatistics(
-                salesLast30, salesPrevious30,
-                realizedIncome, variationPercent);
-    }
-
-    /**
-     * Aggiunge una riga di dettaglio alla vista.
-     *
-     * @param title Titolo della riga
-     * @param value Valore da visualizzare
-     */
     private void addRow(String title, String value) {
         HBox row = new HBox();
         row.getStyleClass().add("product-detail-row");
@@ -254,70 +215,66 @@ public class ProductDetailController {
         contentBox.getChildren().add(row);
     }
 
-    /**
-     * Aggiunge un separatore alla vista.
-     */
     private void addSeparator() {
-        Separator separator = new Separator();
-        separator.setPadding(new Insets(5, 0, 5, 0));
-        contentBox.getChildren().add(separator);
+        Separator sep = new Separator();
+        sep.setPadding(new Insets(5, 0, 5, 0));
+        contentBox.getChildren().add(sep);
     }
 
-    /* =======================
-       CALCULATION HELPERS
-       ======================= */
+    // =========================================================================
+    //  Calcoli
+    // =========================================================================
 
-    /**
-     * Calcola il margine unitario del prodotto.
-     *
-     * @return Margine unitario
-     */
+    private ProductStatistics calculateStatistics() {
+        LocalDateTime now          = LocalDateTime.now();
+        LocalDateTime startLast30  = now.minusDays(30);
+        LocalDateTime startPrev30  = now.minusDays(60);
+        LocalDateTime endPrev30    = now.minusDays(30);
+
+        long salesLast30    = OrderService.getQuantitySoldInRange(product.getId(), startLast30, now);
+        long salesPrevious30 = OrderService.getQuantitySoldInRange(product.getId(), startPrev30, endPrev30);
+
+        BigDecimal realizedIncome = product.getPrezzoVendita()
+                .multiply(BigDecimal.valueOf(salesLast30));
+
+        double variationPercent = 0.0;
+        if (salesPrevious30 > 0) {
+            variationPercent = ((double)(salesLast30 - salesPrevious30) / salesPrevious30) * 100.0;
+        }
+
+        return new ProductStatistics(salesLast30, salesPrevious30, realizedIncome, variationPercent);
+    }
+
     private BigDecimal calculateMargin() {
         return product.getPrezzoVendita().subtract(product.getCostoRealizzazione());
     }
 
-
-    /**
-     * Formatta un valore monetario.
-     *
-     * @param amount Importo da formattare
-     * @return Stringa formattata
-     */
     private String formatCurrency(BigDecimal amount) {
         return "€ " + amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
 
-    /**
-     * Formatta una percentuale.
-     *
-     * @param percent Percentuale da formattare
-     * @return Stringa formattata
-     */
     private String formatPercentage(double percent) {
         String formatted = String.format("%.1f%%", percent);
-        if (percent >= POSITIVE_TREND_THRESHOLD) {
-            return formatted + " ↑";
-        } else if (percent < 0) {
-            return formatted + " ↓";
-        }
+        if (percent >= POSITIVE_TREND_THRESHOLD) return formatted + " ↑";
+        if (percent < 0)                         return formatted + " ↓";
         return formatted;
     }
 
+    // =========================================================================
+    //  Inner class statistica
+    // =========================================================================
 
-    /**
-     * Classe di supporto per contenere le statistiche del prodotto.
-     */
     private static class ProductStatistics {
-        final long salesLast30;
-        final long salesPrevious30;
+        final long       salesLast30;
+        final long       salesPrevious30;
         final BigDecimal realizedIncome;
-        final double variationPercent;
+        final double     variationPercent;
 
         ProductStatistics(long salesLast30, long salesPrevious30,
                           BigDecimal realizedIncome, double variationPercent) {
-            this.salesLast30 = salesLast30;
+            this.salesLast30     = salesLast30;
             this.salesPrevious30 = salesPrevious30;
-            this.realizedIncome = realizedIncome;
+            this.realizedIncome  = realizedIncome;
             this.variationPercent = variationPercent;
         }
     }

@@ -1,8 +1,9 @@
 package com.example.rm.dao.impl;
 
+import com.example.rm.bean.OrderBean;
+import com.example.rm.bean.OrderItemBean;
 import com.example.rm.dao.OrderDAO;
 import com.example.rm.model.MenuProduct;
-import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
 import com.example.rm.service.ConnectionManager;
@@ -15,6 +16,17 @@ import java.util.logging.Logger;
 
 import static com.example.rm.service.DBConstants.*;
 
+/**
+ * Implementazione PostgreSQL di {@link OrderDAO}.
+ *
+ * <p>Tutti i metodi di lettura restituiscono Bean; la conversione a Model
+ * avviene nel layer Service tramite {@code BeanMapper}.</p>
+ *
+ * <p>L'eccezione è {@link #getItemsWithTipologiaForDecomposition(int)},
+ * metodo privato usato internamente dalla scomposizione ordini: richiede
+ * la {@code tipologia} del prodotto (non presente nello snapshot) e perciò
+ * restituisce {@code List<OrderItem>} con il campo product popolato.</p>
+ */
 public class OrderDAOPostgres implements OrderDAO {
 
     private static final Logger logger = Logger.getLogger(OrderDAOPostgres.class.getName());
@@ -54,13 +66,13 @@ public class OrderDAOPostgres implements OrderDAO {
         }
 
         String sqlOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
-        String sqlItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, " +
+        String sqlItem  = "INSERT INTO order_items (order_id, menu_item_id, quantita, " +
                 "prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = getConnection();
              PreparedStatement pstmtOrder = conn.prepareStatement(sqlOrder, Statement.RETURN_GENERATED_KEYS);
-             PreparedStatement pstmtItem = conn.prepareStatement(sqlItem)) {
+             PreparedStatement pstmtItem  = conn.prepareStatement(sqlItem)) {
 
             conn.setAutoCommit(false);
             return commitOrRollback(conn,
@@ -74,43 +86,34 @@ public class OrderDAOPostgres implements OrderDAO {
         }
     }
 
-    private boolean executeCreateOrderTransaction(
-            PreparedStatement pstmtOrder,
-            PreparedStatement pstmtItem,
-            String username,
-            Integer tavolo,
-            String note,
-            List<OrderItem> items
-    ) throws SQLException {
-
+    private boolean executeCreateOrderTransaction(PreparedStatement pstmtOrder,
+                                                  PreparedStatement pstmtItem,
+                                                  String username,
+                                                  Integer tavolo,
+                                                  String note,
+                                                  List<OrderItem> items) throws SQLException {
         pstmtOrder.setString(1, username);
-
         if (tavolo != null) {
             pstmtOrder.setInt(2, tavolo);
         } else {
             pstmtOrder.setNull(2, Types.INTEGER);
         }
-
         pstmtOrder.setString(3, note);
         pstmtOrder.setString(4, TODOSTRING);
         pstmtOrder.executeUpdate();
 
         int orderId;
         try (ResultSet keys = pstmtOrder.getGeneratedKeys()) {
-            if (!keys.next()) {
-                throw new SQLException("ID ordine non generato");
-            }
+            if (!keys.next()) throw new SQLException("ID ordine non generato");
             orderId = keys.getInt(1);
         }
 
         pstmtItem.setInt(1, orderId);
-
         for (OrderItem item : items) {
             if (item.getProduct() == null) {
                 logger.warning("Articolo con prodotto null saltato");
                 continue;
             }
-
             pstmtItem.setInt(2, item.getProduct().getId());
             pstmtItem.setInt(3, item.getQuantita());
             pstmtItem.setBigDecimal(4, item.getPrezzoSnapshot());
@@ -118,24 +121,22 @@ public class OrderDAOPostgres implements OrderDAO {
             pstmtItem.setString(6, item.getProduct().getNome());
             pstmtItem.addBatch();
         }
-
         pstmtItem.executeBatch();
 
-        logger.log(Level.INFO, "Ordine #{0} creato con successo con {1} articoli",
+        logger.log(Level.INFO, "Ordine #{0} creato con {1} articoli",
                 new Object[]{orderId, items.size()});
-
         return true;
     }
 
     // -------------------------------------------------------------------------
-    // Query ordini
+    // Query ordini — restituiscono List<OrderBean>
     // -------------------------------------------------------------------------
 
     @Override
-    public List<Order> getAllOrdersWithTotal() {
-        List<Order> list = new ArrayList<>();
+    public List<OrderBean> getAllOrdersWithTotal() {
+        List<OrderBean> list = new ArrayList<>();
         String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
-                "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) as totale_calcolato " +
+                "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) AS totale_calcolato " +
                 "FROM orders o LEFT JOIN order_items oi " +
                 "    ON o.id = oi.order_id AND oi.status <> 'canceled' " +
                 "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status " +
@@ -143,7 +144,7 @@ public class OrderDAOPostgres implements OrderDAO {
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             ResultSet rs   = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
                 list.add(mapOrder(rs));
@@ -155,13 +156,12 @@ public class OrderDAOPostgres implements OrderDAO {
     }
 
     @Override
-    public List<Order> getOrdersByStatus(String statusTarget) {
-        List<Order> list = new ArrayList<>();
+    public List<OrderBean> getOrdersByStatus(String statusTarget) {
+        List<OrderBean> list = new ArrayList<>();
         String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
                 "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) AS totale_calcolato " +
                 "FROM orders o " +
-                "LEFT JOIN order_items oi " +
-                "    ON o.id = oi.order_id AND oi.status <> 'canceled' " +
+                "LEFT JOIN order_items oi ON o.id = oi.order_id AND oi.status <> 'canceled' " +
                 "WHERE o.status = ? " +
                 "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status " +
                 "ORDER BY o.data_ora DESC";
@@ -170,10 +170,10 @@ public class OrderDAOPostgres implements OrderDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, statusTarget);
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                list.add(mapOrder(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapOrder(rs));
+                }
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero ordini per stato", e);
@@ -182,23 +182,24 @@ public class OrderDAOPostgres implements OrderDAO {
     }
 
     @Override
-    public List<Order> getKitchenActiveOrders() {
-        List<Order> list = new ArrayList<>();
+    public List<OrderBean> getKitchenActiveOrders() {
+        List<OrderBean> list = new ArrayList<>();
         String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
-                "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) as totale_calcolato " +
+                "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) AS totale_calcolato " +
                 "FROM orders o LEFT JOIN order_items oi " +
                 "    ON o.id = oi.order_id AND oi.status <> 'canceled' " +
                 "WHERE o.status = ? AND o.data_ora >= NOW() - INTERVAL '24 HOURS' " +
                 "GROUP BY o.id, o.data_ora, o.tavolo, o.username, o.note, o.status " +
                 "ORDER BY o.data_ora ASC";
+
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setString(1, TODOSTRING);
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                list.add(mapOrder(rs));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapOrder(rs));
+                }
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero ordini cucina", e);
@@ -207,7 +208,17 @@ public class OrderDAOPostgres implements OrderDAO {
     }
 
     @Override
-    public Order findById(int orderId) {
+    public List<OrderBean> getReadyOrdersForWaiter() {
+        return getOrdersByStatus("ready");
+    }
+
+    @Override
+    public List<OrderBean> getOrdersToPay() {
+        return getOrdersByStatus("delivered");
+    }
+
+    @Override
+    public OrderBean findById(int orderId) {
         String sql = "SELECT o.id, o.data_ora, o.tavolo, o.username, o.note, o.status, " +
                 "COALESCE(SUM(oi.quantita * oi.prezzo_vendita_snapshot), 0) AS totale_calcolato " +
                 "FROM orders o LEFT JOIN order_items oi " +
@@ -220,9 +231,7 @@ public class OrderDAOPostgres implements OrderDAO {
 
             pstmt.setInt(1, orderId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapOrder(rs);
-                }
+                if (rs.next()) return mapOrder(rs);
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore recupero ordine per ID: {0}", orderId);
@@ -230,11 +239,9 @@ public class OrderDAOPostgres implements OrderDAO {
         return null;
     }
 
-    /**
-     * Mappa la riga corrente del ResultSet in un oggetto Order.
-     */
-    private Order mapOrder(ResultSet rs) throws SQLException {
-        return new Order(
+    /** Mappa la riga corrente del ResultSet in un OrderBean. */
+    private OrderBean mapOrder(ResultSet rs) throws SQLException {
+        return new OrderBean(
                 rs.getInt(COL_ID),
                 rs.getTimestamp(COL_DATA_ORA).toLocalDateTime(),
                 rs.getInt(COL_TAVOLO),
@@ -258,21 +265,10 @@ public class OrderDAOPostgres implements OrderDAO {
             pstmt.setString(1, newStatus);
             pstmt.setInt(2, orderId);
             return pstmt.executeUpdate() > 0;
-
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore cambio stato ordine", e);
             return false;
         }
-    }
-
-    @Override
-    public List<Order> getReadyOrdersForWaiter() {
-        return getOrdersByStatus("ready");
-    }
-
-    @Override
-    public List<Order> getOrdersToPay() {
-        return getOrdersByStatus("delivered");
     }
 
     @Override
@@ -286,8 +282,98 @@ public class OrderDAOPostgres implements OrderDAO {
     }
 
     // -------------------------------------------------------------------------
-    // Dettagli articoli
+    // Dettagli articoli — restituisce List<OrderItemBean>
     // -------------------------------------------------------------------------
+
+    @Override
+    public List<OrderItemBean> getOrderItemsDetailed(int orderId) {
+        List<OrderItemBean> items = new ArrayList<>();
+        String sql = "SELECT oi.id AS oi_id, oi.order_id, oi.status AS oi_status, " +
+                "oi.menu_item_id, oi.quantita, oi.prezzo_vendita_snapshot, " +
+                "oi.costo_realizzazione_snapshot, oi.nome_prodotto_snapshot " +
+                "FROM order_items oi " +
+                "WHERE oi.order_id = ? AND oi.status <> 'canceled'";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, orderId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    items.add(mapOrderItem(rs));
+                }
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore recupero dettagli articoli ordine", e);
+        }
+        return items;
+    }
+
+    /** Mappa la riga corrente del ResultSet in un OrderItemBean. */
+    private OrderItemBean mapOrderItem(ResultSet rs) throws SQLException {
+        OrderItemBean bean = new OrderItemBean(
+                rs.getInt("order_id"),
+                rs.getInt("menu_item_id"),
+                rs.getInt(QTASTR),
+                rs.getBigDecimal("prezzo_vendita_snapshot"),
+                rs.getBigDecimal("costo_realizzazione_snapshot"),
+                rs.getString("nome_prodotto_snapshot")
+        );
+        // Nota: l'id dell'item (oi_id) è necessario per la cancellazione dal cassiere.
+        // OrderItemBean non ha un campo id; il Service usa il valore recuperato qui.
+        // Se in futuro servirà, aggiungere il campo id a OrderItemBean.
+        return bean;
+    }
+
+    /**
+     * Metodo privato esclusivo per la decomposizione ordini.
+     * Recupera gli articoli con la {@code tipologia} del prodotto (non presente
+     * nello snapshot) facendo JOIN su {@code menu_items}.
+     * Restituisce {@code List<OrderItem>} con il campo {@code product} popolato.
+     */
+    private List<OrderItem> getItemsWithTipologiaForDecomposition(int orderId) {
+        List<OrderItem> items = new ArrayList<>();
+        String sql = "SELECT oi.id AS oi_id, oi.menu_item_id, oi.quantita, " +
+                "oi.prezzo_vendita_snapshot, oi.costo_realizzazione_snapshot, " +
+                "oi.nome_prodotto_snapshot, " +
+                "mi.id AS product_id, mi.nome AS product_nome, mi.tipologia AS product_tipologia " +
+                "FROM order_items oi " +
+                "LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id " +
+                "WHERE oi.order_id = ? AND oi.status <> 'canceled'";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, orderId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    Integer productId = rs.getObject("product_id", Integer.class);
+                    MenuProduct product = new MenuProduct();
+                    if (productId != null) {
+                        product.setId(productId);
+                        product.setNome(rs.getString("product_nome"));
+                        product.setTipologia(rs.getString("product_tipologia"));
+                    } else {
+                        product.setId(rs.getInt("menu_item_id"));
+                        String nomeSnap = rs.getString("nome_prodotto_snapshot");
+                        product.setNome(nomeSnap != null ? nomeSnap : "Prodotto eliminato");
+                        product.setTipologia("Altro");
+                    }
+                    OrderItem item = new OrderItem();
+                    item.setId(rs.getInt("oi_id"));
+                    item.setProduct(product);
+                    item.setQuantita(rs.getInt(QTASTR));
+                    item.setPrezzoSnapshot(rs.getBigDecimal("prezzo_vendita_snapshot"));
+                    item.setCostoSnapshot(rs.getBigDecimal("costo_realizzazione_snapshot"));
+                    item.setNomeSnapshot(rs.getString("nome_prodotto_snapshot"));
+                    items.add(item);
+                }
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Errore recupero articoli per decomposizione ordine {0}", orderId);
+        }
+        return items;
+    }
 
     @Override
     public List<String> getOrderItemsForDisplay(int orderId) {
@@ -302,74 +388,15 @@ public class OrderDAOPostgres implements OrderDAO {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, orderId);
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                int quantita = rs.getInt(QTASTR);
-                String nome = rs.getString("nome");
-                details.add(quantita + "x " + nome);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    details.add(rs.getInt(QTASTR) + "x " + rs.getString("nome"));
+                }
             }
         } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore dettagli ordine", e);
+            logger.log(Level.SEVERE, "Errore dettagli ordine per display", e);
         }
         return details;
-    }
-
-    @Override
-    public List<OrderItem> getOrderItemsDetailed(int orderId) {
-        List<OrderItem> items = new ArrayList<>();
-        String sql = "SELECT oi.id AS oi_id, oi.status AS oi_status, " +
-                "oi.menu_item_id, oi.quantita, oi.prezzo_vendita_snapshot, " +
-                "oi.costo_realizzazione_snapshot, oi.nome_prodotto_snapshot, " +
-                "mi.id AS product_id, mi.nome AS product_nome, mi.tipologia AS product_tipologia " +
-                "FROM order_items oi " +
-                "LEFT JOIN menu_items mi ON oi.menu_item_id = mi.id " +
-                "WHERE oi.order_id = ? AND oi.status <> 'canceled'";
-
-        try (Connection conn = getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-            pstmt.setInt(1, orderId);
-            ResultSet rs = pstmt.executeQuery();
-
-            while (rs.next()) {
-                items.add(mapOrderItem(rs));
-            }
-        } catch (SQLException e) {
-            logger.log(Level.SEVERE, "Errore recupero dettagli articoli ordine", e);
-        }
-        return items;
-    }
-
-    /**
-     * Mappa la riga corrente del ResultSet in un oggetto OrderItem.
-     */
-    private OrderItem mapOrderItem(ResultSet rs) throws SQLException {
-        MenuProduct product;
-        Integer productId = rs.getObject("product_id", Integer.class);
-
-        if (productId != null) {
-            product = new MenuProduct();
-            product.setId(productId);
-            product.setNome(rs.getString("product_nome"));
-            product.setTipologia(rs.getString("product_tipologia"));
-        } else {
-            product = new MenuProduct();
-            product.setId(rs.getInt("menu_item_id"));
-            String nomeSnap = rs.getString("nome_prodotto_snapshot");
-            product.setNome(nomeSnap != null ? nomeSnap : "Prodotto eliminato");
-            product.setTipologia("Non disponibile");
-        }
-
-        OrderItem item = new OrderItem();
-        item.setId(rs.getInt("oi_id"));
-        item.setStatus(rs.getString("oi_status"));
-        item.setProduct(product);
-        item.setQuantita(rs.getInt(QTASTR));
-        item.setPrezzoSnapshot(rs.getBigDecimal("prezzo_vendita_snapshot"));
-        item.setCostoSnapshot(rs.getBigDecimal("costo_realizzazione_snapshot"));
-        item.setNomeSnapshot(rs.getString("nome_prodotto_snapshot"));
-        return item;
     }
 
     @Override
@@ -384,7 +411,7 @@ public class OrderDAOPostgres implements OrderDAO {
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             ResultSet rs   = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
                 int orderId = rs.getInt("order_id");
@@ -402,6 +429,7 @@ public class OrderDAOPostgres implements OrderDAO {
         String sql = "DELETE FROM order_items WHERE id = ? AND order_id = ?";
         try (Connection conn = getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setInt(1, itemId);
             ps.setInt(2, orderId);
             int affected = ps.executeUpdate();
@@ -420,10 +448,9 @@ public class OrderDAOPostgres implements OrderDAO {
 
     @Override
     public boolean decomposeOrderIfNeeded(int orderId) {
-        List<OrderItem> allItems = getOrderItemsDetailed(orderId);
-        if (allItems.isEmpty()) {
-            return true;
-        }
+        // Usa il metodo interno con tipologia — necessario per raggruppare per categoria
+        List<OrderItem> allItems = getItemsWithTipologiaForDecomposition(orderId);
+        if (allItems.isEmpty()) return true;
 
         try (Connection conn = getConnection()) {
             conn.setAutoCommit(false);
@@ -438,20 +465,18 @@ public class OrderDAOPostgres implements OrderDAO {
     private boolean executeDecomposition(Connection conn, int orderId,
                                          List<OrderItem> allItems) throws SQLException {
         String sqlRead = "SELECT tavolo, username, note FROM orders WHERE id = ?";
-
         Integer tavolo;
         String username;
         String note;
 
         try (PreparedStatement pstmt = conn.prepareStatement(sqlRead)) {
             pstmt.setInt(1, orderId);
-            ResultSet rs = pstmt.executeQuery();
-            if (!rs.next()) {
-                return false;
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (!rs.next()) return false;
+                tavolo   = rs.getInt("tavolo");
+                username = rs.getString("username");
+                note     = rs.getString("note");
             }
-            tavolo = rs.getInt("tavolo");
-            username = rs.getString("username");
-            note = rs.getString("note");
         }
 
         Map<String, List<OrderItem>> itemsByCategory = new HashMap<>();
@@ -460,9 +485,7 @@ public class OrderDAOPostgres implements OrderDAO {
             itemsByCategory.computeIfAbsent(categoria, k -> new ArrayList<>()).add(item);
         }
 
-        if (itemsByCategory.size() <= 1) {
-            return true;
-        }
+        if (itemsByCategory.size() <= 1) return true;
 
         createCategoryOrders(conn, itemsByCategory, username, tavolo, note);
         deleteOriginalOrder(conn, orderId);
@@ -470,15 +493,13 @@ public class OrderDAOPostgres implements OrderDAO {
     }
 
     private void deleteOriginalOrder(Connection conn, int orderId) throws SQLException {
-        String sqlDeleteItems = "DELETE FROM order_items WHERE order_id = ?";
-        String sqlDeleteOrder = "DELETE FROM orders WHERE id = ?";
-
-        try (PreparedStatement pstmtItems = conn.prepareStatement(sqlDeleteItems);
-             PreparedStatement pstmtOrder = conn.prepareStatement(sqlDeleteOrder)) {
+        try (PreparedStatement pstmtItems = conn.prepareStatement(
+                "DELETE FROM order_items WHERE order_id = ?");
+             PreparedStatement pstmtOrder = conn.prepareStatement(
+                     "DELETE FROM orders WHERE id = ?")) {
 
             pstmtItems.setInt(1, orderId);
             pstmtItems.executeUpdate();
-
             pstmtOrder.setInt(1, orderId);
             pstmtOrder.executeUpdate();
 
@@ -488,23 +509,20 @@ public class OrderDAOPostgres implements OrderDAO {
 
     private void createCategoryOrders(Connection conn,
                                       Map<String, List<OrderItem>> itemsByCategory,
-                                      String username,
-                                      Integer tavolo,
+                                      String username, Integer tavolo,
                                       String note) throws SQLException {
-
         String sqlNewOrder = "INSERT INTO orders (username, tavolo, note, status) VALUES (?, ?, ?, ?)";
-        String sqlNewItem = "INSERT INTO order_items (order_id, menu_item_id, quantita, " +
+        String sqlNewItem  = "INSERT INTO order_items (order_id, menu_item_id, quantita, " +
                 "prezzo_vendita_snapshot, costo_realizzazione_snapshot, nome_prodotto_snapshot) " +
                 "VALUES (?, ?, ?, ?, ?, ?)";
 
-        try (PreparedStatement pstmtNewOrder = conn.prepareStatement(sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
+        try (PreparedStatement pstmtNewOrder = conn.prepareStatement(
+                sqlNewOrder, Statement.RETURN_GENERATED_KEYS);
              PreparedStatement pstmtNewItem = conn.prepareStatement(sqlNewItem)) {
 
             int ordersCreated = 0;
             for (List<OrderItem> categoryItems : itemsByCategory.values()) {
-                if (categoryItems == null || categoryItems.isEmpty()) {
-                    continue;
-                }
+                if (categoryItems == null || categoryItems.isEmpty()) continue;
 
                 int newOrderId = insertOrderAndGetId(pstmtNewOrder, username, tavolo, note);
                 pstmtNewItem.setInt(1, newOrderId);
@@ -517,12 +535,10 @@ public class OrderDAOPostgres implements OrderDAO {
                     pstmtNewItem.setString(6, item.getNomeSnapshot());
                     pstmtNewItem.addBatch();
                 }
-
                 pstmtNewItem.executeBatch();
                 pstmtNewItem.clearBatch();
                 ordersCreated++;
             }
-
             logger.log(Level.INFO, "Creati {0} ordini separati per categoria", ordersCreated);
         }
     }
@@ -540,9 +556,7 @@ public class OrderDAOPostgres implements OrderDAO {
         pstmt.executeUpdate();
 
         try (ResultSet keys = pstmt.getGeneratedKeys()) {
-            if (!keys.next()) {
-                throw new SQLException("ID non generato per il nuovo ordine");
-            }
+            if (!keys.next()) throw new SQLException("ID non generato per il nuovo ordine");
             return keys.getInt(1);
         }
     }
@@ -569,11 +583,11 @@ public class OrderDAOPostgres implements OrderDAO {
 
     @Override
     public List<Integer> getPendingOrderIds(int tavolo) {
+        List<Integer> pendingIds = new ArrayList<>();
         String sql = "SELECT DISTINCT o.id FROM orders o " +
                 "JOIN order_items oi ON o.id = oi.order_id " +
                 "WHERE o.tavolo = ? AND o.status != 'delivered' AND o.status != 'canceled'";
 
-        List<Integer> pendingIds = new ArrayList<>();
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
@@ -592,11 +606,12 @@ public class OrderDAOPostgres implements OrderDAO {
     @Override
     public Set<Integer> getTablesWithPendingOrders() {
         Set<Integer> tables = new HashSet<>();
-        String sql = "SELECT DISTINCT tavolo FROM orders WHERE status != 'delivered' AND status != 'closed'";
+        String sql = "SELECT DISTINCT tavolo FROM orders " +
+                "WHERE status != 'delivered' AND status != 'closed'";
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             ResultSet rs   = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
                 tables.add(rs.getInt("tavolo"));
@@ -627,9 +642,7 @@ public class OrderDAOPostgres implements OrderDAO {
             pstmt.setTimestamp(3, Timestamp.valueOf(end));
 
             try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getLong(1);
-                }
+                if (rs.next()) return rs.getLong(1);
             }
         } catch (SQLException e) {
             logger.log(Level.SEVERE, "Errore conteggio vendite per data", e);

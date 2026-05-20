@@ -6,6 +6,7 @@ import com.example.rm.dao.impl.OrderDAOPostgres;
 import com.example.rm.model.Order;
 import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
+import com.example.rm.util.BeanMapper;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -17,11 +18,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Gestisce l'accesso agli ordini attraverso il DAO attivo.
+ * Facade sul layer DAO per la gestione degli ordini.
  *
- * <p>La scelta dell'implementazione (Postgres o FileSystem) è responsabilità
- * esclusiva di questa classe. Il campo {@code volatile} garantisce che ogni
- * thread veda l'ultima implementazione assegnata.</p>
+ * <p>Questo è il <strong>punto di mappatura</strong> Bean → Model:
+ * i DAO restituiscono Bean, {@code BeanMapper} li converte in Model
+ * prima che raggiungano Controller e View.</p>
+ *
+ * <p>I Controller non devono mai importare classi del package {@code bean}.</p>
  */
 public final class OrderService {
 
@@ -29,19 +32,15 @@ public final class OrderService {
 
     private static final AtomicReference<OrderDAO> dao = new AtomicReference<>(null);
 
-
-
     private OrderService() {
         throw new IllegalStateException("Utility class");
     }
 
+    // -------------------------------------------------------------------------
     // Inizializzazione DAO
+    // -------------------------------------------------------------------------
 
-
-    /**
-     * Attiva l'implementazione PostgreSQL.
-     * Da invocare dopo {@link ConnectionManager#configure}.
-     */
+    /** Attiva l'implementazione PostgreSQL. Da invocare dopo {@link ConnectionManager#configure}. */
     public static synchronized void usePostgres() {
         dao.set(new OrderDAOPostgres());
         logger.info("OrderDAO: modalità PostgreSQL attiva");
@@ -62,10 +61,6 @@ public final class OrderService {
         }
     }
 
-
-    // Accesso al DAO
-
-
     private static OrderDAO dao() {
         OrderDAO current = dao.get();
         if (current == null) {
@@ -75,8 +70,9 @@ public final class OrderService {
         return current;
     }
 
-
-    // Operazioni sugli ordini
+    // -------------------------------------------------------------------------
+    // Operazioni di scrittura — i parametri restano Model (provengono dalla UI)
+    // -------------------------------------------------------------------------
 
     public static boolean create(List<OrderItem> items, Integer tavolo,
                                  String note, User utente) {
@@ -85,34 +81,6 @@ public final class OrderService {
 
     public static boolean setStatus(int orderId, String newStatus) {
         return dao().setOrderStatus(orderId, newStatus);
-    }
-
-    public static List<Order> getAllWithTotal() {
-        return dao().getAllOrdersWithTotal();
-    }
-
-    public static List<Order> getByStatus(String status) {
-        return dao().getOrdersByStatus(status);
-    }
-
-    public static List<Order> getKitchenActive() {
-        return dao().getKitchenActiveOrders();
-    }
-
-    public static List<String> getItemsForDisplay(int orderId) {
-        return dao().getOrderItemsForDisplay(orderId);
-    }
-
-    public static List<OrderItem> getItemsDetailed(int orderId) {
-        return dao().getOrderItemsDetailed(orderId);
-    }
-
-    public static List<Order> getReadyForWaiter() {
-        return dao().getReadyOrdersForWaiter();
-    }
-
-    public static List<Order> getToPay() {
-        return dao().getOrdersToPay();
     }
 
     public static boolean markDelivered(int orderId) {
@@ -127,6 +95,71 @@ public final class OrderService {
         return dao().decomposeOrderIfNeeded(orderId);
     }
 
+    public static boolean removeOrderItem(int orderId, int itemId) {
+        return dao().removeOrderItem(orderId, itemId);
+    }
+
+    // -------------------------------------------------------------------------
+    // Operazioni di lettura — DAO restituisce Bean, qui mappiamo a Model
+    // -------------------------------------------------------------------------
+
+    /** Tutti gli ordini con totale. */
+    public static List<Order> getAllWithTotal() {
+        return BeanMapper.toOrderModels(dao().getAllOrdersWithTotal());
+    }
+
+    /** Ordini filtrati per stato. */
+    public static List<Order> getByStatus(String status) {
+        return BeanMapper.toOrderModels(dao().getOrdersByStatus(status));
+    }
+
+    /** Ordini attivi in cucina (ultime 24 ore). */
+    public static List<Order> getKitchenActive() {
+        return BeanMapper.toOrderModels(dao().getKitchenActiveOrders());
+    }
+
+    /** Ordini pronti per il cameriere. */
+    public static List<Order> getReadyForWaiter() {
+        return BeanMapper.toOrderModels(dao().getReadyOrdersForWaiter());
+    }
+
+    /** Ordini da pagare alla cassa. */
+    public static List<Order> getToPay() {
+        return BeanMapper.toOrderModels(dao().getOrdersToPay());
+    }
+
+    /**
+     * Cerca un ordine per ID.
+     *
+     * @return l'ordine oppure {@code null} se non trovato
+     */
+    public static Order findById(int orderId) {
+        return BeanMapper.toModel(dao().findById(orderId));
+    }
+
+    /**
+     * Dettagli articoli di un ordine (con dati di snapshot completi).
+     * La tipologia del prodotto è vuota: questo metodo è pensato per la
+     * visualizzazione, non per la decomposizione per categoria.
+     */
+    public static List<OrderItem> getItemsDetailed(int orderId) {
+        return BeanMapper.toOrderItemModels(dao().getOrderItemsDetailed(orderId));
+    }
+
+    /** Articoli formattati per la visualizzazione ("Qtà x NomeProdotto"). */
+    public static List<String> getItemsForDisplay(int orderId) {
+        return dao().getOrderItemsForDisplay(orderId);
+    }
+
+    /** Mappa orderId → stringhe, per il caricamento massivo nella vista Financial. */
+    public static Map<Integer, List<String>> getAllItemsForDisplay() {
+        return dao().getAllOrderItemsForDisplay();
+    }
+
+    // -------------------------------------------------------------------------
+    // Utilità
+    // -------------------------------------------------------------------------
+
     public static boolean hasPendingOrders(int tavolo) {
         return dao().hasPendingOrders(tavolo);
     }
@@ -135,26 +168,13 @@ public final class OrderService {
         return dao().getPendingOrderIds(tavolo);
     }
 
+    public static Set<Integer> getTablesWithPendingOrders() {
+        return dao().getTablesWithPendingOrders();
+    }
+
     public static long getQuantitySoldInRange(int productId,
                                               LocalDateTime start,
                                               LocalDateTime end) {
         return dao().getQuantitySoldInDateRange(productId, start, end);
     }
-
-    public static Map<Integer, List<String>> getAllItemsForDisplay() {
-        return dao().getAllOrderItemsForDisplay();
-    }
-
-    public static Set<Integer> getTablesWithPendingOrders() {
-        return dao().getTablesWithPendingOrders();
-    }
-
-    public static Order findById(int orderId) {
-        return dao().findById(orderId);
-    }
-
-    public static boolean removeOrderItem(int orderId, int itemId) {
-        return dao().removeOrderItem(orderId, itemId);
-    }
-
 }

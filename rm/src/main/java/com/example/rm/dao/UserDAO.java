@@ -1,5 +1,6 @@
 package com.example.rm.dao;
 
+import com.example.rm.bean.UserBean;
 import com.example.rm.model.User;
 import java.util.List;
 
@@ -8,7 +9,7 @@ public interface UserDAO {
     /**
      * Recupera tutti gli utenti ordinati per ruolo e username.
      */
-    List<User> findAll();
+    List<UserBean> findAll();
 
     /**
      * Elimina un utente per username.

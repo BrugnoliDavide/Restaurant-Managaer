@@ -1,6 +1,7 @@
 package com.example.rm.dao;
 
-import com.example.rm.model.Order;
+import com.example.rm.bean.OrderBean;
+import com.example.rm.bean.OrderItemBean;
 import com.example.rm.model.OrderItem;
 import com.example.rm.model.User;
 
@@ -11,123 +12,103 @@ import java.util.Set;
 
 /**
  * Data Access Object per la gestione degli ordini.
- * Fornisce un'astrazione per l'accesso ai dati indipendente dall'implementazione.
+ *
+ * <p>Tutti i metodi di <em>lettura</em> restituiscono Bean (puro Java, senza
+ * dipendenze JavaFX). Il mapping a Model avviene nel layer Service tramite
+ * {@code BeanMapper}.</p>
+ *
+ * <p>I metodi di <em>scrittura</em> continuano ad accettare i Model
+ * ({@code OrderItem}, {@code User}) poiché arrivano direttamente dalla UI.</p>
  */
 public interface OrderDAO {
 
+    // -------------------------------------------------------------------------
+    // Scrittura — parametri restano Model (provengono dalla UI)
+    // -------------------------------------------------------------------------
+
     /**
-     * Crea un nuovo ordine con i relativi articoli
-     * @param items Lista articoli da ordinare
-     * @param tavolo Numero tavolo (può essere null)
-     * @param note Note aggiuntive (può essere null)
-     * @param utente Utente che crea l'ordine
-     * @return true se l'ordine è stato creato con successo
+     * Crea un nuovo ordine con i relativi articoli.
      */
     boolean createOrder(List<OrderItem> items, Integer tavolo, String note, User utente);
 
     /**
-     * Recupera tutti gli ordini con il totale calcolato
-     * @return Lista di ordini
-     */
-    List<Order> getAllOrdersWithTotal();
-
-    /**
-     * Recupera gli ordini filtrati per stato
-     * @param status Stato target
-     * @return Lista di ordini con lo stato specificato
-     */
-    List<Order> getOrdersByStatus(String status);
-
-    /**
-     * Recupera gli ordini attivi per la cucina (ultime 24 ore)
-     * @return Lista di ordini attivi
-     */
-    List<Order> getKitchenActiveOrders();
-
-    /**
-     * Modifica lo stato di un ordine
-     * @param orderId ID dell'ordine
-     * @param newStatus Nuovo stato
-     * @return true se l'aggiornamento è riuscito
+     * Modifica lo stato di un ordine.
      */
     boolean setOrderStatus(int orderId, String newStatus);
 
+    boolean markOrderAsDelivered(int orderId);
+
+    boolean markOrderAsPaid(int orderId);
+
+    boolean decomposeOrderIfNeeded(int orderId);
+
+    boolean hasPendingOrders(int tavolo);
+
+    boolean removeOrderItem(int orderId, int itemId);
+
+    // -------------------------------------------------------------------------
+    // Lettura ordini — restituisce OrderBean
+    // -------------------------------------------------------------------------
+
     /**
-     * Recupera i dettagli degli articoli di un ordine per la visualizzazione
-     * @param orderId ID dell'ordine
-     * @return Lista di stringhe formattate "Qtà x Nome Prodotto"
+     * Tutti gli ordini con totale calcolato, ordinati per data decrescente.
+     */
+    List<OrderBean> getAllOrdersWithTotal();
+
+    /**
+     * Ordini filtrati per stato.
+     */
+    List<OrderBean> getOrdersByStatus(String status);
+
+    /**
+     * Ordini attivi per la cucina (ultime 24 ore, stato "to-do").
+     */
+    List<OrderBean> getKitchenActiveOrders();
+
+    /**
+     * Ordini pronti per il cameriere (stato "ready").
+     */
+    List<OrderBean> getReadyOrdersForWaiter();
+
+    /**
+     * Ordini da pagare alla cassa (stato "delivered").
+     */
+    List<OrderBean> getOrdersToPay();
+
+    /**
+     * Cerca un singolo ordine per ID.
+     *
+     * @return {@code OrderBean} oppure {@code null} se non trovato
+     */
+    OrderBean findById(int orderId);
+
+    // -------------------------------------------------------------------------
+    // Lettura articoli — restituisce OrderItemBean
+    // -------------------------------------------------------------------------
+
+    /**
+     * Dettagli completi degli articoli di un ordine.
+     */
+    List<OrderItemBean> getOrderItemsDetailed(int orderId);
+
+    /**
+     * Articoli formattati per la visualizzazione ("Qtà x NomeProdotto").
+     * Restituisce stringhe, non ha senso mappare a Bean.
      */
     List<String> getOrderItemsForDisplay(int orderId);
 
     /**
-     * Recupera i dettagli completi degli articoli di un ordine
-     * @param orderId ID dell'ordine
-     * @return Lista di OrderItem con tutti i dati
+     * Mappa orderId → lista stringhe per display, usata nel caricamento massivo.
      */
-    List<OrderItem> getOrderItemsDetailed(int orderId);
-
-    /**
-     * Recupera gli ordini pronti per il cameriere
-     * @return Lista di ordini con stato 'ready'
-     */
-    List<Order> getReadyOrdersForWaiter();
-
-    /**
-     * Recupera gli ordini da pagare alla cassa
-     * @return Lista di ordini con stato 'delivered'
-     */
-    List<Order> getOrdersToPay();
-
-    /**
-     * Marca un ordine come consegnato
-     * @param orderId ID dell'ordine
-     * @return true se l'operazione è riuscita
-     */
-    boolean markOrderAsDelivered(int orderId);
-
-    /**
-     * Marca un ordine come pagato
-     * @param orderId ID dell'ordine
-     * @return true se l'operazione è riuscita
-     */
-    boolean markOrderAsPaid(int orderId);
-
-    /**
-     * Scompone un ordine in più ordini per categoria se necessario
-     * @param orderId ID dell'ordine da scomporre
-     * @return true se l'operazione è riuscita
-     */
-    boolean decomposeOrderIfNeeded(int orderId);
-
-    /**
-     * Verifica se un tavolo ha ordini pendenti
-     * @param tavolo Numero tavolo
-     * @return true se esistono ordini non consegnati
-     */
-    boolean hasPendingOrders(int tavolo);
-
-    /**
-     * Recupera gli ID degli ordini pendenti per un tavolo
-     * @param tavolo Numero tavolo
-     * @return Lista di ID ordini pendenti
-     */
-    List<Integer> getPendingOrderIds(int tavolo);
-
-    /**
-     * Recupera la quantità venduta di un prodotto in un intervallo di date
-     * @param productId ID del prodotto
-     * @param start Data inizio
-     * @param end Data fine
-     * @return Quantità totale venduta
-     */
-    long getQuantitySoldInDateRange(int productId, LocalDateTime start, LocalDateTime end);
-
-
     Map<Integer, List<String>> getAllOrderItemsForDisplay();
+
+    // -------------------------------------------------------------------------
+    // Utilità
+    // -------------------------------------------------------------------------
+
+    List<Integer> getPendingOrderIds(int tavolo);
 
     Set<Integer> getTablesWithPendingOrders();
 
-    Order findById(int orderId);
-
-    boolean removeOrderItem(int orderId, int itemId);
+    long getQuantitySoldInDateRange(int productId, LocalDateTime start, LocalDateTime end);
 }

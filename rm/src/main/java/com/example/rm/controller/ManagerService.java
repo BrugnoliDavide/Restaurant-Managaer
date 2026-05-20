@@ -1,10 +1,10 @@
 package com.example.rm.controller;
 
-
 import com.example.rm.model.User;
 import java.util.List;
 import com.example.rm.dao.DatabaseUserDAO;
 import com.example.rm.dao.UserDAO;
+import com.example.rm.util.BeanMapper;
 
 
 public class ManagerService implements ManagerUseCase {
@@ -15,7 +15,7 @@ public class ManagerService implements ManagerUseCase {
 
     @Override
     public List<User> loadAllUsers() {
-        return userDAO.findAll();
+        return BeanMapper.toUserModels(userDAO.findAll());
     }
 
     @Override
