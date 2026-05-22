@@ -1,6 +1,5 @@
 package com.example.rm.dao;
 
-import com.example.rm.model.MenuProduct;
 import com.example.rm.service.ConnectionManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +15,7 @@ import java.sql.SQLException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.example.rm.bean.ProductBean;
 
 class DatabaseProductDAOMockStaticTest {
 
@@ -46,7 +46,7 @@ class DatabaseProductDAOMockStaticTest {
 
     @Test
     void testSave_NewProduct_Success() throws SQLException {
-        MenuProduct product = createProduct(0, "Pizza Margherita",
+        ProductBean product = createProduct(0, "Pizza Margherita",
                 "Piatto principale", BigDecimal.valueOf(12.5), BigDecimal.valueOf(4.5), "Glutine");
 
         when(mockPreparedStatement.executeUpdate()).thenReturn(1);
@@ -62,7 +62,7 @@ class DatabaseProductDAOMockStaticTest {
 
     @Test
     void testSave_NewProduct_Failure() throws SQLException {
-        MenuProduct product = new MenuProduct();
+        ProductBean product = new ProductBean();
         product.setNome("Pizza");
 
         when(mockPreparedStatement.executeUpdate()).thenReturn(0);
@@ -72,7 +72,7 @@ class DatabaseProductDAOMockStaticTest {
 
     @Test
     void testSave_NewProduct_SQLException() throws SQLException {
-        MenuProduct product = new MenuProduct();
+        ProductBean product = new ProductBean();
         product.setNome("Pizza");
 
         when(mockPreparedStatement.executeUpdate()).thenThrow(new SQLException("Database error"));
@@ -84,7 +84,7 @@ class DatabaseProductDAOMockStaticTest {
 
     @Test
     void testSave_ExistingProduct_Success() throws SQLException {
-        MenuProduct product = createProduct(1, "Pizza Margherita",
+        ProductBean product = createProduct(1, "Pizza Margherita",
                 "Piatto principale", BigDecimal.valueOf(12.5),BigDecimal.valueOf( 4.5), "Glutine");
 
         when(mockPreparedStatement.executeUpdate()).thenReturn(1);
@@ -101,7 +101,7 @@ class DatabaseProductDAOMockStaticTest {
 
     @Test
     void testSave_ExistingProduct_VerifyId() throws SQLException {
-        MenuProduct product = new MenuProduct();
+        ProductBean product = new ProductBean();
         product.setId(1);
         product.setNome("Pizza");
 
@@ -157,9 +157,9 @@ class DatabaseProductDAOMockStaticTest {
 
     // --- Helper ---
 
-    private MenuProduct createProduct(int id, String nome, String tipologia,
+    private ProductBean createProduct(int id, String nome, String tipologia,
                                       BigDecimal prezzo, BigDecimal costo, String allergeni) {
-        MenuProduct p = new MenuProduct();
+        ProductBean p = new ProductBean();
         p.setId(id);
         p.setNome(nome);
         p.setTipologia(tipologia);
