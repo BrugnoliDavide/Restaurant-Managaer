@@ -143,4 +143,21 @@ public class KitchenPreferences {
         return Objects.hash(username, splitMixedCategoryOrders, selectedCategories, includeOtherCategories);
     }
 
+
+    /**
+     * Indica se le comande devono essere stampate automaticamente
+     * quando vengono visualizzate in cucina.
+     */
+    private boolean printOrdersAutomatically;
+
+
+    public boolean isPrintOrdersAutomatically() {
+        return printOrdersAutomatically;
+    }
+
+    public void setPrintOrdersAutomatically(boolean printOrdersAutomatically) {
+        this.printOrdersAutomatically = printOrdersAutomatically;
+    }
+
+
 }

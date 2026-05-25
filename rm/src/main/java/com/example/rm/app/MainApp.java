@@ -1,7 +1,6 @@
 package com.example.rm.app;
 
 import com.example.rm.service.ConnectionManager;
-import com.example.rm.view.EarningController;
 import com.example.rm.view.LoginController;
 import javafx.application.Application;
 import javafx.scene.Parent;

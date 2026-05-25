@@ -1,7 +1,6 @@
 package com.example.rm.dao;
 
 import com.example.rm.bean.UserBean;
-import com.example.rm.model.User;
 import java.util.List;
 
 public interface UserDAO {
