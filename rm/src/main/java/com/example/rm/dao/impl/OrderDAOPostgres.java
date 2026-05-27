@@ -30,8 +30,9 @@ import static com.example.rm.service.DBConstants.*;
 public class OrderDAOPostgres implements OrderDAO {
 
     private static final Logger logger = Logger.getLogger(OrderDAOPostgres.class.getName());
-    private static final String TODOSTRING = "to-do";
-    private static final String QTASTR = "quantita";
+    private static final String TODOSTRING =                "to-do";
+    private static final String QTASTR =                    "quantita";
+    private static final String NOMEPRODOTTOSNAPSHOTSTR =   "nome_prodotto_snapshot";
 
     @FunctionalInterface
     private interface TransactionalOperation {
@@ -317,7 +318,7 @@ public class OrderDAOPostgres implements OrderDAO {
                 rs.getInt(QTASTR),
                 rs.getBigDecimal("prezzo_vendita_snapshot"),
                 rs.getBigDecimal("costo_realizzazione_snapshot"),
-                rs.getString("nome_prodotto_snapshot")
+                rs.getString(NOMEPRODOTTOSNAPSHOTSTR)
         );
         // Nota: l'id dell'item (oi_id) è necessario per la cancellazione dal cassiere.
         // OrderItemBean non ha un campo id; il Service usa il valore recuperato qui.
@@ -355,7 +356,7 @@ public class OrderDAOPostgres implements OrderDAO {
                         product.setTipologia(rs.getString("product_tipologia"));
                     } else {
                         product.setId(rs.getInt("menu_item_id"));
-                        String nomeSnap = rs.getString("nome_prodotto_snapshot");
+                        String nomeSnap = rs.getString(NOMEPRODOTTOSNAPSHOTSTR);
                         product.setNome(nomeSnap != null ? nomeSnap : "Prodotto eliminato");
                         product.setTipologia("Altro");
                     }
@@ -365,7 +366,7 @@ public class OrderDAOPostgres implements OrderDAO {
                     item.setQuantita(rs.getInt(QTASTR));
                     item.setPrezzoSnapshot(rs.getBigDecimal("prezzo_vendita_snapshot"));
                     item.setCostoSnapshot(rs.getBigDecimal("costo_realizzazione_snapshot"));
-                    item.setNomeSnapshot(rs.getString("nome_prodotto_snapshot"));
+                    item.setNomeSnapshot(rs.getString(NOMEPRODOTTOSNAPSHOTSTR));
                     items.add(item);
                 }
             }

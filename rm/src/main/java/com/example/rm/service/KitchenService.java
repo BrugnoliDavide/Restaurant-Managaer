@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 /**
  * Gestisce le preferenze di cucina e il filtraggio degli ordini attivi
  * in base alle categorie selezionate dall'utente cucina.
- *
+
  * ESTESO CON: Integrazione stampa comande automatica su stampante termica ESC/POS.
  */
 public final class KitchenService {
@@ -111,7 +111,7 @@ public final class KitchenService {
         // NOTA: Questo richiede l'aggiunta del campo 'printOrdersAutomatically'
         // alla classe KitchenPreferences (vedi sotto per dettagli)
         if (prefs == null || !prefs.isPrintOrdersAutomatically()) {
-            LOGGER.fine("Stampa comande disabilitata per l'utente: " + username);
+            LOGGER.log(Level.INFO,"Stampa comande disabilitata per l'utente: {0}}", username);
             return;
         }
 
@@ -154,8 +154,7 @@ public final class KitchenService {
                 // CRITICO: Non interrompere il flusso anche se la stampa fallisce
                 // La cucina DEVE comunque vedere l'ordine sullo schermo
                 LOGGER.log(Level.WARNING,
-                        "Errore durante la stampa dell'ordine #" + order.getId() +
-                                " - L'ordine è comunque visibile sullo schermo", e);
+                        "Errore durante la stampa dell'ordine #{0} - L'ordine è comunque visibile sullo schermo", order.getId());
             }
         }
     }
@@ -194,7 +193,7 @@ public final class KitchenService {
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE,
-                    "Errore durante la ristampa manuale dell'ordine #" + orderId, e);
+                    "Errore durante la ristampa manuale dell'ordine #{0}", orderId);
             return false;
         }
     }
@@ -226,7 +225,7 @@ public final class KitchenService {
      */
     public static void clearPrintedOrderCache(int orderId) {
         getPrintedOrderIdsCache().remove(orderId);
-        LOGGER.fine("Cache di stampa pulita per ordine #" + orderId);
+        LOGGER.log(Level.INFO,"Cache di stampa pulita per ordine #{0}",orderId);
     }
 
     /**

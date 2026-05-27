@@ -30,9 +30,9 @@ import java.util.logging.Logger;
  * Thread-safe e con supporto per stampa asincrona.
  */
 public class PrinterService {
-    private static final Logger LOGGER = Logger.getLogger(PrinterService.class.getName());
-    private static PrinterService instance;
-    private static final Object lock = new Object();
+    private static final    Logger LOGGER = Logger.getLogger(PrinterService.class.getName());
+    private static volatile PrinterService instance;
+    private static final    Object lock = new Object();
 
     private PrinterConfiguration config;
     private final ExecutorService printExecutor;
@@ -116,7 +116,7 @@ public class PrinterService {
                 printOrderSync(order, items);
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE,
-                        "Errore stampa comanda #" + order.getId(), e);
+                        "Errore stampa comanda #{0}", order.getId());
             }
         });
     }
@@ -190,16 +190,6 @@ public class PrinterService {
                     item.getQuantita(),
                     truncate(item.getNomeSnapshot(), 30));
             escpos.writeLF(normalStyle, line);
-
-
-            /*
-
-            questa parte è commentata in quanto al momento l'orderItem non ha note
-
-            // Se ci sono note sull'item
-            if (item.getNote() != null && !item.getNote().isEmpty()) {
-                escpos.writeLF("   >> " + item.getNote());
-            }*/
         }
 
         escpos.writeLF("----------------------------------------");
