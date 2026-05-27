@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.TextField?>
@@ -27,9 +28,22 @@
                 <Label styleClass="text-header" text="Financial Overview" />
             </HBox>
 
-            <TextField fx:id="txtSearch" prefWidth="300"
-                       promptText="Search by ID, table, date, total..."
-                       styleClass="input-standard" />
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <TextField fx:id="txtSearch" prefWidth="300"
+                           promptText="Search by ID, table, date, total..."
+                           styleClass="input-standard" />
+
+                <Label text="Da:" styleClass="text-label" />
+                <DatePicker fx:id="dateFrom" promptText="Data inizio"
+                            prefWidth="150" styleClass="input-standard" />
+
+                <Label text="A:" styleClass="text-label" />
+                <DatePicker fx:id="dateTo" promptText="Data fine"
+                            prefWidth="150" styleClass="input-standard" />
+
+                <Label fx:id="lblClearDates" text="✕ Reset"
+                       styleClass="text-link" onMouseClicked="#clearDateFilters" />
+            </HBox>
         </VBox>
     </top>
 

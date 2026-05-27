@@ -539,7 +539,6 @@ context-menu-item-danger{
     -fx-font-weight: bold;
     -fx-text-fill: #2ecc71;
 }
-
 .product-row-minus {
     -fx-background-color: #FFE5E5;
     -fx-text-fill: #E74C3C;
@@ -547,6 +546,7 @@ context-menu-item-danger{
     -fx-cursor: hand;
     -fx-background-radius: 5;
 }
+
 .product-row-qty {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
@@ -583,4 +583,34 @@ context-menu-item-danger{
 
 .pending-status {
     -fx-text-fill: orange;
+}
+
+/* =========================================================================
+   FINANCIAL VIEW - Aggiunte per filtro temporale e raggruppamento giornaliero
+   ========================================================================= */
+
+/* Separatore giornaliero tra gruppi di ordini */
+.day-separator {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #555555;
+    -fx-background-color: #F0F0F0;
+    -fx-background-radius: 6px;
+    -fx-padding: 8px 12px;
+    -fx-border-color: #DDDDDD;
+    -fx-border-width: 0 0 1px 0;
+}
+
+/* Orario visualizzato in ogni riga ordine */
+.order-time {
+    -fx-font-size: 13px;
+    -fx-text-fill: #888888;
+    -fx-font-weight: normal;
+}
+
+/* Label dei filtri (Da: / A:) */
+.text-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #555555;
+    -fx-padding: 0 0 0 5px;
 }
