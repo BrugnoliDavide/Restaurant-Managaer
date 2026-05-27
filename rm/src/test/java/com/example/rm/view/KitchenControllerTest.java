@@ -26,15 +26,15 @@ class KitchenControllerTest {
     private static volatile boolean javaFxInitialized = false;
 
     @BeforeAll
-    static void initJavaFx() throws Exception {
-        if (!javaFxInitialized) {
-            CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> {
-                new JFXPanel();
-                javaFxInitialized = true;
-                latch.countDown();
-            }).start();
-            assertTrue(latch.await(5, TimeUnit.SECONDS), "JavaFX initialization timeout");
+    static void initJavaFx() {
+        System.setProperty("java.awt.headless", "true");
+        System.setProperty("prism.order", "sw");
+        System.setProperty("prism.text", "t2k");
+
+        try {
+            new JFXPanel();
+        } catch (Exception e) {
+            throw new IllegalStateException("Impossibile inizializzare JavaFX Toolkit", e);
         }
     }
 
