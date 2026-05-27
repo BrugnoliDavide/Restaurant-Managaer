@@ -158,7 +158,7 @@ public final class BeanMapper {
 
     public static List<MenuProduct> toProductModels(List<ProductBean> beans) {
         if (beans == null) return Collections.emptyList();
-        return beans.stream().map(BeanMapper::toModel).collect(Collectors.toList());
+        return List.copyOf(beans.stream().map(BeanMapper::toModel).toList());
     }
 
     public static List<ProductBean> toProductBeans(List<MenuProduct> models) {
@@ -168,7 +168,7 @@ public final class BeanMapper {
 
     public static List<Order> toOrderModels(List<OrderBean> beans) {
         if (beans == null) return Collections.emptyList();
-        return beans.stream().map(BeanMapper::toModel).collect(Collectors.toList());
+        return List.copyOf(beans.stream().map(BeanMapper::toModel).toList());
     }
 
     public static List<OrderBean> toOrderBeans(List<Order> models) {
@@ -178,11 +178,11 @@ public final class BeanMapper {
 
     public static List<OrderItem> toOrderItemModels(List<OrderItemBean> beans) {
         if (beans == null) return Collections.emptyList();
-        return beans.stream().map(BeanMapper::toModel).collect(Collectors.toList());
+        return List.copyOf(beans.stream().map(BeanMapper::toModel).toList());
     }
 
     public static List<User> toUserModels(List<UserBean> beans) {
         if (beans == null) return Collections.emptyList();
-        return beans.stream().map(BeanMapper::toModel).collect(Collectors.toList());
+        return List.copyOf(beans.stream().map(BeanMapper::toModel).toList());
     }
 }

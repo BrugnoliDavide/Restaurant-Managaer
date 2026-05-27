@@ -52,16 +52,16 @@ public class EarningController {
 
     private Timeline pollingTimeline;
     
-    private static final  String oipSTR = "order-item-price";
-    private static final  String oinSTR = "order-item-name";
-    private static final  String canceledSTR = "canceled";
-    private static final  String annullaSTR = "annulla";
+    private static final  String OIPSTR = "order-item-price";
+    private static final  String OINSTR = "order-item-name";
+    private static final  String CANCELEDSTR = "canceled";
+    private static final  String ANNULLASTR = "annulla";
 
     private String formatCurrency(BigDecimal amount) {
         return "€" + amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
-    private static final  String selectedString = "selected";
-    private static final  String tavoloString = "Tavolo ";
+    private static final  String SELECTEDSTRING = "selected";
+    private static final  String TAVOLOSTRING = "Tavolo ";
     
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("HH:mm");
@@ -178,7 +178,7 @@ public class EarningController {
             ordersContainer.getChildren().add(card);
 
             if (selectedTable != null && selectedTable == tableNumber) {
-                card.getStyleClass().add(selectedString);
+                card.getStyleClass().add(SELECTEDSTRING);
                 selectedCard = card;
             }
         }
@@ -193,7 +193,7 @@ public class EarningController {
         VBox leftInfo = new VBox(5);
         HBox.setHgrow(leftInfo, Priority.ALWAYS);
 
-        Label lblTable = new Label(tavoloString + tableNumber);
+        Label lblTable = new Label(TAVOLOSTRING + tableNumber);
         lblTable.getStyleClass().add("table-title");
 
         String time = "";
@@ -222,11 +222,11 @@ public class EarningController {
 
         card.setOnMouseClicked(e -> {
             if (selectedCard != null && selectedCard != card) {
-                selectedCard.getStyleClass().remove(selectedString);
+                selectedCard.getStyleClass().remove(SELECTEDSTRING);
             }
             selectedCard = card;
             selectedTable = tableNumber;
-            card.getStyleClass().add(selectedString);
+            card.getStyleClass().add(SELECTEDSTRING);
 
             showTableDetails(tableNumber, orders, totalAmount);
         });
@@ -240,7 +240,7 @@ public class EarningController {
         VBox content = new VBox(15);
         content.setPadding(new Insets(0));
 
-        Label lblTitle = new Label(tavoloString + tableNumber);
+        Label lblTitle = new Label(TAVOLOSTRING + tableNumber);
         lblTitle.getStyleClass().add("details-title");
 
         Separator sep1 = new Separator();
@@ -324,13 +324,13 @@ public class EarningController {
 
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("⚠️ " + pendingOrderIds.size() + " ordini pendenti");
-            alert.setHeaderText(tavoloString + tavolo + " ha ordini non consegnati:");
+            alert.setHeaderText(TAVOLOSTRING + tavolo + " ha ordini non consegnati:");
             alert.getDialogPane().setContentText(articoli.toString());
 
 
             ButtonType annullaPaga = new ButtonType("Paga e cancella i pendenti");
             ButtonType deliveredPaga = new ButtonType("Contrassegna come consegnato e Paga");
-            ButtonType nonPagare = new ButtonType(annullaSTR);
+            ButtonType nonPagare = new ButtonType(ANNULLASTR);
             alert.getButtonTypes().setAll(annullaPaga, deliveredPaga, nonPagare);
 
             Optional<ButtonType> result = alert.showAndWait();
@@ -339,7 +339,7 @@ public class EarningController {
             }
 
             if (result.get() == annullaPaga) {
-                pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, canceledSTR));
+                pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, CANCELEDSTR));
                 logger.log(Level.INFO,"Annullati pendenti tavolo {0}", tavolo);
             } else if (result.get() == deliveredPaga) {
                 pendingOrderIds.forEach(id -> earningUseCase.setOrderStatus(id, "delivered"));
@@ -429,7 +429,7 @@ public class EarningController {
         btnDeleteOrder.getStyleClass().add("btn-delete-order");
 
         btnDeleteOrder.setOnAction(e -> {
-            earningUseCase.setOrderStatus(order.getId(), canceledSTR);
+            earningUseCase.setOrderStatus(order.getId(), CANCELEDSTR);
             refreshDataPreservingSelection();
         });
 
@@ -459,13 +459,13 @@ public class EarningController {
                     : "???";
 
             Label lblName = new Label(item.getQuantita() + "x " + nomeProdotto);
-            lblName.getStyleClass().add(oinSTR);
+            lblName.getStyleClass().add(OINSTR);
 
             Region itemSpacer = new Region();
             HBox.setHgrow(itemSpacer, Priority.ALWAYS);
 
             Label lblPrice = new Label(formatCurrency(rowTotal));
-            lblPrice.getStyleClass().add(oipSTR);
+            lblPrice.getStyleClass().add(OIPSTR);
 
             // BOTTONE ELIMINA ITEM
             Button btnRemoveItem = new Button("✖");
@@ -483,7 +483,7 @@ public class EarningController {
                         + " dall'ordine #" + order.getId());
 
                 ButtonType btnOk = new ButtonType("Elimina", ButtonBar.ButtonData.OK_DONE);
-                ButtonType btnCancel = new ButtonType(annullaSTR, ButtonBar.ButtonData.CANCEL_CLOSE);
+                ButtonType btnCancel = new ButtonType(ANNULLASTR, ButtonBar.ButtonData.CANCEL_CLOSE);
                 confirm.getButtonTypes().setAll(btnOk, btnCancel);
 
                 confirm.showAndWait()
@@ -574,7 +574,7 @@ public class EarningController {
 
     private HBox createOrderHeaderRow(int orderId) {
         Label lblOrderSub = new Label("Ordine #" + orderId);
-        lblOrderSub.getStyleClass().add(oinSTR);
+        lblOrderSub.getStyleClass().add(OINSTR);
 
         Button btnDelete = new Button("✖");
         btnDelete.getStyleClass().add("btn-delete-order");
@@ -583,7 +583,7 @@ public class EarningController {
                     "Annullare l'ordine #" + orderId + "?",
                     "L'ordine in preparazione sarà marcato come cancellato.",
                     "Annulla ordine")) {
-                earningUseCase.setOrderStatus(orderId, canceledSTR);
+                earningUseCase.setOrderStatus(orderId, CANCELEDSTR);
                 refreshDataPreservingSelection();
             }
         });
@@ -602,10 +602,10 @@ public class EarningController {
                 : "???";
 
         Label lblName = new Label("⏳ " + item.getQuantita() + "x " + nomeProdotto);
-        lblName.getStyleClass().add(oinSTR);
+        lblName.getStyleClass().add(OINSTR);
 
         Label lblPrice = new Label(formatCurrency(rowTotal));
-        lblPrice.getStyleClass().add(oipSTR);
+        lblPrice.getStyleClass().add(OIPSTR);
 
         Button btnRemove = new Button("✖");
         btnRemove.getStyleClass().add("btn-delete-item");
@@ -631,7 +631,7 @@ public class EarningController {
 
     private HBox createSubtotalRow(String prefix, BigDecimal amount) {
         Label lbl = new Label(prefix + formatCurrency(amount));
-        lbl.getStyleClass().add(oipSTR);
+        lbl.getStyleClass().add(OIPSTR);
 
         HBox row = new HBox(lbl);
         row.setAlignment(Pos.CENTER_RIGHT);
@@ -645,7 +645,7 @@ public class EarningController {
         confirm.setContentText(body);
 
         ButtonType ok = new ButtonType(confirmLabel, ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancel = new ButtonType(annullaSTR, ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType cancel = new ButtonType(ANNULLASTR, ButtonBar.ButtonData.CANCEL_CLOSE);
         confirm.getButtonTypes().setAll(ok, cancel);
 
         return confirm.showAndWait().filter(ok::equals).isPresent();

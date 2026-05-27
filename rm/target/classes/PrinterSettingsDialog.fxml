@@ -1,21 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
 
-<DialogPane xmlns:fx="http://javafx.com/fxml">
-    <content>
-        <VBox spacing="10">
-            <CheckBox fx:id="chkEnabled" text="Abilita stampa automatica comande"/>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-            <Label text="Stampante:"/>
-            <ComboBox fx:id="cmbPrinter" promptText="Seleziona stampante"/>
+<VBox spacing="12" style="-fx-background-color: white; -fx-padding: 20;"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.rm.view.component.PrinterSettingsDialog">
 
-            <Label text="Larghezza (caratteri):"/>
-            <Spinner fx:id="spnWidth" min="32" max="80" initialValue="48"/>
+    <!-- TITOLO -->
+    <Label style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333;"
+           text="Impostazioni Stampante Comande" />
 
-            <CheckBox fx:id="chkAutoCut" text="Taglio automatico" selected="true"/>
+    <Separator />
 
-            <Button text="Test Stampa" onAction="#handleTestPrint"/>
-        </VBox>
-    </content>
-</DialogPane>
+    <!-- ABILITAZIONE -->
+    <CheckBox fx:id="chkEnabled"
+              style="-fx-font-size: 13px;"
+              text="Abilita stampa automatica comande" />
+
+    <Separator style="-fx-padding: 5 0 5 0;" />
+
+    <!-- NOME STAMPANTE -->
+    <Label style="-fx-font-size: 13px; -fx-text-fill: #555;" text="Nome stampante:" />
+    <TextField fx:id="txtPrinterName"
+               promptText="Es. POS-58, EPSON TM-T20III..."
+               styleClass="input-standard" />
+
+    <!-- LARGHEZZA ETICHETTA (SPESSORE) -->
+    <Label style="-fx-font-size: 13px; -fx-text-fill: #555;"
+           text="Spessore etichetta (larghezza carta in mm):" />
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Spinner fx:id="spnLabelWidth" prefWidth="120" />
+        <Label style="-fx-font-size: 12px; -fx-text-fill: #888;"
+               text="Valori comuni: 58mm, 80mm" />
+    </HBox>
+
+    <!-- LARGHEZZA CARATTERI PER RIGA -->
+    <Label style="-fx-font-size: 13px; -fx-text-fill: #555;"
+           text="Caratteri per riga:" />
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Spinner fx:id="spnCharsPerLine" prefWidth="120" />
+        <Label style="-fx-font-size: 12px; -fx-text-fill: #888;"
+               text="Tipicamente 32 (58mm) o 48 (80mm)" />
+    </HBox>
+
+    <!-- TAGLIO AUTOMATICO -->
+    <CheckBox fx:id="chkAutoCut"
+              style="-fx-font-size: 13px;"
+              text="Taglio automatico dopo stampa" />
+
+    <Separator style="-fx-padding: 5 0 5 0;" />
+
+    <!-- PULSANTI -->
+    <HBox spacing="10" style="-fx-padding: 10 0 0 0;">
+        <Button fx:id="btnSave"
+                style="-fx-padding: 5 15; -fx-font-size: 13px; -fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"
+                text="Salva" />
+
+        <Button fx:id="btnCancel"
+                style="-fx-padding: 5 10; -fx-font-size: 13px; -fx-background-color: #CCC; -fx-text-fill: #333; -fx-cursor: hand;"
+                text="Annulla">
+            <font><Font size="9.0" /></font>
+        </Button>
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <Button fx:id="btnTestPrint"
+                style="-fx-padding: 5 15; -fx-font-size: 12px; -fx-background-color: #2196F3; -fx-text-fill: white; -fx-cursor: hand;"
+                text="Test Stampa" />
+    </HBox>
+
+    <!-- STATO -->
+    <Label fx:id="lblStatus"
+           style="-fx-font-size: 12px; -fx-text-fill: #999; -fx-font-style: italic;"
+           text="" />
+
+</VBox>

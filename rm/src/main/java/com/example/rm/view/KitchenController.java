@@ -81,20 +81,27 @@ public class KitchenController {
         itemPreference.getStyleClass().add("context-menu-item-info");
         itemPreference.setOnAction(e ->  showPreferencesDialog());
 
+        // =====================================================================
+        // AGGIUNTO: Voce di menu per le impostazioni della stampante comande
+        // =====================================================================
+        MenuItem itemPrinterSettings = new MenuItem("Impostazioni Stampante");
+        itemPrinterSettings.getStyleClass().add("context-menu-item-info");
+        itemPrinterSettings.setOnAction(e -> showPrinterSettingsDialog());
+
         MenuItem itemLogout = new MenuItem("Logout");
         itemLogout.getStyleClass().add("context-menu-item-danger");
         itemLogout.setOnAction(e -> {
             logger.log(Level.INFO, "Logout Cucina effettuato.");
             UserSession.cleanUserSession();
             SceneManager.showLogin();
-
-
         });
 
         contextMenu.getItems().addAll(
                 itemChangePassword,
                 new SeparatorMenuItem(),
                 itemPreference,
+                new SeparatorMenuItem(),
+                itemPrinterSettings,
                 new SeparatorMenuItem(),
                 itemLogout
         );
@@ -163,6 +170,20 @@ public class KitchenController {
                     refreshData();
                 }
             });
+        }
+    }
+
+    /**
+     * Apre il dialog di configurazione della stampante comande.
+     * Accessibile dal menu profilo della vista cucina.
+     */
+    private void showPrinterSettingsDialog() {
+        try {
+            Stage stage = (Stage) profileBtn.getScene().getWindow();
+            PrinterSettingsDialog.show(stage);
+            logger.log(Level.INFO, "Dialog impostazioni stampante aperto dalla cucina.");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Errore apertura dialog impostazioni stampante", e);
         }
     }
 }
