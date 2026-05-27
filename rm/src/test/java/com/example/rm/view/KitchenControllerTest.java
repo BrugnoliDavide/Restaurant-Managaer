@@ -23,8 +23,6 @@ import static org.mockito.Mockito.*;
 
 class KitchenControllerTest {
 
-    private static volatile boolean javaFxInitialized = false;
-
     @BeforeAll
     static void initJavaFx() {
         System.setProperty("java.awt.headless", "true");

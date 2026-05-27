@@ -111,7 +111,7 @@ public final class KitchenService {
         // NOTA: Questo richiede l'aggiunta del campo 'printOrdersAutomatically'
         // alla classe KitchenPreferences (vedi sotto per dettagli)
         if (prefs == null || !prefs.isPrintOrdersAutomatically()) {
-            LOGGER.log(Level.INFO,"Stampa comande disabilitata per l'utente: {0}}", username);
+            LOGGER.log(Level.INFO,"Stampa comande disabilitata per utente: {0}}", username);
             return;
         }
 
@@ -154,7 +154,7 @@ public final class KitchenService {
                 // CRITICO: Non interrompere il flusso anche se la stampa fallisce
                 // La cucina DEVE comunque vedere l'ordine sullo schermo
                 LOGGER.log(Level.WARNING,
-                        "Errore durante la stampa dell'ordine #{0} - L'ordine è comunque visibile sullo schermo", order.getId());
+                        "Errore durante la stampa di ordine #{0} - ordine visibile sullo schermo", order.getId());
             }
         }
     }
@@ -173,13 +173,13 @@ public final class KitchenService {
             PrinterService printerService = PrinterService.getInstance();
 
             if (!printerService.getConfiguration().isEnabled()) {
-                LOGGER.warning("Tentativo di stampa manuale ma stampante disabilitata");
+                LOGGER.log(Level.WARNING,"Tentativo di stampa manuale ma stampante disabilitata");
                 return false;
             }
 
             Order order = OrderService.findById(orderId);
             if (order == null) {
-                LOGGER.warning("Tentativo di stampare ordine inesistente: " + orderId);
+                LOGGER.log(Level.WARNING,"Tentativo di stampare ordine inesistente: {0}", orderId);
                 return false;
             }
 
@@ -188,12 +188,12 @@ public final class KitchenService {
             // Stampa SINCRONA per dare feedback immediato all'utente
             printerService.printOrderSync(order, items);
 
-            LOGGER.info("Ristampa manuale completata per ordine #" + orderId);
+            LOGGER.log(Level.INFO,"Ristampa manuale completata per ordine #{0}", orderId);
             return true;
 
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE,
-                    "Errore durante la ristampa manuale dell'ordine #{0}", orderId);
+                    "Errore durante la ristampa manuale ordine #{0}", orderId);
             return false;
         }
     }

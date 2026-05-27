@@ -35,7 +35,8 @@ public class KitchenController {
 
     private static KitchenUseCase kitchenUseCase = new KitchenService();
     public static final Logger logger = Logger.getLogger(KitchenController.class.getName());
-    private String ordineString = "Ordine #";
+    private static final String ordineString = "Ordine #";
+    private static final String CONTEXTMENUITEMINFOSTR = "context-menu-item-info";
 
     public static void setKitchenUseCase(KitchenUseCase useCase) {
         kitchenUseCase = useCase;
@@ -71,21 +72,21 @@ public class KitchenController {
         ContextMenu contextMenu = new ContextMenu();
 
         MenuItem itemChangePassword = new MenuItem("Cambia Password");
-        itemChangePassword.getStyleClass().add("context-menu-item-info");
+        itemChangePassword.getStyleClass().add(CONTEXTMENUITEMINFOSTR);
         itemChangePassword.setOnAction(e -> {
             Stage stage = (Stage) profileBtn.getScene().getWindow();
             ChangePasswordDialog.show(stage);
         });
 
         MenuItem itemPreference = new MenuItem("Preference");
-        itemPreference.getStyleClass().add("context-menu-item-info");
+        itemPreference.getStyleClass().add(CONTEXTMENUITEMINFOSTR);
         itemPreference.setOnAction(e ->  showPreferencesDialog());
 
         // =====================================================================
         // AGGIUNTO: Voce di menu per le impostazioni della stampante comande
         // =====================================================================
         MenuItem itemPrinterSettings = new MenuItem("Impostazioni Stampante");
-        itemPrinterSettings.getStyleClass().add("context-menu-item-info");
+        itemPrinterSettings.getStyleClass().add(CONTEXTMENUITEMINFOSTR);
         itemPrinterSettings.setOnAction(e -> showPrinterSettingsDialog());
 
         MenuItem itemLogout = new MenuItem("Logout");
