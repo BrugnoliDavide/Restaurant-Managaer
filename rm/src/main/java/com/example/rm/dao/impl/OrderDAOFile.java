@@ -458,8 +458,7 @@ public class OrderDAOFile implements OrderDAO {
                                            LocalDateTime start, LocalDateTime end) {
         long total = 0;
         for (Order order : getAllOrdersInternal()) {
-            if (order.getStatus().equals("canceled")) continue;
-            if (order.getDataOra().isBefore(start) || order.getDataOra().isAfter(end)) continue;
+            if (order.getStatus().equals("canceled") || order.getDataOra().isBefore(start) || order.getDataOra().isAfter(end)) continue;
 
             for (OrderItem item : getOrderItemsDetailedInternal(order.getId())) {
                 if (item.getProduct().getId() == productId) {

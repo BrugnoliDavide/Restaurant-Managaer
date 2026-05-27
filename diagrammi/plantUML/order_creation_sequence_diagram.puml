@@ -64,6 +64,13 @@ else Preload asincrono menu
     deactivate productService
 
     preloadService -> cache: store(products)
+
+    activate cache
+    cache -->> preloadService: completed(products)
+    deactivate cache
+
+
+
     preloadService -->> waiterCtrl: cacheReady
     deactivate preloadService
 end
@@ -96,7 +103,7 @@ loop Per ogni prodotto selezionato
     activate controller
 
     controller -> controller: incrementProductQuantity(prodotto)
-    note right of controller: Aggiornamento carrello locale\n(Map<Integer, OrderItem>)
+    note right of controller: Aggiornamento carrello locale
 
     controller -> controller: createOrderItem(prodotto, quantità)
     controller -> controller: updateSendButton()

@@ -52,16 +52,16 @@ public class EarningController {
 
     private Timeline pollingTimeline;
     
-    private final static String oipSTR = "order-item-price";
-    private final static String oinSTR = "order-item-name";
-    private final static String canceledSTR = "canceled";
-    private final static String annullaSTR = "annulla";
+    private static final  String oipSTR = "order-item-price";
+    private static final  String oinSTR = "order-item-name";
+    private static final  String canceledSTR = "canceled";
+    private static final  String annullaSTR = "annulla";
 
     private String formatCurrency(BigDecimal amount) {
         return "€" + amount.setScale(2, RoundingMode.HALF_UP).toPlainString();
     }
-    private final static String selectedString = "selected";
-    private final static String tavoloString = "Tavolo ";
+    private static final  String selectedString = "selected";
+    private static final  String tavoloString = "Tavolo ";
     
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("HH:mm");
