@@ -12,7 +12,6 @@ import com.example.rm.model.User;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Converte tra Bean (layer DAO, puro Java) e Model (layer UI, JavaFX Properties).
@@ -152,9 +151,9 @@ public final class BeanMapper {
         return new UserBean(model.getUsername(), null, model.getRole());
     }
 
-    // =========================================================================
-    //  Conversioni su Liste
-    // =========================================================================
+// =========================================================================
+//  Conversioni su Liste
+// =========================================================================
 
     public static List<MenuProduct> toProductModels(List<ProductBean> beans) {
         if (beans == null) return Collections.emptyList();
@@ -163,7 +162,7 @@ public final class BeanMapper {
 
     public static List<ProductBean> toProductBeans(List<MenuProduct> models) {
         if (models == null) return Collections.emptyList();
-        return models.stream().map(BeanMapper::toBean).collect(Collectors.toList());
+        return List.copyOf(models.stream().map(BeanMapper::toBean).toList()); // MODIFICATO
     }
 
     public static List<Order> toOrderModels(List<OrderBean> beans) {
@@ -173,7 +172,7 @@ public final class BeanMapper {
 
     public static List<OrderBean> toOrderBeans(List<Order> models) {
         if (models == null) return Collections.emptyList();
-        return models.stream().map(BeanMapper::toBean).collect(Collectors.toList());
+        return List.copyOf(models.stream().map(BeanMapper::toBean).toList()); // MODIFICATO
     }
 
     public static List<OrderItem> toOrderItemModels(List<OrderItemBean> beans) {

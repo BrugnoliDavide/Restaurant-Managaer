@@ -60,6 +60,8 @@ package "<<Boundary>>" <<Rectangle>> BOUNDARY_COLOR {
             + handleProfileMenu(): void
         }
 
+        Interface View
+
         class ManagerController <<boundary>> {
             - tabPane: TabPane
             --
@@ -87,6 +89,8 @@ package "<<Boundary>>" <<Rectangle>> BOUNDARY_COLOR {
             + handleSend(): void
             + handleCancel(): void
         }
+
+
     }
 
     package "app" {
@@ -424,12 +428,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
 
 
 
-    package "exception" {
-        class AuthenticationException <<entity>> extends Exception {
-            --
-            + AuthenticationException(String): void
-        }
-    }
+
 }
 
 ' ============================================================================
@@ -447,13 +446,20 @@ ManagerController ..> FinancialUseCase
 CashierController ..> FinancialUseCase
 MainApp ..> SecurityService
 
+WaiterController -- TakeOrderController
 
+LoginController     .up.|> View
+WaiterController    .up.|> View
+ManagerController   .up.|> View
+KitchenController   .up.|> View
+CashierController   .up.|> View
+TakeOrderController .up.|> View
 
 ' Control -> Control
-ManagerService ..> BeanMapper : converts
-MenuService ..> BeanMapper : converts
-FinancialService ..> BeanMapper : converts
-SecurityService ..> BeanMapper : converts
+ManagerService .down.> BeanMapper : converts
+MenuService .down.> BeanMapper : converts
+FinancialService .down.> BeanMapper : converts
+SecurityService .down.> BeanMapper : converts
 
 ' Control -> Entity (DAO)
 ManagerService --> UserDAO : uses
@@ -471,9 +477,9 @@ BeanMapper ..> OrderBean : creates
 BeanMapper ..> OrderItemBean : creates
 
 ' Entity (DAO) -> Entity (Model)
-DatabaseProductDAO ..> MenuProduct : persists
-DatabaseUserDAO ..> User : persists
-DatabaseOrderDAO ..> Order : persists
+DatabaseProductDAO .down.> MenuProduct : persists
+DatabaseUserDAO .down.> User : persists
+DatabaseOrderDAO .down.> Order : persists
 
 
 ' Entity (Model) relationships
@@ -486,8 +492,6 @@ BeanMapper ..> MenuProduct : converts from
 BeanMapper ..> User : converts from
 BeanMapper ..> Order : converts from
 
-' Exceptions
-SecurityService ..> AuthenticationException : throws
 
 legend right
   |<BOUNDARY_COLOR>| **Boundary** | Interfacce con l'esterno (View, CLI, Entry Points) |

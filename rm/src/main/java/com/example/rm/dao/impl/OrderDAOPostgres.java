@@ -312,7 +312,9 @@ public class OrderDAOPostgres implements OrderDAO {
 
     /** Mappa la riga corrente del ResultSet in un OrderItemBean. */
     private OrderItemBean mapOrderItem(ResultSet rs) throws SQLException {
-        OrderItemBean bean = new OrderItemBean(
+
+
+        return  new OrderItemBean(
                 rs.getInt("order_id"),
                 rs.getInt("menu_item_id"),
                 rs.getInt(QTASTR),
@@ -320,10 +322,6 @@ public class OrderDAOPostgres implements OrderDAO {
                 rs.getBigDecimal("costo_realizzazione_snapshot"),
                 rs.getString(NOMEPRODOTTOSNAPSHOTSTR)
         );
-        // Nota: l'id dell'item (oi_id) è necessario per la cancellazione dal cassiere.
-        // OrderItemBean non ha un campo id; il Service usa il valore recuperato qui.
-        // Se in futuro servirà, aggiungere il campo id a OrderItemBean.
-        return bean;
     }
 
     /**

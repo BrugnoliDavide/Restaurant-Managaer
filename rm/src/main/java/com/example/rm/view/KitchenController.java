@@ -35,7 +35,7 @@ public class KitchenController {
 
     private static KitchenUseCase kitchenUseCase = new KitchenService();
     public static final Logger logger = Logger.getLogger(KitchenController.class.getName());
-    private static final String ordineString = "Ordine #";
+    private static final String ORDINESTR = "Ordine #";
     private static final String CONTEXTMENUITEMINFOSTR = "context-menu-item-info";
 
     public static void setKitchenUseCase(KitchenUseCase useCase) {
@@ -149,7 +149,7 @@ public class KitchenController {
             final javafx.scene.Node[] cardRef = new javafx.scene.Node[1];
 
             cardRef[0] = cardFactory.createOrderCard(order, () -> {
-                logger.info(ordineString + order.getId() + " completato.");
+                logger.info(ORDINESTR + order.getId() + " completato.");
                 kitchenUseCase.updateOrderStatus(order.getId(), "ready");
                 ordersContainer.getChildren().remove(cardRef[0]);
             });
