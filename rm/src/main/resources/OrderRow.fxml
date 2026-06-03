@@ -14,7 +14,7 @@
       stylesheets="@style.css"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.example.rm.view.component.OrderRowController">
+      fx:controller="rm.view.component.OrderRowController">
 
     <VBox spacing="4">
         <Label fx:id="lblTitle" styleClass="row-title" />

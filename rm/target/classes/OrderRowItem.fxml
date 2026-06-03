@@ -14,7 +14,7 @@
       stylesheets="@style.css"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.example.rm.view.component.OrderRowItemController">
+      fx:controller="rm.view.component.OrderRowItemController">
 
 
     <VBox spacing="5" HBox.hgrow="ALWAYS">

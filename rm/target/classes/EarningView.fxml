@@ -16,7 +16,7 @@
 <BorderPane stylesheets="@style.css"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.rm.view.EarningController">
+            fx:controller="rm.view.EarningController">
 
     <top>
         <VBox spacing="10">

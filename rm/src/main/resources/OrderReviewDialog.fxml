@@ -12,7 +12,7 @@
       stylesheets="@style.css"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.example.rm.view.component.OrderReviewDialog">
+      fx:controller="rm.view.component.OrderReviewDialog">
 
     <Label styleClass="text-header" stylesheets="@style.css" text="Revisione Ordine" />
 

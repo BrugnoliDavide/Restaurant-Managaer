@@ -7,7 +7,7 @@
       stylesheets="@style.css"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.example.rm.view.component.DateHeaderController">
+      fx:controller="rm.view.component.DateHeaderController">
 
     <Label fx:id="lblDate" style="-fx-font-size: 12px;                   -fx-text-fill: #999;                   -fx-font-weight: bold;                   -fx-padding: 15 0 5 0;" styleClass="text-header" stylesheets="@style.css" />
 </VBox>

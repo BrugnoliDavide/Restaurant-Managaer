@@ -13,7 +13,7 @@
             stylesheets="@style.css"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.rm.view.ProductDetailController">
+            fx:controller="rm.view.ProductDetailController">
 
     <padding>
         <Insets bottom="30" left="40" right="40" top="30" />

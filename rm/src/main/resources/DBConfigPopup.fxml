@@ -8,7 +8,7 @@
       stylesheets="@style.css"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.example.rm.view.component.DBConfigPopupController">
+      fx:controller="rm.view.component.DBConfigPopupController">
 
     <padding>
         <Insets bottom="15" left="15" right="15" top="15" />

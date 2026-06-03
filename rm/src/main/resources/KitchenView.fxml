@@ -15,7 +15,7 @@
             stylesheets="@/style.css"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.example.rm.view.KitchenController">
+            fx:controller="rm.view.KitchenController">
 
     <padding>
         <Insets bottom="20" left="20" right="20" top="20" />
