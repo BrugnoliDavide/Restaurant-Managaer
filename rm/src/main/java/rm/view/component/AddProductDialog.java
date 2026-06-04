@@ -1,8 +1,11 @@
 package rm.view.component;
 
 import rm.app.MainApp;
+import rm.controller.AllergenDetectionUseCase;
 import rm.controller.MenuService;
 import rm.controller.MenuUseCase;
+import rm.controller.SpoonacularAllergenDetectionService;
+import rm.exception.AllergenDetectionException;
 import rm.model.MenuProduct;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -25,8 +28,6 @@ public class AddProductDialog {
         menuUseCase = useCase;
     }
 
-
-
     private AddProductDialog() {
         throw new IllegalStateException("Classe di utilità: non può essere istanziata");
     }
@@ -41,7 +42,6 @@ public class AddProductDialog {
     public static void displayEdit(MenuProduct productToEdit, Consumer<Boolean> onComplete) {
         new DialogBuilder(productToEdit, onComplete).show();
     }
-
 
     private static class DialogBuilder {
         private final MenuProduct productToEdit;
@@ -63,13 +63,11 @@ public class AddProductDialog {
             this.menuService = AddProductDialog.menuUseCase;
             this.window = createWindow();
         }
+
         public void show() {
             VBox layout = buildLayout();
             window.setScene(new Scene(layout));
-
-            // Gestisce la chiusura della finestra
             window.setOnCloseRequest(e -> notifyCompletion(false));
-
             window.showAndWait();
         }
 
@@ -141,8 +139,11 @@ public class AddProductDialog {
             ComboBox<String> comboBox = new ComboBox<>();
             comboBox.getItems().addAll(menuService.loadCategories());
             comboBox.setEditable(true);
-            if (isEditMode) comboBox.setValue(productToEdit.getTipologia());
-            else if (!comboBox.getItems().isEmpty()) comboBox.getSelectionModel().selectFirst();
+            if (isEditMode) {
+                comboBox.setValue(productToEdit.getTipologia());
+            } else if (!comboBox.getItems().isEmpty()) {
+                comboBox.getSelectionModel().selectFirst();
+            }
             return comboBox;
         }
 
@@ -165,6 +166,13 @@ public class AddProductDialog {
             return button;
         }
 
+        // =============================================================
+        //  CORRETTO: il servizio NON viene più istanziato nel campo.
+        //  Viene creato on-demand dentro handleSave(), così:
+        //    - se la chiave manca il dialog si apre lo stesso
+        //    - se l'API fallisce si usa il valore inserito a mano
+        // =============================================================
+
         private void handleSave() {
             if (!validateInputs()) {
                 showError("Compilare tutti i campi obbligatori");
@@ -173,20 +181,42 @@ public class AddProductDialog {
 
             try {
                 MenuProduct product = buildProductFromForm();
-                boolean success = saveProduct(product);
 
+                tryDetectAllergens(product);
+
+                boolean success = saveProduct(product);
                 if (success) {
-                    logger.log(Level.INFO, "Prodotto {0} salvato con successo",
-                            isEditMode ? "modificato" : "aggiunto");
                     notifyCompletion(true);
                     window.close();
-                } else {
-                    logger.log(Level.WARNING, "Errore salvataggio DB");
-                    showError("Errore durante il salvataggio nel database");
                 }
-            } catch (NumberFormatException ex) {
-                logger.log(Level.WARNING, "Errore formato numeri: {0}", ex.getMessage());
-                showError("Formato numerico non valido per prezzo o costo");
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Errore durante il salvataggio", e);
+                showError("Errore durante il salvataggio del prodotto");
+            }
+        }
+
+        /**
+         * Tenta il rilevamento automatico degli allergeni via Spoonacular.
+         * In caso di fallimento (chiave assente, rete non disponibile,
+         * prodotto non trovato) lascia inalterato il campo allergeni
+         * compilato manualmente dall'utente.
+         */
+        private void tryDetectAllergens(MenuProduct product) {
+            try {
+
+                AllergenDetectionUseCase service = new SpoonacularAllergenDetectionService();
+                String allergeni = service.detectAllergens(product.getNome());
+                product.setAllergeni(allergeni);
+                logger.log(Level.INFO, "Allergeni rilevati automaticamente: {0}", allergeni);
+            } catch (IllegalStateException e) {
+                // Chiave API non configurata: si usa il valore manuale
+                logger.log(Level.INFO,
+                        "API Spoonacular non configurata, allergeni manuali: {0}",
+                        e.getMessage());
+            } catch (AllergenDetectionException e) {
+                // Nessun risultato trovato dall'API: si usa il valore manuale
+                logger.log(Level.WARNING,
+                        "Rilevamento allergeni fallito: {0}", e.getMessage());
             }
         }
 
@@ -232,6 +262,7 @@ public class AddProductDialog {
                 onComplete.accept(success);
             }
         }
+
         private static BigDecimal parseBigDecimalValue(String text) {
             return new BigDecimal(text.replace(",", "."));
         }

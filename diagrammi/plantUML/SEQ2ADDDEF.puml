@@ -1,0 +1,193 @@
+@startuml Order Creation - Restaurant Manager
+
+skinparam backgroundColor #FEFEFE
+skinparam sequence {
+    ArrowColor #2C3E50
+    ActorBorderColor #2C3E50
+    LifeLineBorderColor #34495E
+    LifeLineBackgroundColor #ECF0F1
+    ParticipantBorderColor #2C3E50
+    ParticipantBackgroundColor #ECF0F1
+    BoxBorderColor #34495E
+}
+
+actor Waiter as waiter
+
+participant "<<boundary>>\nWaiterController" as waiterCtrl
+participant "<<boundary>>\nSceneManager" as sceneManager
+participant "<<boundary>>\nViewFactory" as viewFactory
+participant "<<boundary>>\nTakeOrderView" as takeOrderView
+participant "<<controller>>\nTakeOrderController" as controller
+participant "<<service>>\nProductLoadingService" as productService
+participant "<<controller>>\nMenuService" as menuService
+participant "<<DAO>>\nProductDAO" as productDAO
+participant "<<boundary>>\nOrderReviewDialog" as dialog
+participant "<<controller>>\nOrderService" as orderService
+participant "<<DAO>>\nOrderDAOPostgres" as orderDAO
+
+== Waiter Dashboard ==
+
+waiter -> waiterCtrl: openDashboard()
+activate waiterCtrl
+waiterCtrl -> waiterCtrl: setupUserSession()
+waiterCtrl -> waiterCtrl: startPolling()
+waiterCtrl --> waiter: Dashboard displayed
+
+    |||
+    note over waiterCtrl, orderService #FFF9C4: **Async call #1 — Notification Polling (Timeline every 5s)**\nRuns in background throughout the entire WaiterController lifecycle.\nDoes NOT block the UI thread.
+    loop every 5 seconds [Timeline — INDEFINITE]
+        waiterCtrl ->> orderService: loadReadyOrdersForWaiter()
+        activate orderService
+        orderService --> waiterCtrl: List<Order>
+        deactivate orderService
+        waiterCtrl -> waiterCtrl: refreshNotifications()
+        note right of waiterCtrl: Updates notification cards\nfor ready orders.\nFilters by managed tables\nvia UserSession.isTableManaged()
+    end
+    |||
+
+    waiterCtrl ->> productService: start()
+    activate productService
+    note right of productService: background Service\nDoes NOT block the UI thread
+
+    productService -> menuService: loadAllProducts()
+    activate menuService
+    menuService -> productDAO: findAll()
+    activate productDAO
+
+        waiter --> waiterCtrl : insert table number
+
+    productDAO --> menuService: List<ProductBean>
+
+        waiterCtrl -> waiterCtrl: parse tableNumber from txtTable
+
+    deactivate productDAO
+
+
+
+    menuService --> productService: List<MenuProduct>
+    deactivate menuService
+
+    deactivate productService
+
+
+    waiter -> waiterCtrl: handleNewOrder()
+
+    waiterCtrl -> sceneManager: showTakeOrder(tableNumber)
+    deactivate waiterCtrl
+    activate sceneManager
+
+    sceneManager -> viewFactory: forTakeOrder(tableNumber)
+    deactivate sceneManager
+    activate viewFactory
+    viewFactory -> takeOrderView: create(tableNumber)
+    deactivate viewFactory
+    activate takeOrderView
+    takeOrderView -> controller: init(tableNumber)
+    deactivate takeOrderView
+    activate controller
+
+== Take Order Initialization ==
+
+controller -> controller: updateTitle()
+controller -> controller: initProductLoadingService()
+controller -> productService: getData
+activate productService
+productService --> controller: onSucceeded(List<MenuProduct>)
+deactivate productService
+controller -> controller: updateProductList(products)
+note right of controller: Stores products in\nallProductsCache\n(CopyOnWriteArrayList)
+controller -> controller: renderProducts(products)
+controller -> controller: setupSearch()
+controller --> waiter: Product list displayed
+
+== Product Selection ==
+
+loop For each selected product
+    waiter -> controller: handleIncrementProduct(product)
+    controller -> controller: incrementProductQuantity(product)
+    note right of controller: If product already in cart:\n  update existing OrderItem quantity\nIf new product:\n  createOrderItem(product, 1)\n  carrello.put(productId, item)
+    controller -> controller: updateSendButton()
+    note right of controller: Button disabled if cart is empty \n and the button show how many\n items are in the order
+    controller -> controller: loadProducts()
+    note right of controller: Reloads UI to reflect\nupdated quantities
+    controller --> waiter: Updated quantity displayed
+end
+
+== Product Search (Debouncing) ==
+
+note over controller #FFF9C4: **Async call #3 — Search with debouncing**\nThe Waiter can search products at any time during selection.\nExecutes on a dedicated ScheduledExecutorService thread.
+
+waiter -> controller: type in searchField
+controller -> controller: searchDebounce.playFromStart()
+note right of controller: PauseTransition 300ms\nResets on every keystroke\nto avoid excessive queries
+
+...300ms debounce delay...
+
+controller ->> controller: performSearch()
+note right of controller: Runs on SearchExecutor thread\n(SingleThreadScheduledExecutor).\nFilters allProductsCache by\nname, category, allergens\n(case-insensitive).
+
+alt results found
+    controller -> controller: Platform.runLater()
+    controller -> controller: updateProductList(filteredResults)
+    controller --> waiter: Filtered products displayed\n(green border, tooltip with count)
+else no results
+    controller -> controller: Platform.runLater()
+    controller --> waiter: Empty state displayed\n(red border, "No products found" tooltip)
+end
+
+== Order Submission ==
+
+waiter -> controller: handleSend()
+
+alt cart is empty
+    controller --> waiter: showInfoAlert("Empty cart")
+end
+    controller -> controller: btnSend.setDisable(true)
+
+    controller -> dialog: show(stage, tableNumber, items, "", callback)
+    activate dialog
+    dialog --> waiter: Display order review
+    waiter -> dialog: confirm(notes)
+    dialog -> controller: callback(OrderReviewResult)
+    deactivate dialog
+    controller -> controller: sendOrderToDatabase(items, result.getNote())
+
+    == Order Persistence ==
+
+    controller -> orderService: createOrder(items, tableNumber, note, currentUser)
+    activate orderService
+    orderService -> orderDAO: createOrder(items, tableNumber, note, user)
+    activate orderDAO
+
+    orderDAO --> orderService: true
+    deactivate orderDAO
+    orderService --> controller: true
+    deactivate orderService
+
+    == Completion ==
+
+    controller -> controller: handleOrderSuccess()
+    controller -> controller: showInfoAlert("Success", "Order sent successfully!")
+                    controller --> waiter: Success message displayed
+    controller -> controller: cleanup()
+    controller -> controller: clearCart()
+
+
+
+
+    controller -> sceneManager: showWaiter()
+        deactivate controller
+
+    activate sceneManager
+
+    sceneManager --> waiterCtrl: void
+    deactivate sceneManager
+    activate waiterCtrl
+    deactivate controller
+
+    waiterCtrl --> waiter: show waiter dashboard
+    note right: at this point we are back in the starting\n situation, and the cycle can begin again \n therefore waitercontroller does not terminate
+
+
+
+@enduml

@@ -13,22 +13,23 @@ skinparam sequence {
     BoxBorderColor #34495E
 }
 
-actor Cameriere as waiter
-participant "WaiterController" as waiterCtrl
-participant "MenuPreloadService" as preloadService
-participant "ProductLoadingService" as productService
-participant "MenuService" as menuService
-participant "MenuCacheService" as cache
+actor Waiter as waiter
+participant "<<boundary>>\nWaiterController" as waiterCtrl
+participant "<<utils>>\nMenuPreloadService" as preloadService
+participant "<<utils>>\nProductLoadingService" as productService
+participant "<<utils>>\nMenuService" as menuService
+participant "<<utils>>\nMenuCacheService" as cache
 
-participant "TakeOrderController" as controller
-participant "OrderReviewDialog" as dialog
-participant "OrderService" as orderService
-participant "OrderDAO" as orderDAO
-participant "productDAO" as PDAO
+participant "<<controller>>\nTakeOrderController" as controller
+participant "<<boundary>>\nOrderReviewDialog" as dialog
+participant "<<controller>>\nOrderService" as orderService
+participant "<<entiry>>\n OrderItem" as Oitem
+participant "<<DAO>>\nOrderDAO" as orderDAO
+participant "<<DAO>>\nproductDAO" as PDAO
 
 
 
-== Dashboard Cameriere ==
+== Waiter Dashboard  ==
 
 waiter -> waiterCtrl: openDashboard()
 activate waiterCtrl
@@ -39,7 +40,7 @@ par UI Dashboard
     waiterCtrl -> waiter: show ready orders and fillable field for select table
 
 else Preload asincrono menu
-    waiterCtrl ->> preloadService: preloadMenu()
+    waiterCtrl ->> preloadService: ProductLoadingService()
     activate preloadService
 
     preloadService ->> productService: start()
@@ -75,14 +76,14 @@ else Preload asincrono menu
     deactivate preloadService
 end
 
-== Scelta Tavolo ==
+== Table choose ==
 
 waiter -> waiterCtrl: seleziona tavolo
 waiterCtrl -> controller: handleTakeOrder(numeroTavolo)
 deactivate waiterCtrl
 activate controller
 
-== Inizializzazione Take Order (da cache) ==
+== initialization Take Order (da cache) ==
 
 controller -> controller: init(numeroTavolo)
 controller -> cache: getProducts()
@@ -94,18 +95,19 @@ controller -> controller: updateProductList(products)
 controller -> controller: renderProducts()
 
 controller --> waiter: Vista prodotti caricata
-deactivate controller
 
-== Selezione Prodotti ==
+
+== Product choose ==
 
 loop Per ogni prodotto selezionato
     waiter -> controller: handleIncrementProduct(prodotto)
-    activate controller
+
 
     controller -> controller: incrementProductQuantity(prodotto)
     note right of controller: Aggiornamento carrello locale
 
-    controller -> controller: createOrderItem(prodotto, quantità)
+    controller -> Oitem: createOrderItem(prodotto, quantità)
+    activate Oitem
     controller -> controller: updateSendButton()
 
     controller --> waiter: Quantità aggiornata
@@ -149,7 +151,12 @@ deactivate orderService
 
 controller -> controller: handleOrderSuccess()
 controller -> controller: clearCart()
-controller -> controller: showInfoAlert("Successo", "Ordine inviato con successo!")
+controller ->x Oitem
+deactivate Oitem
+
+
+controller --> waiter : showInfoAlert("Successo", "Ordine inviato con successo!")
+
 
 controller -> controller: SceneManager.showWaiter()
 

@@ -1,6 +1,6 @@
 package rm.app;
 
-import rm.model.*;
+
 import rm.model.KitchenUser;
 import rm.model.ManagerUser;
 import rm.model.User;

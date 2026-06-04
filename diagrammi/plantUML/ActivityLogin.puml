@@ -1,0 +1,35 @@
+@startuml Create Order - Activity Diagram Login
+
+skinparam backgroundColor #FEFEFE
+skinparam activity {
+    BackgroundColor #ECF0F1
+    BorderColor #2C3E50
+    StartColor #27AE60
+    EndColor #C0392B
+    DiamondBackgroundColor #F39C12
+    DiamondBorderColor #E67E22
+}
+
+skinparam note {
+    BackgroundColor #FFF9E6
+    BorderColor #F39C12
+}
+
+start
+
+repeat
+    :Show login page;
+
+    :user insert his credentiale;
+
+
+
+repeat while (credentiale is rejected) is (yes)
+    :display error;
+    ->yes;
+
+
+
+stop
+
+@enduml

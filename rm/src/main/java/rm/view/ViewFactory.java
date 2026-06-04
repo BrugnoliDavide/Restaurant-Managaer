@@ -7,7 +7,6 @@ import rm.view.einkscreen.KitchenEinkView;
 import rm.view.einkscreen.TakeOrderEinkView;
 import rm.view.einkscreen.WaiterEinkView;
 import rm.view.screens.*;
-import rm.view.screens.*;
 
 public final class ViewFactory {
 

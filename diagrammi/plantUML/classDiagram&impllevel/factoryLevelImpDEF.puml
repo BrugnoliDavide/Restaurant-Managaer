@@ -1,0 +1,61 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 60
+
+package "app" #E8F5E9 {
+
+
+
+    class UsersFactory <<Factory>> {
+        + {static} createUser(String, String): User
+    }
+}
+
+
+
+package "model" #FFF3E0 {
+
+    abstract class User {
+        # username: String
+        # role: String
+        + getUsername(): String
+        + getRole(): String
+        + {abstract} getWelcomeMessage(): String
+    }
+
+    class ManagerUser {
+        + getWelcomeMessage(): String
+    }
+
+    class WaiterUser {
+        + getWelcomeMessage(): String
+    }
+
+    class KitchenUser {
+        + getWelcomeMessage(): String
+    }
+
+    class CashierUser {
+        + getWelcomeMessage(): String
+    }
+
+}
+
+' ── Generalizzazioni ──
+User <|-down- ManagerUser
+User <|-down- WaiterUser
+User <|-down- KitchenUser
+User <|-down- CashierUser
+
+' ── Dipendenze di creazione ──
+UsersFactory -u[#595959,dashed]-> ManagerUser : «create»
+UsersFactory -u[#595959,dashed]-> WaiterUser : «create»
+UsersFactory -u[#595959,dashed]-> KitchenUser : «create»
+UsersFactory -u[#595959,dashed]-> CashierUser : «create»
+
+' ── Composizione ──
+
+@enduml

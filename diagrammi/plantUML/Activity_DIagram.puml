@@ -145,7 +145,7 @@ repeat while (Insert successful?) is (no)
 
     -> yes;
 
-    :Retrieve generated order ID;
+
 
     repeat :Insert order item;
         note right

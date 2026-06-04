@@ -1,0 +1,59 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
+
+class BeanMapper {
+  + toBean(Order): OrderBean
+  + toBean(User): UserBean
+  + toOrderBeans(List<Order>): List<OrderBean>
+  + toProductBeans(List<MenuProduct>): List<ProductBean>
+  + toProductModels(List<ProductBean>): List<MenuProduct>
+  + toBean(MenuProduct): ProductBean
+  + toOrderItemModels(List<OrderItemBean>): List<OrderItem>
+  + toModel(OrderItemBean): OrderItem
+  + toUserModels(List<UserBean>): List<User>
+  + toModel(OrderBean): Order
+  + toModel(UserBean): User
+  + toOrderModels(List<OrderBean>): List<Order>
+  + toModel(ProductBean): MenuProduct
+  + toBean(OrderItem, int): OrderItemBean
+}
+abstract class User {
+  # username: String
+  # role: String
+  --
+  + getter
+}
+class UserBean {
+  - passwordHash: String
+  - username: String
+  - role: String
+  - kitchenPreferences: String
+  --
+  + equals(Object): boolean
+  + hashCode(): int
+  + toString(): String
+  + getter/setter
+}
+class UserSession {
+  - managedTables: AtomicReference<Set<Integer>>
+  - user: User
+  - {static} instance: AtomicReference<UserSession>
+  + getInstance(User): UserSession
+  + isTableManaged(int): boolean
+  + cleanUserSession(): void
+  + clearInstanceForTesting(): void
+}
+class UsersFactory {
+  + createUser(String, String): User
+}
+
+BeanMapper    -[#595959,dashed]->  User
+BeanMapper    -[#595959,dashed]->  UserBean     : "«create»"
+BeanMapper  -[#595959,dashed]->  UsersFactory
+UserSession  "1" *-[#595959,plain]-> "user\n1" User
+UsersFactory  -[#595959,dashed]->  User
+@enduml

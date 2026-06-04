@@ -9,6 +9,8 @@ import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 
@@ -33,6 +35,11 @@ public class MainApp extends Application {
         primaryStage.setResizable(true);
         setLogo(primaryStage);
         primaryStage.show();
+
+        loadEnvFile();
+
+
+
     }
 
 
@@ -50,4 +57,28 @@ public class MainApp extends Application {
                 "[%1$tF %1$tT] [%4$-7s] %5$s %n");
         launch();
     }
+
+    private static void loadEnvFile() {
+        Path envPath = Path.of(".env");
+        if (!Files.exists(envPath)) {
+            return;
+        }
+        try (var lines = Files.lines(envPath)) {
+            lines.filter(line -> !line.isBlank() && !line.startsWith("#"))
+                    .forEach(line -> {
+                        String[] parts = line.split("=", 2);
+                        if (parts.length == 2) {
+                            System.setProperty(
+                                    parts[0].trim(),
+                                    parts[1].trim()
+                            );
+                        }
+                    });
+        } catch (IOException e) {
+            // File .env non obbligatorio: ignora se non presente
+        }
+    }
+
+
 }
+

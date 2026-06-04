@@ -1,0 +1,29 @@
+@startuml
+
+skinparam classAttributeIconSize 0
+
+top to bottom direction
+
+
+class User {
+  # username: String
+  # role: String
+  --
+  + welcomeMessage: String
+  + username: String
+  + role: String
+}
+class UserSession {
+  - managedTables: AtomicReference<Set<Integer>>
+  - instance: AtomicReference<UserSession>
+  - user: User
+  + isTableManaged(int): boolean
+  + getInstance(User): UserSession
+  + cleanUserSession(): void
+  + clearInstanceForTesting(): void
+
+}
+
+
+UserSession                 "1" *-[#595959,plain]-> "user\n1" User
+@enduml

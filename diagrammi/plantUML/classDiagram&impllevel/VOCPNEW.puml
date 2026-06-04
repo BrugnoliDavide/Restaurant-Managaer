@@ -1,18 +1,19 @@
 @startuml Restaurant_Manager_BCE_Pattern
 
-!pragma layout smetana
 
+!pragma layout smetana
 !define BOUNDARY_COLOR #E3F2FD
 !define CONTROL_COLOR #E8F5E9
 !define ENTITY_COLOR #FFF3E0
 !define BEAN_COLOR #FCE4EC
 
+skinparam linetype polyline
 skinparam packageStyle rectangle
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false
 skinparam defaultFontName Arial
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
+
 skinparam nodesep 100
 skinparam ranksep 80
 
@@ -31,30 +32,14 @@ package "<<Boundary>>" <<Rectangle>> BOUNDARY_COLOR {
         class LoginController <<boundary>> {
             - txtUsername: TextField
             - txtPassword: PasswordField
-            - btnLogin: Button
             --
-            + initialize(): void
             + handleLogin(ActionEvent): void
             - navigateToRoleView(String): void
         }
 
-        class KitchenController <<boundary>> {
-            - ordersContainer: VBox
-            - lblActiveFilters: Label
-            - profileBtn: StackPane
-            --
-            + initialize(): void
-            + refreshData(): void
-            + handleOrderStatusChange(): void
-            + handleProfileMenu(): void
-        }
 
         class WaiterController <<boundary>> {
-            - notificationsContainer: VBox
-            - txtTable: TextField
-            - btnNewOrder: Button
-            --
-            + initialize(): void
+
             + handleNewOrder(): void
             + refreshData(): void
             + handleProfileMenu(): void
@@ -62,30 +47,8 @@ package "<<Boundary>>" <<Rectangle>> BOUNDARY_COLOR {
 
         Interface View
 
-        class ManagerController <<boundary>> {
-            - tabPane: TabPane
-            --
-            + initialize(): void
-            + handleUserManagement(): void
-            + handleMenuManagement(): void
-            + handleFinancialReports(): void
-        }
-
-        class CashierController <<boundary>> {
-            - ordersTable: TableView
-            - txtTotal: TextField
-            --
-            + initialize(): void
-            + handleCheckout(): void
-            + processPayment(): void
-            + printReceipt(): void
-        }
 
         class TakeOrderController <<boundary>> {
-            - productsContainer: VBox
-            - btnSend: Button
-            --
-            + initialize(): void
             + handleSend(): void
             + handleCancel(): void
         }
@@ -93,20 +56,6 @@ package "<<Boundary>>" <<Rectangle>> BOUNDARY_COLOR {
 
     }
 
-    package "app" {
-
-        class MainApp <<boundary>> {
-            - primaryStage: Stage
-            - currentScene: Scene
-            --
-            + start(Stage): void
-            + main(String[]): void
-            - initializeDatabase(): void
-            - showLoginView(): void
-        }
-
-
-    }
 }
 
 ' ============================================================================
@@ -117,13 +66,6 @@ package "<<Control>>" <<Rectangle>> CONTROL_COLOR {
 
     package "controller" {
 
-        interface ManagerUseCase <<control>> {
-            + getAllUsers(): List<UserBean>
-            + saveUser(UserBean): void
-            + deleteUser(String): void
-            + updateUser(UserBean): void
-            + getUserByUsername(String): UserBean
-        }
 
         interface MenuUseCase <<control>> {
             + getAllProducts(): List<ProductBean>
@@ -133,22 +75,8 @@ package "<<Control>>" <<Rectangle>> CONTROL_COLOR {
             + getProductById(int): ProductBean
         }
 
-        interface FinancialUseCase <<control>> {
-            + getAllOrders(): List<OrderBean>
-            + getOrdersByDateRange(LocalDate, LocalDate): List<OrderBean>
-            + getTotalRevenue(): BigDecimal
-            + getRevenueByPeriod(LocalDate, LocalDate): BigDecimal
-        }
 
-        class ManagerService <<control>> implements ManagerUseCase {
-            - userDAO: UserDAO
-            --
-            + getAllUsers(): List<UserBean>
-            + saveUser(UserBean): void
-            + deleteUser(String): void
-            + updateUser(UserBean): void
-            + getUserByUsername(String): UserBean
-        }
+
 
         class MenuService <<control>> implements MenuUseCase {
             - productDAO: ProductDAO
@@ -158,15 +86,6 @@ package "<<Control>>" <<Rectangle>> CONTROL_COLOR {
             + deleteProduct(int): void
             + updateProduct(ProductBean): void
             + getProductById(int): ProductBean
-        }
-
-        class FinancialService <<control>> implements FinancialUseCase {
-            - orderDAO: OrderDAO
-            --
-            + getAllOrders(): List<OrderBean>
-            + getOrdersByDateRange(LocalDate, LocalDate): List<OrderBean>
-            + getTotalRevenue(): BigDecimal
-            + getRevenueByPeriod(LocalDate, LocalDate): BigDecimal
         }
     }
 
@@ -215,14 +134,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             - available: boolean
             - description: String
             --
-            + getId(): int
-            + setId(int): void
-            + getName(): String
-            + setName(String): void
-            + getCategory(): String
-            + setCategory(String): void
-            + getPrice(): BigDecimal
-            + setPrice(BigDecimal): void
+            + setter/getter
             + isAvailable(): boolean
             + setAvailable(boolean): void
         }
@@ -237,13 +149,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             - items: List<OrderItem>
             - paymentMethod: String
             --
-            + getId(): int
-            + getTableNumber(): int
-            + getStatus(): String
-            + getTotalAmount(): BigDecimal
-            + getItems(): List<OrderItem>
-            + addItem(OrderItem): void
-            + removeItem(OrderItem): void
+            + setter/getter
         }
 
         class OrderItem <<entity>> {
@@ -252,12 +158,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             - notes: String
             - subtotal: BigDecimal
             --
-            + getProduct(): MenuProduct
-            + setProduct(MenuProduct): void
-            + getQuantity(): int
-            + setQuantity(int): void
-            + getNotes(): String
-            + setNotes(String): void
+            + setter/getter
             + calculateSubtotal(): BigDecimal
         }
 
@@ -268,14 +169,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             - displayName: String
             - active: boolean
             --
-            + getUsername(): String
-            + setUsername(String): void
-            + getPasswordHash(): String
-            + setPasswordHash(String): void
-            + getRole(): String
-            + setRole(String): void
-            + getDisplayName(): String
-            + setDisplayName(String): void
+            + setter/getter
         }
     }
 
@@ -293,14 +187,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             - available: boolean
             - description: String
             --
-            + getId(): int
-            + setId(int): void
-            + getName(): String
-            + setName(String): void
-            + getCategory(): String
-            + setCategory(String): void
-            + getPrice(): BigDecimal
-            + setPrice(BigDecimal): void
+            + setter/getter
         }
 
         class OrderBean <<bean>> {
@@ -313,14 +200,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             - items: List<OrderItemBean>
             - paymentMethod: String
             --
-            + getId(): int
-            + setId(int): void
-            + getTableNumber(): int
-            + setTableNumber(int): void
-            + getStatus(): String
-            + setStatus(String): void
-            + getTotalAmount(): BigDecimal
-            + setTotalAmount(BigDecimal): void
+            + setter/getter
         }
 
         class OrderItemBean <<bean>> {
@@ -331,12 +211,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             - unitPrice: BigDecimal
             - subtotal: BigDecimal
             --
-            + getProductId(): int
-            + setProductId(int): void
-            + getQuantity(): int
-            + setQuantity(int): void
-            + getSubtotal(): BigDecimal
-            + setSubtotal(BigDecimal): void
+            + setter/getter
         }
 
         class UserBean <<bean>> {
@@ -346,12 +221,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             - displayName: String
             - active: boolean
             --
-            + getUsername(): String
-            + setUsername(String): void
-            + getRole(): String
-            + setRole(String): void
-            + getDisplayName(): String
-            + setDisplayName(String): void
+            + setter/getter
         }
 
 
@@ -437,40 +307,34 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
 
 ' Boundary -> Control
 LoginController ..> SecurityService : authenticates with
-KitchenController ..> FinancialUseCase
+
 WaiterController ..> MenuUseCase
-WaiterController ..> FinancialUseCase
-ManagerController ..> ManagerUseCase
-ManagerController ..> MenuUseCase
-ManagerController ..> FinancialUseCase
-CashierController ..> FinancialUseCase
-MainApp ..> SecurityService
+
+
+
+
 
 WaiterController -- TakeOrderController
 
 LoginController     .up.|> View
 WaiterController    .up.|> View
-ManagerController   .up.|> View
-KitchenController   .up.|> View
-CashierController   .up.|> View
+
+
+
 TakeOrderController .up.|> View
 
 ' Control -> Control
-ManagerService .down.> BeanMapper : converts
+
 MenuService .down.> BeanMapper : converts
-FinancialService .down.> BeanMapper : converts
 SecurityService .down.> BeanMapper : converts
 
 ' Control -> Entity (DAO)
-ManagerService --> UserDAO : uses
+
 MenuService --> ProductDAO : uses
-FinancialService --> OrderDAO : uses
+
 
 ' Control <-> Bean
-ManagerUseCase ..> UserBean : transfers
 MenuUseCase ..> ProductBean : transfers
-FinancialUseCase ..> OrderBean : transfers
-FinancialUseCase ..> OrderItemBean : transfers
 BeanMapper ..> ProductBean : creates
 BeanMapper ..> UserBean : creates
 BeanMapper ..> OrderBean : creates

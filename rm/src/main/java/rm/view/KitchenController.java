@@ -23,7 +23,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import rm.controller.KitchenService;
 import rm.controller.KitchenUseCase;
-import rm.view.component.*;
 
 public class KitchenController {
 
