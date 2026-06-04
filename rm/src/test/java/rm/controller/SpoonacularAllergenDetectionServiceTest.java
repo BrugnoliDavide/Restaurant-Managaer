@@ -129,7 +129,12 @@ class SpoonacularAllergenDetectionServiceTest {
 
     @Test
     void detectAllergensShouldThrowOnHttpError() throws Exception {
-        configureMockResponse("Server Error", 500);
+        // body() non viene stubato: con status != 200 il codice production
+        // lancia AllergenDetectionException prima di chiamare response.body(),
+        // evitando UnnecessaryStubbingException in strict mode.
+        when(mockResponse.statusCode()).thenReturn(500);
+        when(mockHttpClient.send(any(HttpRequest.class),
+                any(HttpResponse.BodyHandler.class))).thenReturn(mockResponse);
 
         AllergenDetectionException ex = assertThrows(
                 AllergenDetectionException.class,
@@ -181,7 +186,7 @@ class SpoonacularAllergenDetectionServiceTest {
     }
 
     // =========================================================================
-    //  Metodi di utilita per i test
+    //  Metodi di utilità per i test
     // =========================================================================
 
     @SuppressWarnings("unchecked")
