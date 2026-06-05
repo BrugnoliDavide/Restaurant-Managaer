@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,6 +28,8 @@ public class OrderBean implements Serializable {
     public static final String STATUS_DELIVERED = "delivered";
     public static final String STATUS_CANCELED  = "canceled";
 
+    private static final ZoneId APP_ZONE = ZoneId.systemDefault();
+
     private int             id;
     private LocalDateTime   dataOra;
     private int             tavolo;
@@ -42,7 +45,7 @@ public class OrderBean implements Serializable {
 
     /** Costruttore no-arg richiesto dallo standard Java Bean. */
     public OrderBean() {
-        this.dataOra = LocalDateTime.now();
+        this.dataOra = LocalDateTime.now(APP_ZONE);
         this.status  = STATUS_TODO;
         this.note    = "";
         this.items   = new ArrayList<>();

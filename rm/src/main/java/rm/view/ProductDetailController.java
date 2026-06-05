@@ -18,6 +18,7 @@ import rm.view.component.AddProductDialog;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -227,7 +228,7 @@ public class ProductDetailController {
     // =========================================================================
 
     private ProductStatistics calculateStatistics() {
-        LocalDateTime now          = LocalDateTime.now();
+        LocalDateTime now          = LocalDateTime.now(Clock.systemDefaultZone());
         LocalDateTime startLast30  = now.minusDays(30);
         LocalDateTime startPrev30  = now.minusDays(60);
         LocalDateTime endPrev30    = now.minusDays(30);

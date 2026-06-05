@@ -14,6 +14,7 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.nio.file.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.logging.Level;
@@ -101,7 +102,8 @@ public class OrderDAOFile implements OrderDAO {
         }
 
         int orderId   = nextOrderId++;
-        String dataOra  = LocalDateTime.now().format(DATE_FORMATTER);
+        String dataOra  = LocalDateTime.now(ZoneId.systemDefault())
+                .format(DATE_FORMATTER);
         String tavoloStr = tavolo != null ? String.valueOf(tavolo) : "";
         String noteStr   = note   != null ? note.replace(CSV_SEPARATOR, ",") : "";
 
@@ -301,7 +303,9 @@ public class OrderDAOFile implements OrderDAO {
 
     @Override
     public List<OrderBean> getKitchenActiveOrders() {
-        LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
+        LocalDateTime cutoff =
+                LocalDateTime.now(ZoneId.systemDefault())
+                        .minusHours(24);
         return BeanMapper.toOrderBeans(
                 getAllOrdersInternal().stream()
                         .filter(o -> o.getStatus().equals("to-do"))

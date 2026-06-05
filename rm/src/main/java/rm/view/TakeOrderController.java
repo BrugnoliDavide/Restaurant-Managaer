@@ -61,6 +61,8 @@ public class TakeOrderController {
     private static final OrderUseCase orderUseCase = new OrderService();
     private static final User currentUser = UserSession.getInstance().getUser();
 
+    private TakeOrderViewCallback viewCallback;
+
     private static final String ERRORESTRING = "ERRORE: ";
 
       private ProductLoadingService productLoadingService;
@@ -74,7 +76,8 @@ public class TakeOrderController {
     private List<MenuProduct> allProductsCache = new CopyOnWriteArrayList<>();
 
 
-    public void init(int numeroTavolo) {
+    public void init(int numeroTavolo, TakeOrderViewCallback viewCallback) {
+        this.viewCallback = viewCallback;
         this.numeroTavolo = numeroTavolo;
         updateTitle();
         initLoadingIndicator();
@@ -95,7 +98,8 @@ public class TakeOrderController {
                 Platform.runLater(() -> {
                     updateProductList(products);
                     showLoadingIndicator(false);
-                    logger.info("Prodotti caricati: " + products.size());
+                    viewCallback.onProductsLoaded(products.size());  // AGGIUNTA
+                    logger.info(() -> "Prodotti caricati: " + products.size());
                 });
             });
 
@@ -353,10 +357,12 @@ public class TakeOrderController {
         if (btnSend == null) {
             return;
         }
-
         int totalItems = calculateTotalItems();
         btnSend.setText("Send Order (" + totalItems + ")");
         btnSend.setDisable(totalItems == 0);
+        if (viewCallback != null) {
+            viewCallback.onCartUpdated(totalItems);
+        }
     }
 
     private int calculateTotalItems() {
@@ -439,6 +445,9 @@ public class TakeOrderController {
 
     private void handleOrderSuccess() {
         logger.log(Level.INFO, "Ordine inviato con successo per tavolo {0}", numeroTavolo);
+        if (viewCallback != null) {
+            viewCallback.onOrderSuccess();
+        }
         showInfoAlert("Successo", "Ordine inviato con successo!");
         cleanup();
         clearCart();
@@ -447,6 +456,9 @@ public class TakeOrderController {
 
     private void handleOrderFailure() {
         logger.log(Level.SEVERE, "Impossibile inviare ordine per tavolo {0}", numeroTavolo);
+        if (viewCallback != null) {
+            viewCallback.onOrderFailure("Impossibile inviare l'ordine al database.");
+        }
         showErrorAlert(ERRORESTRING, "Impossibile inviare l'ordine al database.");
     }
 

@@ -5,6 +5,7 @@ import javafx.beans.property.*;
 
 import java.io.*;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,7 +24,7 @@ public class Order implements Serializable {
 
     public Order() {
         this.id = new SimpleIntegerProperty(0);
-        this.dataOra = new SimpleObjectProperty<>(LocalDateTime.now());
+        this.dataOra = new SimpleObjectProperty<>(LocalDateTime.now(Clock.systemDefaultZone()) );
         this.tavolo = new SimpleIntegerProperty(0);
         this.username = new SimpleStringProperty("");
         this.note = new SimpleStringProperty("");
