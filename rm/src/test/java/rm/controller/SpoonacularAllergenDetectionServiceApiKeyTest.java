@@ -16,33 +16,41 @@ class SpoonacularAllergenDetectionServiceApiKeyTest {
 
     @Test
     void shouldAcceptValidApiKey() {
+        var httpClient = java.net.http.HttpClient.newHttpClient();
+
         assertDoesNotThrow(
                 () -> new SpoonacularAllergenDetectionService(
                         "valid-test-key-12345",
-                        java.net.http.HttpClient.newHttpClient()));
+                        httpClient));
     }
 
     @Test
     void shouldRejectNullApiKey() {
+        var httpClient = java.net.http.HttpClient.newHttpClient();
+
         assertThrows(IllegalArgumentException.class,
                 () -> new SpoonacularAllergenDetectionService(
                         null,
-                        java.net.http.HttpClient.newHttpClient()));
+                        httpClient));
     }
 
     @Test
     void shouldRejectEmptyApiKey() {
+        var httpClient = java.net.http.HttpClient.newHttpClient();
+
         assertThrows(IllegalArgumentException.class,
                 () -> new SpoonacularAllergenDetectionService(
                         "",
-                        java.net.http.HttpClient.newHttpClient()));
+                        httpClient));
     }
 
     @Test
     void shouldRejectBlankApiKey() {
+        var httpClient = java.net.http.HttpClient.newHttpClient();
+
         assertThrows(IllegalArgumentException.class,
                 () -> new SpoonacularAllergenDetectionService(
                         "   ",
-                        java.net.http.HttpClient.newHttpClient()));
+                        httpClient));
     }
 }
