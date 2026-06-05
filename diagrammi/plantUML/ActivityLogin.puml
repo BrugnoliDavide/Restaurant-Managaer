@@ -18,18 +18,24 @@ skinparam note {
 start
 
 repeat
+
     :Show login page;
 
-    :user insert his credentiale;
+    :User inserts credentials;
 
+    :Verify credentials;
 
+    if (Credentials valid?) then (yes)
 
-repeat while (credentiale is rejected) is (yes)
-    :display error;
-    ->yes;
+        :show waiter dashboard;
+        stop
 
+    else (no)
 
+        :Display error message;
 
-stop
+    endif
+
+repeat while (Credentials valid?) is (no)
 
 @enduml

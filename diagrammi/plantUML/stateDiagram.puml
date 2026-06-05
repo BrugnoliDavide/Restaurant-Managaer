@@ -1,0 +1,76 @@
+@startuml
+title State Diagram — Order Creation
+
+' ── Layout & Style ──────────────────────────────────────────
+skinparam backgroundColor          white
+skinparam shadowing                false
+skinparam defaultFontName          "Segoe UI"
+skinparam defaultFontSize          13
+
+skinparam state {
+    BackgroundColor     #F5F7FA
+    BorderColor         #3B4252
+    FontColor           #2E3440
+    FontSize            13
+    FontStyle           bold
+    ArrowColor          #4C566A
+    ArrowFontSize       11
+    ArrowFontColor      #434C5E
+}
+
+skinparam note {
+    BackgroundColor     #ECEFF4
+    BorderColor         #D8DEE9
+    FontSize            11
+}
+
+left to right direction
+skinparam Nodesep      80
+skinparam Ranksep      100
+
+' ── States ──────────────────────────────────────────────────
+state "Order Entry Open"              as OrderEntryOpen
+state "Cart Populated"                as CartPopulated
+state "Ready For Review"              as ReadyForReview
+
+state "Review & Validation" as ReviewGroup {
+    state "Under Review"              as UnderReview
+    state "Order Validated"           as OrderValidated
+}
+
+state "Persistence" as PersistGroup {
+    state "Order Persisted"           as OrderPersisted
+}
+
+state "Order Created\n(status = to-do)" as OrderCreated   #DDF4DD ##2D7F2D
+state "Order Cancelled"                 as OrderCancelled #FFF3CD ##856404
+state "Order Creation Failed"           as OrderFailed    #F8D7DA ##842029
+
+' ── Transitions ─────────────────────────────────────────────
+[*] --> OrderEntryOpen
+
+OrderEntryOpen --> CartPopulated : productSelected\n[cartSize > 0]\n/ updateCart()
+
+CartPopulated --> CartPopulated : productAddedOrRemoved\n[cartSize > 0]\n/ refreshCart()
+
+CartPopulated --> ReadyForReview : sendOrderRequested\n[cartSize > 0]\n/ buildOrderItems()
+
+ReadyForReview --> UnderReview : reviewDialogOpened\n[dialogAvailable]\n/ showOrderSummary()
+
+UnderReview --> OrderCancelled : cancelRequested\n/ closeDialog()
+
+UnderReview --> OrderValidated : confirmRequested\n[itemsValid && userValid]\n/ collectNotes()
+
+OrderValidated --> OrderPersisted : createOrderRequested\n[databaseAvailable]\n/ executeTransaction()
+
+OrderValidated --> OrderFailed : createOrderRequested\n[!databaseAvailable]\n/ handleFailure()
+
+OrderPersisted --> OrderCreated : transactionCommitted\n[commitSuccessful]\n/ notifyObservers()
+
+OrderPersisted --> OrderFailed : transactionCompleted\n[rollbackRequired]\n/ rollbackTransaction()
+
+OrderCreated   --> [*]
+OrderCancelled --> [*]
+OrderFailed    --> [*]
+
+@enduml

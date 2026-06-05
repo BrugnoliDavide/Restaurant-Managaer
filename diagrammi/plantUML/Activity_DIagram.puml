@@ -125,42 +125,25 @@ repeat while (Confirm order?) is (Close review dialog)
 
 
 
-partition "Database Persistence" #LightBlue {
+partition "Persistence level" #LightBlue {
 
 
 repeat
 
-    :Begin database transaction;
 
-    fork
-        :Prepare order insert statement;
-    fork again
-        :Prepare order items batch statement;
-    end fork
 
-    :Insert order record\n(table, user, notes, status='todo');
+
+
+    :Insert order records\n(table, user, notes, status='todo');
 
 
 repeat while (Insert successful?) is (no)
 
     -> yes;
 
-
-
-    repeat :Insert order item;
-        note right
-            Item snapshot includes:
-            - Sale price
-            - Product cost
-            - Product name
-        end note
-    repeat while (All items inserted?) is (no)
-    -> yes;
-
-
-
     :Commit transaction;
 
+}
 
 :Display success message;
 

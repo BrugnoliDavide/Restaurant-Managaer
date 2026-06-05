@@ -1,0 +1,110 @@
+@startuml State_Diagram_Order_Creation
+
+!pragma layout smetana
+
+' ═══════════════════════════════════════════════════════════════
+' CONFIGURAZIONE GLOBALE
+' Convenzioni coerenti con il progetto (cfr. VOCPNEW.puml)
+' e con le best practice del documento State Diagram Professionali
+' ═══════════════════════════════════════════════════════════════
+
+skinparam backgroundColor     #FFFFFF
+skinparam shadowing           false
+skinparam defaultFontName     Arial
+skinparam defaultFontSize     12
+skinparam linetype            ortho
+skinparam nodesep             60
+skinparam ranksep             50
+
+skinparam state {
+    BackgroundColor   #F5F7FA
+    BorderColor       #3B4252
+    FontColor         #2E3440
+    FontSize          12
+    FontStyle         bold
+    ArrowColor        #4C566A
+    ArrowFontSize     10
+    ArrowFontColor    #434C5E
+    ArrowFontName     Arial
+}
+
+skinparam note {
+    BackgroundColor   #FFFDE7
+    BorderColor       #D8DEE9
+    FontSize          10
+}
+
+title State Diagram — Order Creation
+
+' ═══════════════════════════════════════════════════════════════
+' STATI
+' Nomenclatura: participi passati / aggettivi (§3.1.2)
+' Gerarchia: stato composto per la fase di revisione (§3.1.3)
+' ═══════════════════════════════════════════════════════════════
+
+state "Idle" as Idle
+
+state "Items Selected" as ItemsSelected
+
+state "Pending Review" as PendingReview
+
+
+    state "In Review" as InReview
+    state "Validated" as Validated
+
+    InReview -down-> Validated : confirmOrder\n[itemsValid && userValid]\n/ collectNotes()
+
+
+state "Persisted" as Persisted
+
+state "Created\n(status = to-do)" as Created #DCEDC8
+
+state "Cancelled" as Cancelled #FFF9C4
+
+state "Failed" as Failed #FFCDD2
+
+' ═══════════════════════════════════════════════════════════════
+' TRANSIZIONI
+' Flusso principale: alto → basso (§3.2.1)
+' Formato label: evento [guardia] / azione
+' ═══════════════════════════════════════════════════════════════
+
+[*] -down-> Idle
+
+Idle -down-> ItemsSelected : selectProduct[item == !null]\n/ addToCart()
+
+ItemsSelected -right-> ItemsSelected : modifyCart\n/ refreshCart()
+
+ItemsSelected -down-> PendingReview : click[button == submitOrder && cartSize > 0]\n/ buildOrderItems()
+
+PendingReview -down-> InReview : openReviewDialog\n/ showOrderSummary()
+
+InReview -left-> Cancelled : click[button == cancelOrder]\n/ closeDialog()
+
+Validated -down-> Persisted : commitOrder\n[persistenceLayer]\n/ executeTransaction()
+
+Validated -right-> Failed : \n\ncommitOrder\n[!persistenceLayer]\n/ handleFailure()
+
+Persisted -down-> Created : transactionCommitted\n[commitSuccessful]\n/ notifyObservers()
+
+
+' ═══════════════════════════════════════════════════════════════
+' TERMINAZIONI
+' ═══════════════════════════════════════════════════════════════
+
+Created -down-> [*]
+Cancelled -down-> [*]
+Failed -down-> [*]
+
+' ═══════════════════════════════════════════════════════════════
+' NOTE UML (§3.2.2)
+' ═══════════════════════════════════════════════════════════════
+
+note right of Created
+The order is now visible in the kitchen
+    status "to-do".
+end note
+
+
+
+@enduml

@@ -1,7 +1,7 @@
 @startuml Restaurant_Manager_BCE_Pattern
 
 
-!pragma layout smetana
+
 !define BOUNDARY_COLOR #E3F2FD
 !define CONTROL_COLOR #E8F5E9
 !define ENTITY_COLOR #FFF3E0
@@ -16,7 +16,7 @@ skinparam classAttributeIconSize 0
 
 skinparam nodesep 100
 skinparam ranksep 80
-
+skinparam linetype ortho
 
 
 title Restaurant Manager - BCE Pattern Architecture
@@ -214,15 +214,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             + setter/getter
         }
 
-        class UserBean <<bean>> {
-            - username: String
-            - passwordHash: String
-            - role: String
-            - displayName: String
-            - active: boolean
-            --
-            + setter/getter
-        }
+
 
 
     }
@@ -242,13 +234,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             + findByCategory(String): List<MenuProduct>
         }
 
-        interface UserDAO <<entity>> {
-            + findAll(): List<User>
-            + findByUsername(String): User
-            + save(User): void
-            + update(User): void
-            + delete(String): void
-        }
+
 
         interface OrderDAO <<entity>> {
             + findAll(): List<Order>
@@ -270,15 +256,7 @@ package "<<Entity>>" <<Rectangle>> ENTITY_COLOR {
             - mapResultSetToProduct(ResultSet): MenuProduct
         }
 
-        class DatabaseUserDAO <<entity>> implements UserDAO {
-            --
-            + findAll(): List<User>
-            + findByUsername(String): User
-            + save(User): void
-            + update(User): void
-            + delete(String): void
-            - mapResultSetToUser(ResultSet): User
-        }
+
 
         class DatabaseOrderDAO <<entity>> implements OrderDAO {
             --
@@ -336,13 +314,13 @@ MenuService --> ProductDAO : uses
 ' Control <-> Bean
 MenuUseCase ..> ProductBean : transfers
 BeanMapper ..> ProductBean : creates
-BeanMapper ..> UserBean : creates
+
 BeanMapper ..> OrderBean : creates
 BeanMapper ..> OrderItemBean : creates
 
 ' Entity (DAO) -> Entity (Model)
 DatabaseProductDAO .down.> MenuProduct : persists
-DatabaseUserDAO .down.> User : persists
+
 DatabaseOrderDAO .down.> Order : persists
 
 
