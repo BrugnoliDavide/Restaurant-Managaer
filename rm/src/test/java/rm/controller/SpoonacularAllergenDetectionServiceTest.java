@@ -42,9 +42,6 @@ class SpoonacularAllergenDetectionServiceTest {
         service = new SpoonacularAllergenDetectionService(FAKE_API_KEY, mockHttpClient);
     }
 
-    // =========================================================================
-    //  Test - rilevamento allergeni con successo
-    // =========================================================================
 
     @Test
     void detectAllergensShouldReturnGlutineAndLattosioWhenNotFree() throws Exception {
@@ -87,9 +84,7 @@ class SpoonacularAllergenDetectionServiceTest {
         assertTrue(result.contains("Uova"));
     }
 
-    // =========================================================================
-    //  Test - eccezioni attese
-    // =========================================================================
+
 
     @Test
     void detectAllergensShouldThrowWhenNoResultsFound() throws Exception {
@@ -155,9 +150,7 @@ class SpoonacularAllergenDetectionServiceTest {
         assertTrue(ex.getMessage().contains("Errore di rete"));
     }
 
-    // =========================================================================
-    //  Test - costruttore
-    // =========================================================================
+
 
     @Test
     void constructorShouldRejectNullApiKey() {
@@ -171,9 +164,6 @@ class SpoonacularAllergenDetectionServiceTest {
                 () -> new SpoonacularAllergenDetectionService("  ", mockHttpClient));
     }
 
-    // =========================================================================
-    //  Test - formato output
-    // =========================================================================
 
     @Test
     void detectAllergensShouldReturnCommaSeparatedString() throws Exception {
@@ -185,9 +175,6 @@ class SpoonacularAllergenDetectionServiceTest {
         assertEquals("Glutine, Lattosio, Uova", result);
     }
 
-    // =========================================================================
-    //  Metodi di utilità per i test
-    // =========================================================================
 
     @SuppressWarnings("unchecked")
     private void configureMockResponse(String body, int statusCode) throws Exception {
